@@ -22,12 +22,16 @@ class EnumGenerator : TemplateGenerator {
         if (SqlSchemaUtils.hasRelation(table)) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName]
-
         val columns = context.columnsMap[tableName] ?: return false
 
+        // 检查是否有未生成的枚举列
         return columns.any { column ->
-            SqlSchemaUtils.hasEnum(column) && !SqlSchemaUtils.isIgnore(column) && generatedEnums.contains(entityType)
+            if (!SqlSchemaUtils.hasEnum(column) || SqlSchemaUtils.isIgnore(column)) {
+                false
+            } else {
+                val enumType = SqlSchemaUtils.getType(column)
+                !generatedEnums.contains(enumType) && context.enumConfigMap.containsKey(enumType)
+            }
         }
     }
 

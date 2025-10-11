@@ -25,6 +25,18 @@ interface BaseContext {
     fun getInt(key: String, default: Int = 0): Int =
         baseMap[key]?.toString()?.toIntOrNull() ?: default
 
-    fun MutableMap<String, Any?>.putContext(tag: String, variable: String, value: Any)
+    /**
+     * 将值放入上下文 Map，支持模板别名映射
+     *
+     * 例如: putContext("entity", "Entity", "User")
+     * 会根据 templateAliasMap 中的映射，将 "User" 同时放入多个别名 key 中
+     */
+    fun MutableMap<String, Any?>.putContext(tag: String, variable: String, value: Any) {
+        val key = "$tag.$variable"
+        val aliases = templateAliasMap[key] ?: listOf(variable)
+        aliases.forEach { alias ->
+            this[alias] = value
+        }
+    }
 }
 

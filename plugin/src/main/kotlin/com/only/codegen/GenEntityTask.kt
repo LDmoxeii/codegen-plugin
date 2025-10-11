@@ -3,6 +3,7 @@ package com.only.codegen
 import com.only.codegen.context.EntityContext
 import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.context.builders.*
+import com.only.codegen.generators.EntityGenerator
 import com.only.codegen.generators.EnumGenerator
 import com.only.codegen.generators.TemplateGenerator
 import com.only.codegen.misc.SqlSchemaUtils
@@ -135,6 +136,7 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
     private fun generateFiles(context: EntityContext) {
         val generators = listOf(
             EnumGenerator(),
+            EntityGenerator(),
         )
 
         generators.sortedBy { it.order }
