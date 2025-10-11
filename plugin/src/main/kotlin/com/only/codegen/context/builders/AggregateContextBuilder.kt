@@ -14,7 +14,7 @@ class AggregateContextBuilder: ContextBuilder {
 
             var result = ""
 
-            generateSequence(context.tableMap[tableName]) { currentTable ->
+            generateSequence(table) { currentTable ->
                 val parent = SqlSchemaUtils.getParent(currentTable)
                 if (parent.isBlank()) null else {
                     context.tableMap[parent]?.also {

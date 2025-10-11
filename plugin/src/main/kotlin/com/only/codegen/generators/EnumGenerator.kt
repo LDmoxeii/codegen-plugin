@@ -15,7 +15,10 @@ class EnumGenerator : TemplateGenerator {
     override val tag = "enum"
     override val order = 10
 
-    private val generatedEnums = mutableSetOf<String>()
+    @Volatile
+    private lateinit var currentEnumType: String
+
+    private val generatedEnumTypes = mutableSetOf<String>()
 
     override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
@@ -30,7 +33,7 @@ class EnumGenerator : TemplateGenerator {
                 false
             } else {
                 val enumType = SqlSchemaUtils.getType(column)
-                !(generatedEnums.contains(enumType))
+                !(generatedEnumTypes.contains(enumType))
             }
         }
     }
@@ -51,22 +54,17 @@ class EnumGenerator : TemplateGenerator {
             columns.forEach { column ->
                 if (SqlSchemaUtils.hasEnum(column) && !SqlSchemaUtils.isIgnore(column)) {
                     val enumType = SqlSchemaUtils.getType(column)
-                    if (generatedEnums.contains(enumType)) return@forEach
                     val enumConfig = enumConfigMap[enumType]
                     if (enumConfig != null && enumConfig.isNotEmpty()) {
                         newEnums.add(enumType)
-                        generatedEnums.add(enumType)
                     }
-
                 }
             }
 
-            // 如果没有新的枚举需要生成，返回空
-            if (newEnums.isEmpty()) {
-                return emptyMap()
-            }
+            val enumType = newEnums.firstOrNull { !(generatedEnumTypes.contains(entityType)) }
+                ?: return emptyMap()
+            currentEnumType = enumType
 
-            val enumType = newEnums.first()
             val enumConfig = enumConfigMap[enumType]!!
 
 
@@ -109,5 +107,12 @@ class EnumGenerator : TemplateGenerator {
             data = "enum"
             conflict = "overwrite"
         }
+    }
+
+    override fun onGenerated(
+        table: Map<String, Any?>,
+        context: EntityContext,
+    ) {
+        generatedEnumTypes.add(currentEnumType)
     }
 }

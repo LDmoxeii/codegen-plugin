@@ -2,6 +2,7 @@ package com.only.codegen.generators
 
 import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.EntityContext
+import com.only.codegen.generators.manager.EntityImportManager
 import com.only.codegen.misc.*
 import com.only.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_ID_ALIAS
 import com.only.codegen.misc.SqlSchemaUtils.RIGHT_QUOTES_4_ID_ALIAS
@@ -15,6 +16,8 @@ class EntityGenerator : TemplateGenerator {
     override val tag = "entity"
     override val order = 20
 
+    private val generated = mutableSetOf<String>()
+
     override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
@@ -23,7 +26,7 @@ class EntityGenerator : TemplateGenerator {
         val columns = context.columnsMap[tableName] ?: return false
         val ids = resolveIdColumns(columns)
 
-        return ids.isNotEmpty()
+        return ids.isNotEmpty() && !(generated.contains(tableName))
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
@@ -34,6 +37,10 @@ class EntityGenerator : TemplateGenerator {
         val ids = resolveIdColumns(columns)
 
         val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
+
+        // 创建 ImportManager
+        val importManager = EntityImportManager()
+        importManager.addBaseImports()
 
         // 处理基类
         var baseClass: String? = null
@@ -57,7 +64,7 @@ class EntityGenerator : TemplateGenerator {
         val implementsClause = if (SqlSchemaUtils.isValueObject(table)) ", ValueObject<$identityType>" else ""
 
         // 收集自定义内容
-        val importLines = mutableListOf<String>()
+        val existingImportLines = mutableListOf<String>()
         val annotationLines = mutableListOf<String>()
         val customerLines = mutableListOf<String>()
         val enums = mutableListOf<String>()
@@ -68,8 +75,21 @@ class EntityGenerator : TemplateGenerator {
             entityFullPackage,
             entityType,
         )
-        processEntityCustomerSourceFile(filePath, importLines, annotationLines, customerLines, context)
+        processEntityCustomerSourceFile(filePath, existingImportLines, annotationLines, customerLines, context)
         processAnnotationLines(table, columns, annotationLines, context, ids)
+
+        // 将现有文件中的自定义导入添加到 importManager
+        // 只处理真正的 import 语句，过滤掉空行、注释等
+        existingImportLines.forEach { line ->
+            val trimmed = line.trim()
+            if (trimmed.startsWith("import ")) {
+                val importPath = trimmed.removePrefix("import").trim()
+                // 只添加不在 importManager 中的导入（避免重复）
+                if (importPath.isNotBlank() && !importManager.contains(importPath)) {
+                    importManager.add(importPath)
+                }
+            }
+        }
 
         // 准备列数据
         val columnDataList = columns.map { column ->
@@ -79,16 +99,44 @@ class EntityGenerator : TemplateGenerator {
         // 准备关系数据
         val relationDataList = prepareRelationData(table, context.relationsMap, context.tablePackageMap, context)
 
-        // 准备 imports
-        val entityClassExtraImports = context.entityClassExtraImports.toMutableList()
-        if (SqlSchemaUtils.isValueObject(table)) {
-            val idx = entityClassExtraImports.indexOf("com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate")
-            if (idx > 0) {
-                entityClassExtraImports.add(idx, "com.only4.cap4k.ddd.core.domain.aggregate.ValueObject")
-            } else {
-                entityClassExtraImports.add("com.only4.cap4k.ddd.core.domain.aggregate.ValueObject")
-            }
-        }
+        // 1. 检查软删除字段
+        val deletedField = context.getString("deletedField")
+        val hasSoftDelete = deletedField.isNotBlank() && SqlSchemaUtils.hasColumn(deletedField, columns)
+        importManager.addIfNeeded(
+            hasSoftDelete,
+            "org.hibernate.annotations.SQLDelete",
+            "org.hibernate.annotations.Where"
+        )
+
+        // 2. 检查是否需要 ID 生成器
+        val needsIdGenerator = ids.size == 1 &&
+                !SqlSchemaUtils.isValueObject(table) &&
+                resolveEntityIdGenerator(table, context).isNotEmpty()
+        importManager.addIfNeeded(
+            needsIdGenerator,
+            "org.hibernate.annotations.GenericGenerator"
+        )
+
+        // 3. 检查是否有集合关系（OneToMany, ManyToMany）
+        val hasCollectionRelation = context.relationsMap[tableName]?.values?.any {
+            val relationType = it.split(";")[0]
+            relationType in listOf("OneToMany", "ManyToMany", "*OneToMany", "*ManyToMany")
+        } == true
+        importManager.addIfNeeded(
+            hasCollectionRelation,
+            "org.hibernate.annotations.Fetch",
+            "org.hibernate.annotations.FetchMode"
+        )
+
+        // 4. 检查是否是 ValueObject
+        importManager.addIfNeeded(
+            SqlSchemaUtils.isValueObject(table),
+            "com.only4.cap4k.ddd.core.domain.aggregate.ValueObject"
+        )
+
+        // 生成最终的 import 列表
+        val finalImports = importManager.toImportLines()
+
 
         // 准备注释行
         val commentLines = SqlSchemaUtils.getComment(table)
@@ -125,7 +173,7 @@ class EntityGenerator : TemplateGenerator {
             resultContext.putContext(tag, "relations", relationDataList)
             resultContext.putContext(tag, "annotationLines", annotationLines)
             resultContext.putContext(tag, "customerLines", customerLines)
-            resultContext.putContext(tag, "imports", entityClassExtraImports)
+            resultContext.putContext(tag, "imports", finalImports)
             resultContext.putContext(tag, "commentLines", commentLines)
         }
 
@@ -141,6 +189,13 @@ class EntityGenerator : TemplateGenerator {
             data = "entity"
             conflict = "overwrite"
         }
+    }
+
+    override fun onGenerated(
+        table: Map<String, Any?>,
+        context: EntityContext,
+    ) {
+        generated.add(SqlSchemaUtils.getTableName(table))
     }
 
     private fun resolveIdColumns(columns: List<Map<String, Any?>>): List<Map<String, Any?>> {
@@ -284,24 +339,24 @@ class EntityGenerator : TemplateGenerator {
             for (i in 1 until lines.size) {
                 val line = lines[i]
                 when {
-                    line.contains("【字段映射开始】") -> {
-                        startMapperLine = i
-                    }
-
-                    line.contains("【字段映射结束】") -> {
-                        endMapperLine = i
-                    }
-
-                    line.trim().startsWith("class") && startClassLine == 0 -> {
-                        startClassLine = i
+                    annotationLines.isEmpty() && startClassLine == 0 && line.trim().startsWith("import ") -> {
+                        importLines.add(line.trim().removePrefix("import").trim())
                     }
 
                     (line.trim().startsWith("@") || annotationLines.isNotEmpty()) && startClassLine == 0 -> {
                         annotationLines.add(line)
                     }
 
-                    annotationLines.isEmpty() && startClassLine == 0 -> {
-                        importLines.add(line)
+                    line.trim().startsWith("class") && startClassLine == 0 -> {
+                        startClassLine = i
+                    }
+
+                    line.contains("【字段映射开始】") -> {
+                        startMapperLine = i
+                    }
+
+                    line.contains("【字段映射结束】") -> {
+                        endMapperLine = i
                     }
 
                     startMapperLine == 0 || endMapperLine > 0 -> {
@@ -422,6 +477,8 @@ class EntityGenerator : TemplateGenerator {
                 """@Where(clause = "$LEFT_QUOTES_4_ID_ALIAS$deletedField$RIGHT_QUOTES_4_ID_ALIAS = 0")"""
             )
         }
+
+
     }
 
     private fun prepareColumnData(
