@@ -1,7 +1,6 @@
 package com.only.codegen.misc
 
-import com.only.codegen.GenEntityTask
-import org.gradle.api.logging.Logger
+import com.only.codegen.context.EntityContext
 import java.sql.DriverManager
 import java.util.regex.Pattern
 
@@ -22,10 +21,9 @@ object SqlSchemaUtils {
     var LEFT_QUOTES_4_LITERAL_STRING = "'"
     var RIGHT_QUOTES_4_LITERAL_STRING = "'"
 
-    var logger: Logger? = null
     val ANNOTATION_PATTERN: Pattern = Pattern.compile("@([A-Za-z]+)(=[^;]+)?;?")
 
-    var task: GenEntityTask? = null
+    lateinit var context: EntityContext
 
     // 新增: 驱动映射（可按需扩展）
     private val DRIVER_BY_DB = mapOf(
@@ -35,19 +33,9 @@ object SqlSchemaUtils {
 
     private val ANY_INT_REGEX = Regex("^[-+]?[0-9]+$")
 
-    fun loadLogger(logger: Logger) {
-        this.logger = logger
-    }
 
-    private fun logError(message: String, throwable: Throwable? = null) =
-        if (throwable != null) logger?.error(message, throwable) else logger?.error(message)
-
-    fun recognizeDbType(connectionString: String): String = runCatching {
+    fun recognizeDbType(connectionString: String): String =
         connectionString.substringAfter("jdbc:").substringBefore(":")
-    }.getOrElse {
-        logError("数据库连接串异常 $connectionString", it)
-        DB_TYPE_MYSQL
-    }
 
     fun processSqlDialect(dbType: String) = when (dbType) {
         DB_TYPE_MYSQL -> {
@@ -95,7 +83,7 @@ object SqlSchemaUtils {
         }
 
     private fun pickByTask(): SqlSchemaDialect =
-        when (task!!.dbType) {
+        when (context!!.dbType) {
             DB_TYPE_POSTGRESQL -> SqlSchemaUtils4Postgresql
             else -> SqlSchemaUtils4Mysql
         }
@@ -104,25 +92,21 @@ object SqlSchemaUtils {
         val result = mutableListOf<Map<String, Any?>>()
         val dbType = recognizeDbType(connectionString)
         DRIVER_BY_DB[dbType]?.let { runCatching { Class.forName(it) } } // 驱动加载失败不抛
-        try {
-            DriverManager.getConnection(connectionString, user, pwd).use { conn ->
-                conn.createStatement().use { st ->
-                    st.executeQuery(sql).use { rs ->
-                        val meta = rs.metaData
-                        while (rs.next()) {
-                            val row = HashMap<String, Any?>(meta.columnCount)
-                            for (i in 1..meta.columnCount) {
-                                val value = rs.getObject(i)
-                                row[meta.getColumnName(i)] =
-                                    if (value is ByteArray) String(value) else value
-                            }
-                            result += row
+        DriverManager.getConnection(connectionString, user, pwd).use { conn ->
+            conn.createStatement().use { st ->
+                st.executeQuery(sql).use { rs ->
+                    val meta = rs.metaData
+                    while (rs.next()) {
+                        val row = HashMap<String, Any?>(meta.columnCount)
+                        for (i in 1..meta.columnCount) {
+                            val value = rs.getObject(i)
+                            row[meta.getColumnName(i)] =
+                                if (value is ByteArray) String(value) else value
                         }
+                        result += row
                     }
                 }
             }
-        } catch (e: Throwable) {
-            logError("SQL查询执行失败: $sql", e)
         }
         return result
     }
@@ -138,8 +122,8 @@ object SqlSchemaUtils {
     fun getColumnType(column: Map<String, Any?>): String =
         if (hasType(column)) {
             val custom = getType(column)
-            if (hasEnum(column) && task!!.enumPackageMap.containsKey(custom)) {
-                val prefix = task!!.enumPackageMap[custom]!!
+            if (hasEnum(column) && context!!.enumPackageMap.containsKey(custom)) {
+                val prefix = context!!.enumPackageMap[custom]!!
                 if (isColumnNullable(column)) "$prefix.$custom?" else "$prefix.$custom"
             } else custom
         } else pickByTask().getColumnType(column)
@@ -187,13 +171,12 @@ object SqlSchemaUtils {
     fun getComment(tableOrColumn: Map<String, Any?>, cleanAnnotations: Boolean = true) =
         pickByTask().getComment(tableOrColumn, cleanAnnotations)
 
-    // ---------------- 注解解析与缓存 ----------------
     fun getAnnotations(columnOrTable: Map<String, Any?>): Map<String, String> {
         val comment = getComment(columnOrTable, false)
-        return task!!.annotationsCache.getOrPut(comment) { parseAnnotations(comment) }
+        return parseAnnotations(comment)
     }
 
-    private fun parseAnnotations(comment: String): MutableMap<String, String> {
+    private fun parseAnnotations(comment: String): Map<String, String> {
         val matcher = ANNOTATION_PATTERN.matcher(comment)
         val map = mutableMapOf<String, String>()
         while (matcher.find()) {

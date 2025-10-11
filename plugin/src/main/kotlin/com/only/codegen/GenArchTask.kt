@@ -17,24 +17,11 @@ open class GenArchTask : AbstractCodegenTask() {
     override val extension: Property<CodegenExtension> =
         project.objects.property(CodegenExtension::class.java)
 
-    @get:Input
-    override val projectName: Property<String> = project.objects.property(String::class.java)
-
-    @get:Input
-    override val projectGroup: Property<String> = project.objects.property(String::class.java)
-
-    @get:Input
-    override val projectVersion: Property<String> = project.objects.property(String::class.java)
-
-    @get:Input
-    override val projectDir: Property<String> = project.objects.property(String::class.java)
-
     @TaskAction
     open fun generate() = genArch()
 
     private fun genArch() {
         val ext = extension.get()
-
         val config = PebbleConfig(
             encoding = ext.archTemplateEncoding.get()
         )
@@ -43,17 +30,17 @@ open class GenArchTask : AbstractCodegenTask() {
         val archTemplate = validateAndGetArchTemplate(ext) ?: return
 
         template = loadTemplate(archTemplate, ext)
-        render(template!!, projectDir.get())
+        render(template!!, project.projectDir.absolutePath)
 
     }
 
     private fun loadTemplate(templatePath: String, ext: CodegenExtension): Template {
         val templateContent = loadFileContent(templatePath, ext.archTemplateEncoding.get())
 
-        PathNode.setDirectory(resolveDirectory(templatePath, projectDir.get()))
+        PathNode.setDirectory(resolveDirectory(templatePath, project.projectDir.absolutePath))
 
         return JSON.parseObject(templateContent, Template::class.java).apply {
-            resolve(getEscapeContext())
+            resolve(baseMap)
         }
     }
 

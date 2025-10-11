@@ -5,35 +5,29 @@ import com.only.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_ID_ALIAS
 import com.only.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_LITERAL_STRING
 import com.only.codegen.misc.SqlSchemaUtils.RIGHT_QUOTES_4_ID_ALIAS
 import com.only.codegen.misc.SqlSchemaUtils.RIGHT_QUOTES_4_LITERAL_STRING
+import com.only.codegen.misc.SqlSchemaUtils.context
 import com.only.codegen.misc.SqlSchemaUtils.executeQuery
 import com.only.codegen.misc.SqlSchemaUtils.getType
 import com.only.codegen.misc.SqlSchemaUtils.hasEnum
 import com.only.codegen.misc.SqlSchemaUtils.hasType
-import com.only.codegen.misc.SqlSchemaUtils.task
 
 object SqlSchemaUtils4Postgresql : SqlSchemaUtils.SqlSchemaDialect {
 
-    // 简化 task 调用
-    private val ext get() = task!!.extension.get()
-    private val db get() = ext.database
-    private val gen get() = ext.generation
-
-    // 构造 (table_name like ...) / not like 条件
     private fun buildTableNameCondition(patterns: String, positive: Boolean): String? =
         patterns.takeIf { it.isNotBlank() }
-            ?.split(AbstractCodegenTask.PATTERN_SPLITTER)
+            ?.split(AbstractCodegenTask.PATTERN_SPLITTER.toRegex())
             ?.joinToString(" or ") {
                 "table_name ${if (positive) "like" else "not like"} ${LEFT_QUOTES_4_LITERAL_STRING}$it$RIGHT_QUOTES_4_LITERAL_STRING"
             }
             ?.let { clause -> if (positive) "( $clause )" else "not ( $clause )" }
 
     override fun resolveTables(connectionString: String, user: String, pwd: String): List<Map<String, Any?>> {
-        val schema = db.schema.get()
+        val schema = context.getString("dbSchema")
         val conditions = mutableListOf(
             "table_schema = ${LEFT_QUOTES_4_LITERAL_STRING}$schema${RIGHT_QUOTES_4_LITERAL_STRING}"
         )
-        buildTableNameCondition(db.tables.get(), true)?.let { conditions += it }
-        buildTableNameCondition(db.ignoreTables.get(), false)?.let { conditions += it }
+        buildTableNameCondition(context.getString("dbTables"), true)?.let { conditions += it }
+        buildTableNameCondition(context.getString("dbIgnoreTables"), false)?.let { conditions += it }
 
         val tableSql = buildString {
             appendLine("select * from ${LEFT_QUOTES_4_ID_ALIAS}information_schema${RIGHT_QUOTES_4_ID_ALIAS}.${LEFT_QUOTES_4_ID_ALIAS}tables${RIGHT_QUOTES_4_ID_ALIAS}")
@@ -44,12 +38,12 @@ object SqlSchemaUtils4Postgresql : SqlSchemaUtils.SqlSchemaDialect {
     }
 
     override fun resolveColumns(connectionString: String, user: String, pwd: String): List<Map<String, Any?>> {
-        val schema = db.schema.get()
+        val schema = context.getString("dbSchema")
         val conditions = mutableListOf(
             "table_schema = ${LEFT_QUOTES_4_LITERAL_STRING}$schema${RIGHT_QUOTES_4_LITERAL_STRING}"
         )
-        buildTableNameCondition(db.tables.get(), true)?.let { conditions += it }
-        buildTableNameCondition(db.ignoreTables.get(), false)?.let { conditions += it }
+        buildTableNameCondition(context.getString("dbTables"), true)?.let { conditions += it }
+        buildTableNameCondition(context.getString("dbIgnoreTables"), false)?.let { conditions += it }
 
         val columnSql = buildString {
             appendLine("select * from ${LEFT_QUOTES_4_ID_ALIAS}information_schema${RIGHT_QUOTES_4_ID_ALIAS}.${LEFT_QUOTES_4_ID_ALIAS}columns${RIGHT_QUOTES_4_ID_ALIAS}")
@@ -61,7 +55,7 @@ object SqlSchemaUtils4Postgresql : SqlSchemaUtils.SqlSchemaDialect {
 
     private fun isBooleanTinyInt(name: String, columnType: String, comment: String): Boolean =
         ".deleted.".contains(".$name.") ||
-                gen.deletedField.get().equals(name, ignoreCase = true) ||
+                context.getString("deletedField").equals(name, ignoreCase = true) ||
                 columnType.equals("tinyint(1)", ignoreCase = true) ||
                 comment.contains("是否")
 
@@ -71,12 +65,7 @@ object SqlSchemaUtils4Postgresql : SqlSchemaUtils.SqlSchemaDialect {
         val comment = SqlSchemaUtils.getComment(column)
         val columnName = SqlSchemaUtils.getColumnName(column).lowercase()
 
-        // 自定义类型映射优先
-        gen.typeRemapping.get()
-            .takeIf { it.isNotEmpty() && it.containsKey(dataType) }
-            ?.let { return it[dataType]!! }
-
-        val datePkgJavaTime = gen.datePackage.get().equals("java.time", ignoreCase = true)
+        val datePkgJavaTime = context.getString("datePackage").equals("java.time", ignoreCase = true)
         val baseType = when (dataType) {
             "char", "varchar", "text", "mediumtext", "longtext" -> "String"
             "datetime", "timestamp" -> if (datePkgJavaTime) "java.time.LocalDateTime" else "java.util.Date"
@@ -110,8 +99,8 @@ object SqlSchemaUtils4Postgresql : SqlSchemaUtils.SqlSchemaDialect {
 
         if (hasType(column)) {
             val customType = getType(column)
-            if (hasEnum(column) && task!!.enumPackageMap.containsKey(customType)) {
-                val enumFqnPrefix = "${task!!.enumPackageMap[customType]}.$customType"
+            if (hasEnum(column) && context!!.enumPackageMap.containsKey(customType)) {
+                val enumFqnPrefix = "${context!!.enumPackageMap[customType]}.$customType"
                 return if (columnType.endsWith("?")) {
                     if (columnDefault.isNullOrEmpty()) "null"
                     else "$enumFqnPrefix.valueOf($columnDefault)"
