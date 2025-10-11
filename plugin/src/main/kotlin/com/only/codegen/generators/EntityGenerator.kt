@@ -319,7 +319,6 @@ class EntityGenerator : TemplateGenerator {
         }
     }
 
-
     private fun processEntityCustomerSourceFile(
         filePath: String,
         importLines: MutableList<String>,
