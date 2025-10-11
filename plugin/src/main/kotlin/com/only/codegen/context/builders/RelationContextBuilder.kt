@@ -2,7 +2,6 @@ package com.only.codegen.context.builders
 
 import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils
-import com.only.codegen.misc.concatPackage
 
 /**
  * 表关系构建器
@@ -23,14 +22,6 @@ class RelationContextBuilder : ContextBuilder {
                 context.relationsMap.merge(key, value) { existing, new ->
                     existing.toMutableMap().apply { putAll(new) }
                 }
-            }
-
-            // 3. 计算包路径
-            context.tablePackageMap[tableName] = resolveEntityPackage(
-                tableName,
-                context
-            ).let { entityPackage ->
-                "${context.getString("basePackage")}.$entityPackage"
             }
         }
     }
@@ -214,14 +205,5 @@ class RelationContextBuilder : ContextBuilder {
                 }
             }
         }
-    }
-
-    fun resolveEntityPackage(
-        tableName: String,
-        context: MutableEntityContext
-    ): String {
-        val module = context.tableModuleMap[tableName]!!
-        val aggregate = context.tableAggregateMap[tableName]!!
-        return concatPackage(context.aggregatesPackage, module, aggregate.lowercase())
     }
 }

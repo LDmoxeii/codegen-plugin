@@ -67,7 +67,6 @@ class EntityGenerator : TemplateGenerator {
             context.getString("domainModulePath"),
             entityFullPackage,
             entityType,
-            context
         )
         processEntityCustomerSourceFile(filePath, importLines, annotationLines, customerLines, context)
         processAnnotationLines(table, columns, annotationLines, context, ids)
@@ -97,7 +96,7 @@ class EntityGenerator : TemplateGenerator {
             .map { it.trim() }
             .filter { it.isNotEmpty() }
             .map { line ->
-                if (line.endsWith(";")) line.substring(0, line.length - 1).trim() else line
+                if (line.endsWith(";")) line.dropLast(1).trim() else line
             }
             .filter { it.isNotEmpty() }
 
@@ -138,13 +137,11 @@ class EntityGenerator : TemplateGenerator {
             type = "file"
             tag = this@EntityGenerator.tag
             name = "{{ Entity }}.kt"
-            format = "resouce"
+            format = "resource"
             data = "entity"
             conflict = "overwrite"
         }
     }
-
-    // === 辅助方法 ===
 
     private fun resolveIdColumns(columns: List<Map<String, Any?>>): List<Map<String, Any?>> {
         return columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
@@ -160,7 +157,6 @@ class EntityGenerator : TemplateGenerator {
         baseDir: String,
         packageName: String,
         className: String,
-        context: EntityContext
     ): String {
         val packagePath = packageName.replace(".", File.separator)
         return "$baseDir${File.separator}src${File.separator}main${File.separator}kotlin${File.separator}$packagePath${File.separator}$className.kt"
@@ -231,13 +227,43 @@ class EntityGenerator : TemplateGenerator {
             .any { pattern -> columnName.matches(pattern.replace("%", ".*").toRegex()) }
     }
 
-    private fun isVersionColumn(column: Map<String, Any?>, context: EntityContext): Boolean {
-        return SqlSchemaUtils.getColumnName(column) == context.getString("versionField")
+    private fun isVersionColumn(column: Map<String, Any?>, context: EntityContext)
+        = SqlSchemaUtils.getColumnName(column) == context.getString("versionField")
+
+    private fun isIdColumn(column: Map<String, Any?>)
+        = SqlSchemaUtils.isColumnPrimaryKey(column)
+
+    private fun generateFieldComment(column: Map<String, Any?>, context: EntityContext): List<String> {
+        val fieldName = SqlSchemaUtils.getColumnName(column)
+        val fieldType = SqlSchemaUtils.getColumnType(column)
+
+        return buildList {
+            add("/**")
+
+            SqlSchemaUtils.getComment(column)
+                .split(Regex(AbstractCodegenTask.PATTERN_LINE_BREAK))
+                .filter { it.isNotEmpty() }
+                .forEach { add(" * $it") }
+
+            if (SqlSchemaUtils.hasEnum(column)) {
+                val enumMap = context.enumConfigMap[fieldType] ?: context.enumConfigMap[SqlSchemaUtils.getType(column)]
+                enumMap?.entries?.forEach { (key, value) ->
+                    add(" * $key:${value[0]}:${value[1]}")
+                }
+            }
+
+            if (fieldName == context.getString("versionField")) {
+                add(" * 数据版本（支持乐观锁）")
+            }
+
+            if (context.getBoolean("generateDbType")) {
+                add(" * ${SqlSchemaUtils.getColumnDbType(column)}")
+            }
+
+            add(" */")
+        }
     }
 
-    private fun isIdColumn(column: Map<String, Any?>): Boolean {
-        return SqlSchemaUtils.isColumnPrimaryKey(column)
-    }
 
     private fun processEntityCustomerSourceFile(
         filePath: String,
@@ -290,7 +316,7 @@ class EntityGenerator : TemplateGenerator {
                 if (line.contains("}")) {
                     customerLines.removeAt(i)
                     if (!line.equals("}", ignoreCase = true)) {
-                        customerLines.add(i, line.substring(0, line.lastIndexOf("}")))
+                        customerLines.add(i, line.take(line.lastIndexOf("}")))
                     }
                     break
                 }
@@ -395,37 +421,6 @@ class EntityGenerator : TemplateGenerator {
                 """@Where\(.*\)?""",
                 """@Where(clause = "$LEFT_QUOTES_4_ID_ALIAS$deletedField$RIGHT_QUOTES_4_ID_ALIAS = 0")"""
             )
-        }
-    }
-
-    private fun generateFieldComment(column: Map<String, Any?>, context: EntityContext): List<String> {
-        val fieldName = SqlSchemaUtils.getColumnName(column)
-        val fieldType = SqlSchemaUtils.getColumnType(column)
-
-        return buildList {
-            add("/**")
-
-            SqlSchemaUtils.getComment(column)
-                .split(Regex(AbstractCodegenTask.PATTERN_LINE_BREAK))
-                .filter { it.isNotEmpty() }
-                .forEach { add(" * $it") }
-
-            if (SqlSchemaUtils.hasEnum(column)) {
-                val enumMap = context.enumConfigMap[fieldType] ?: context.enumConfigMap[SqlSchemaUtils.getType(column)]
-                enumMap?.entries?.forEach { (key, value) ->
-                    add(" * $key:${value[0]}:${value[1]}")
-                }
-            }
-
-            if (fieldName == context.getString("versionField")) {
-                add(" * 数据版本（支持乐观锁）")
-            }
-
-            if (context.getBoolean("generateDbType")) {
-                add(" * ${SqlSchemaUtils.getColumnDbType(column)}")
-            }
-
-            add(" */")
         }
     }
 
@@ -564,8 +559,8 @@ class EntityGenerator : TemplateGenerator {
             var fieldType = ""
             var defaultValue = ""
             var hasLoadMethod = false
-            var entityType = ""
             var fullEntityType = ""
+            val entityType = context.entityTypeMap[refTableName] ?: ""
 
             when (relation) {
                 "OneToMany" -> {
@@ -574,7 +569,7 @@ class EntityGenerator : TemplateGenerator {
                     annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
 
                     val countIsOne = SqlSchemaUtils.countIsOne(navTable)
-                    entityType = context.entityTypeMap[refTableName] ?: ""
+
                     val entityPackage = tablePackageMap[refTableName] ?: ""
                     fullEntityType = "$entityPackage.$entityType"
                     fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
@@ -587,7 +582,6 @@ class EntityGenerator : TemplateGenerator {
                     annotations.add("@${relation.replace("*", "")}(cascade = [], fetch = FetchType.$fetchType)")
                     annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false, insertable = false, updatable = false)")
 
-                    entityType = context.entityTypeMap[refTableName] ?: ""
                     val entityPackage = tablePackageMap[refTableName] ?: ""
                     fullEntityType = "$entityPackage.$entityType"
                     fieldName = toLowerCamelCase(entityType) ?: entityType
@@ -599,7 +593,6 @@ class EntityGenerator : TemplateGenerator {
                     annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
                     annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
 
-                    entityType = context.entityTypeMap[refTableName] ?: ""
                     val entityPackage = tablePackageMap[refTableName] ?: ""
                     fullEntityType = "$entityPackage.$entityType"
                     fieldName = toLowerCamelCase(entityType) ?: entityType
@@ -611,7 +604,6 @@ class EntityGenerator : TemplateGenerator {
                     annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
                     annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
 
-                    entityType = context.entityTypeMap[refTableName] ?: ""
                     val entityPackage = tablePackageMap[refTableName] ?: ""
                     fullEntityType = "$entityPackage.$entityType"
                     fieldName = toLowerCamelCase(entityType) ?: entityType
@@ -630,7 +622,6 @@ class EntityGenerator : TemplateGenerator {
                                 "inverseJoinColumns = [JoinColumn(name = \"$leftQuote$inverseJoinColumn$rightQuote\", nullable = false)])"
                     )
 
-                    entityType = context.entityTypeMap[refTableName] ?: ""
                     val entityPackage = tablePackageMap[refTableName] ?: ""
                     fullEntityType = "$entityPackage.$entityType"
                     fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
@@ -651,7 +642,6 @@ class EntityGenerator : TemplateGenerator {
                     )
                     annotations.add("@Fetch(FetchMode.SUBSELECT)")
 
-                    entityType = context.entityTypeMap[refTableName] ?: ""
                     val entityPackage = tablePackageMap[refTableName] ?: ""
                     fullEntityType = "$entityPackage.$entityType"
                     fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
