@@ -30,7 +30,7 @@ class EnumGenerator : TemplateGenerator {
                 false
             } else {
                 val enumType = SqlSchemaUtils.getType(column)
-                !generatedEnums.contains(enumType) && context.enumConfigMap.containsKey(enumType)
+                !(generatedEnums.contains(enumType))
             }
         }
     }
@@ -93,7 +93,7 @@ class EnumGenerator : TemplateGenerator {
             resultContext.putContext(tag, "EntityVar", entityVar)
             resultContext.putContext(tag, "Enum", enumType)
             resultContext.putContext(tag, "EnumValueField", getString("enumValueField"))
-            resultContext.putContext(tag, "EnumNameField", getString("EnumNameField"))
+            resultContext.putContext(tag, "EnumNameField", getString("enumNameField"))
             resultContext.putContext(tag, "EnumItems", enumItems)
 
             return resultContext

@@ -14,38 +14,22 @@ class CodegenPlugin : Plugin<Project> {
         project.tasks.register("genArch", GenArchTask::class.java) { task ->
             task.description = "Generate project architecture structure"
             task.extension.set(extension)
-            task.projectName.set(project.name)
-            task.projectGroup.set(project.group.toString())
-            task.projectVersion.set(project.version.toString())
-            task.projectDir.set(project.projectDir.absolutePath)
         }
 
         project.tasks.register("genEntity", GenEntityTask::class.java) { task ->
             task.description = "Generate entity classes from database schema"
             task.extension.set(extension)
-            task.projectName.set(project.name)
-            task.projectGroup.set(project.group.toString())
-            task.projectVersion.set(project.version.toString())
-            task.projectDir.set(project.projectDir.absolutePath)
         }
 //
 //        project.tasks.register("genRepository", GenRepositoryTask::class.java) { task ->
 //            task.group = "cap4k codegen"
 //            task.description = "Generate repository classes"
 //            task.extension.set(extension)
-//            task.projectName.set(project.name)
-//            task.projectGroup.set(project.group.toString())
-//            task.projectVersion.set(project.version.toString())
-//            task.projectDir.set(project.projectDir.absolutePath)
 //        }
 //
 //        project.tasks.register("genDesign", GenDesignTask::class.java) { task ->
 //            task.description = "Generate design elements (commands, queries, events)"
 //            task.extension.set(extension)
-//            task.projectName.set(project.name)
-//            task.projectGroup.set(project.group.toString())
-//            task.projectVersion.set(project.version.toString())
-//            task.projectDir.set(project.projectDir.absolutePath)
 //        }
     }
 }

@@ -35,18 +35,6 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
         const val DOMAIN_EVENT_SUBSCRIBER_PACKAGE = "application.subscribers.domain"
         const val INTEGRATION_EVENT_SUBSCRIBER_PACKAGE = "application.subscribers.integration"
         const val DEFAULT_MUL_PRI_KEY_NAME = "Key"
-
-        private val DEFAULT_ENTITY_IMPORTS = listOf(
-            "com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate",
-            "jakarta.persistence.*",
-            "org.hibernate.annotations.DynamicInsert",
-            "org.hibernate.annotations.DynamicUpdate",
-            "org.hibernate.annotations.Fetch",
-            "org.hibernate.annotations.FetchMode",
-            "org.hibernate.annotations.GenericGenerator",
-            "org.hibernate.annotations.SQLDelete",
-            "org.hibernate.annotations.Where",
-        )
     }
 
     @get:Input
@@ -57,31 +45,6 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
 
     @Internal
     protected var renderFileSwitch = true
-
-    @Internal
-    protected fun getEntitySchemaOutputPackage(): String =
-        extension.get().generation.entitySchemaOutputPackage.get().takeIf { it.isNotBlank() } ?: "domain._share.meta"
-
-    @Internal
-    protected fun getEntityClassExtraImports(): List<String> {
-        val ext = extension.get()
-        val extraImports = ext.generation.entityClassExtraImports.get()
-
-        return buildList {
-            addAll(DEFAULT_ENTITY_IMPORTS)
-
-            if (extraImports.isNotEmpty()) {
-                addAll(
-                    extraImports.split(";")
-                        .asSequence()
-                        .map { it.trim().replace(Regex(PATTERN_LINE_BREAK), "") }
-                        .map { if (it.startsWith("import ")) it.substring(6).trim() else it }
-                        .filter { it.isNotBlank() }
-                        .toList()
-                )
-            }
-        }.distinct()
-    }
 
     private val CodegenExtension.adapterPath: String
         get() = modulePath(moduleNameSuffix4Adapter.get())
