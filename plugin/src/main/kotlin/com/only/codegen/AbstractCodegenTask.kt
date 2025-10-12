@@ -141,6 +141,31 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     @get:Internal
     override val domainPath: String by lazy { extension.get().domainPath }
 
+    // === 包路径信息（默认实现，子类可以覆盖） ===
+    @get:Internal
+    override val aggregatesPath: String
+        get() = ""
+
+    @get:Internal
+    override val schemaPath: String
+        get() = ""
+
+    @get:Internal
+    override val subscriberPath: String
+        get() = ""
+
+    @get:Internal
+    override val aggregatesPackage: String
+        get() = ""
+
+    @get:Internal
+    override val schemaPackage: String
+        get() = ""
+
+    @get:Internal
+    override val subscriberPackage: String
+        get() = ""
+
     @get:Internal
     override val typeMapping: MutableMap<String, String> by lazy {
         extension.get().generation.typeMapping.get().toMutableMap()

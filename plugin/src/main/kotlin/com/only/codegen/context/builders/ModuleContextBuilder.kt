@@ -3,7 +3,7 @@ package com.only.codegen.context.builders
 import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils
 
-class ModuleContextBuilder:ContextBuilder {
+class ModuleContextBuilder:EntityContextBuilder {
     override val order: Int = 20
 
     override fun build(context: MutableEntityContext) {

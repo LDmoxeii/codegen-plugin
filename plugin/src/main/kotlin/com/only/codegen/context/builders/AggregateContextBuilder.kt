@@ -4,7 +4,7 @@ import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.toSnakeCase
 
-class AggregateContextBuilder: ContextBuilder {
+class AggregateContextBuilder: EntityContextBuilder {
     override val order: Int = 30
 
     override fun build(context: MutableEntityContext) {

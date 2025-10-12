@@ -4,7 +4,7 @@ import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.toUpperCamelCase
 
-class EntityTypeContextBuilder: ContextBuilder {
+class EntityTypeContextBuilder: EntityContextBuilder {
     override val order: Int = 20
 
     override fun build(context: MutableEntityContext) {

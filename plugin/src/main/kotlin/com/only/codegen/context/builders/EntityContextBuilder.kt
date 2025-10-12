@@ -5,7 +5,7 @@ import com.only.codegen.context.MutableEntityContext
 /**
  * 上下文构建器（负责收集和处理数据）
  */
-interface ContextBuilder {
+interface EntityContextBuilder {
     /**
      * 构建顺序（数字越小越先执行）
      */

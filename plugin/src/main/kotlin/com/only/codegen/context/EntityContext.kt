@@ -5,15 +5,9 @@ interface EntityContext : BaseContext {
     // === 数据库信息 ===
     val dbType: String
 
-    // === 路径信息 ===
-    val aggregatesPath: String
-    val schemaPath: String
-    val subscriberPath: String
-
-    // === 包信息 ===
-    val aggregatesPackage: String
-    val schemaPackage: String
-    val subscriberPackage: String
+    // === 路径和包信息继承自 BaseContext ===
+    // aggregatesPath, schemaPath, subscriberPath
+    // aggregatesPackage, schemaPackage, subscriberPackage
 
     // === 表信息 ===
     val tableMap: Map<String, Map<String, Any?>>

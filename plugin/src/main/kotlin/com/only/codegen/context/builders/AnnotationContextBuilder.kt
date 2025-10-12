@@ -5,7 +5,7 @@ import com.only.codegen.misc.SqlSchemaUtils.getAnnotations
 import com.only.codegen.misc.SqlSchemaUtils.getComment
 import com.only.codegen.misc.SqlSchemaUtils.getTableName
 
-class AnnotationContextBuilder: ContextBuilder {
+class AnnotationContextBuilder: EntityContextBuilder {
     override val order: Int = 20
 
     override fun build(context: MutableEntityContext) {

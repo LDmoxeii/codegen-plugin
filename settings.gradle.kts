@@ -7,3 +7,4 @@
 
 rootProject.name = "codegen-plugin"
 include("plugin")
+include("ksp-processor")

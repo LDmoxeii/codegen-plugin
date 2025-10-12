@@ -6,7 +6,7 @@ import com.only.codegen.misc.SqlSchemaUtils
 /**
  * 表和列信息构建器
  */
-class TableContextBuilder : ContextBuilder {
+class TableContextBuilder : EntityContextBuilder {
     override val order = 10
 
     override fun build(context: MutableEntityContext) {

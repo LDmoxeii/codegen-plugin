@@ -6,7 +6,7 @@ import com.only.codegen.misc.SqlSchemaUtils
 /**
  * 枚举信息构建器
  */
-class EnumContextBuilder : ContextBuilder {
+class EnumContextBuilder : EntityContextBuilder {
     override val order = 50
 
     override fun build(context: MutableEntityContext) {
