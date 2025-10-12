@@ -81,7 +81,7 @@ class SpecificationGenerator : TemplateGenerator {
         return TemplateNode().apply {
             type = "file"
             tag = this@SpecificationGenerator.tag
-            name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_SPEC_PACKAGE }{{ SEPARATOR }}{{ Specification }}.kt"
+            name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_SPEC_PACKAGE }}{{ SEPARATOR }}{{ Specification }}.kt"
             format = "resource"
             data = "specification"
             conflict = "skip" // Specification 通常包含业务逻辑，不覆盖已有文件
