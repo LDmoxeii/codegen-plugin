@@ -50,7 +50,7 @@ class SchemaBaseGenerator : TemplateGenerator {
             val basePackage = getString("basePackage")
             val templatePackage = refPackage(schemaPackage)
 
-            typeMapping["SchemaBase"] = "$basePackage$templatePackage${refPackage("Schema")}"
+            typeMapping["Schema"] = "$basePackage$templatePackage${refPackage("Schema")}"
         }
         generated = true
     }

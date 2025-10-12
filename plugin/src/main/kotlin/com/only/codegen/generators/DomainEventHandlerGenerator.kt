@@ -63,6 +63,7 @@ class DomainEventHandlerGenerator : TemplateGenerator {
             resultContext.putContext(tag, "templatePackage", refPackage(context.subscriberPackage))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
+            resultContext.putContext(tag, "DomainEvent", domainEvent)
             resultContext.putContext(tag, "fullDomainEventType", typeMapping[domainEvent]!!)
 
             resultContext.putContext(tag, "DomainEventHandler", currentDomainEventHandler)

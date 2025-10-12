@@ -1,4 +1,4 @@
-package {{ basePackage }}{{ templatePackage }}{{ package }}
+package {{ basePackage }}{{ templatePackage }}{{ package }}.{{ DEFAULT_SPEC_PACKAGE }}
 
 import {{ fullEntityType }}
 import com.only4.cap4k.ddd.core.domain.aggregate.Specification
@@ -7,9 +7,9 @@ import com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate
 import org.springframework.stereotype.Service
 
 /**
-{% for line in commentLines %}
+{%- for line in commentLines %}
  * {{ line }}
-{% endfor %}
+{%- endfor %}
  *
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
  * 警告：可以在本文件中添加自定义规约方法

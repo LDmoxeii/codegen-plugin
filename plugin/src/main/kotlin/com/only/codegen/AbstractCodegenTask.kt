@@ -42,6 +42,18 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     @get:Input
     abstract val extension: Property<CodegenExtension>
 
+    @get:Input
+    abstract val projectName: Property<String>
+
+    @get:Input
+    abstract val projectGroup: Property<String>
+
+    @get:Input
+    abstract val projectVersion: Property<String>
+
+    @get:Input
+    abstract val projectDir: Property<String>
+
     @Internal
     protected var template: Template? = null
 
@@ -59,9 +71,9 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
 
     private fun CodegenExtension.modulePath(suffix: String): String =
         if (multiModule.get()) {
-            "${project.projectDir.absolutePath}${File.separator}${project.name}$suffix"
+            "${projectDir.get()}${File.separator}${projectName.get()}$suffix"
         } else {
-            project.projectDir.absolutePath
+            projectDir.get()
         }
 
     @get:Internal
@@ -70,9 +82,9 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
             val ext = extension.get()
 
             // 项目信息
-            put("artifactId", project.name)
-            put("groupId", project.group.toString())
-            put("version", project.version.toString())
+            put("artifactId", projectName.get())
+            put("groupId", projectGroup.get())
+            put("version", projectVersion.get())
 
             // 基础配置
             put("archTemplate", ext.archTemplate.get())

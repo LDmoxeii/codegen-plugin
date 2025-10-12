@@ -1,4 +1,4 @@
-package {{ basePackage }}{{ templatePackage }}{{ package }}
+package {{ basePackage }}{{ templatePackage }}{{ package }}.{{ DEFAULT_FAC_PACKAGE }}
 
 import {{ fullEntityType }}
 import com.only4.cap4k.ddd.core.domain.aggregate.AggregateFactory
@@ -33,11 +33,11 @@ class {{ Factory }} : AggregateFactory<{{ Factory }}.Payload, {{ Entity }}> {
      @Aggregate(
         aggregate = "{{ Entity }}",
         name = "{{ Payload }}",
-        type = TYPE_FACTORY_PAYLOAD,
+        type = Aggregate.TYPE_FACTORY_PAYLOAD,
         description = ""
     )
     data class Payload(
-
+        val name: String
     ) : AggregatePayload<{{ Entity }}>
 
 }

@@ -147,6 +147,19 @@ fun resolvePackage(filePath: String): String {
     return className.substringBeforeLast(PACKAGE_SPLITTER)
 }
 
+/**
+ * 从完整类名中获取包名
+ *
+ */
+fun getPackageFromClassName(fullClassName: String): String {
+    val trimmed = fullClassName.trim()
+    return if (trimmed.contains(PACKAGE_SPLITTER)) {
+        trimmed.substringBeforeLast(PACKAGE_SPLITTER)
+    } else {
+        ""
+    }
+}
+
 private fun resolveClassName(filePath: String): String {
     require(filePath.endsWith(".kt")) { "文件不是Kotlin源文件" }
     val canonical = filePath.replace(File.separator, PACKAGE_SPLITTER)

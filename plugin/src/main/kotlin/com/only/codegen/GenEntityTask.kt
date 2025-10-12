@@ -169,12 +169,12 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
             SchemaBaseGenerator(),           // order=10 - Schema 基类
             EnumGenerator(),                 // order=10 - 枚举类
             EntityGenerator(),               // order=20 - 实体类
-            SchemaGenerator(),               // order=30 - Schema 类
             SpecificationGenerator(),        // order=30 - 规约类
             FactoryGenerator(),              // order=30 - 工厂类
             DomainEventGenerator(),          // order=30 - 领域事件类
             DomainEventHandlerGenerator(),   // order=30 - 领域事件处理器
             AggregateGenerator(),            // order=40 - 聚合封装类
+            SchemaGenerator(),               // order=50 - Schema 类
         )
 
         generators.sortedBy { it.order }

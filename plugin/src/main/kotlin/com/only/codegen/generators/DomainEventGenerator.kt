@@ -112,7 +112,7 @@ class DomainEventGenerator : TemplateGenerator {
             val templatePackage = refPackage(context.aggregatesPackage)
             val `package` = refPackage(aggregate)
 
-            val fullDomainEventType = "${getString("basePackage")}${templatePackage}${`package`}${refPackage(currentDomainEvent)}"
+            val fullDomainEventType = "${getString("basePackage")}${templatePackage}${`package`}.${DEFAULT_DOMAIN_EVENT_PACKAGE}${refPackage(currentDomainEvent)}"
             typeMapping[currentDomainEvent] = fullDomainEventType
             generated.add(currentDomainEvent)
         }

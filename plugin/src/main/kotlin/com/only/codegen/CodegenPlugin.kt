@@ -14,16 +14,28 @@ class CodegenPlugin : Plugin<Project> {
         project.tasks.register("genArch", GenArchTask::class.java) { task ->
             task.description = "Generate project architecture structure"
             task.extension.set(extension)
+            task.projectName.set(project.name)
+            task.projectGroup.set(project.group.toString())
+            task.projectVersion.set(project.version.toString())
+            task.projectDir.set(project.projectDir.absolutePath)
         }
 
         project.tasks.register("genEntity", GenEntityTask::class.java) { task ->
             task.description = "Generate entity classes from database schema"
             task.extension.set(extension)
+            task.projectName.set(project.name)
+            task.projectGroup.set(project.group.toString())
+            task.projectVersion.set(project.version.toString())
+            task.projectDir.set(project.projectDir.absolutePath)
         }
 
         project.tasks.register("genAnnotation", GenAnnotationTask::class.java) { task ->
             task.description = "Generate code from annotations (Repository, Service, etc.)"
             task.extension.set(extension)
+            task.projectName.set(project.name)
+            task.projectGroup.set(project.group.toString())
+            task.projectVersion.set(project.version.toString())
+            task.projectDir.set(project.projectDir.absolutePath)
         }
 //
 //        project.tasks.register("genRepository", GenRepositoryTask::class.java) { task ->

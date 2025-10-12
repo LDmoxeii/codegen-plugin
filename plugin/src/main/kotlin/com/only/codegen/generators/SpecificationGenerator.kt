@@ -52,6 +52,7 @@ class SpecificationGenerator : TemplateGenerator {
             resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
             resultContext.putContext(tag, "Specification", "${entityType}Specification")
 
+            resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "fullEntityType", fullEntityType)
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
         }

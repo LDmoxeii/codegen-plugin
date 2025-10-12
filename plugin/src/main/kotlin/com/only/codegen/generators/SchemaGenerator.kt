@@ -2,7 +2,9 @@ package com.only.codegen.generators
 
 import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.entity.EntityContext
+import com.only.codegen.generators.manager.SchemaImportManager
 import com.only.codegen.misc.*
+import com.only.codegen.pebble.PebbleTemplateRenderer.renderString
 import com.only.codegen.template.TemplateNode
 
 /**
@@ -11,7 +13,7 @@ import com.only.codegen.template.TemplateNode
  */
 class SchemaGenerator : TemplateGenerator {
     override val tag = "schema"
-    override val order = 30
+    override val order = 50
 
     private val generated = mutableSetOf<String>()
 
@@ -32,8 +34,30 @@ class SchemaGenerator : TemplateGenerator {
         val aggregate = context.resolveAggregateWithModule(tableName)
         val columns = context.columnsMap[tableName]!!
 
+        val aggregateTypeTemplate = context.getString("aggregateTypeTemplate")
+
         val entityType = context.entityTypeMap[tableName]!!
-        val fullEntityType = context.typeMapping[entityType]!!
+        val aggregateType = renderString(aggregateTypeTemplate, mapOf("Entity" to entityType))
+
+        val isAggregateRoot = SqlSchemaUtils.isAggregateRoot(table)
+        val generateAggregate = context.getBoolean("generateAggregate")
+        val repositorySupportQuerydsl = context.getBoolean("repositorySupportQuerydsl")
+
+        // 创建 ImportManager
+        val importManager = SchemaImportManager()
+        importManager.addBaseImports()
+        importManager.add(
+            context.typeMapping[entityType]!!,
+            context.typeMapping["Schema"]!!,
+        )
+        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl,
+            "com.only4.cap4k.ddd.domain.repo.JpaPredicate",
+            "com.querydsl.core.types.OrderSpecifier",
+            "com.only4.cap4k.ddd.core.domain.aggregate.AggregatePredicate",
+            "com.only4.cap4k.ddd.domain.repo.querydsl.QuerydslPredicate"
+        )
+        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl) { context.typeMapping["Q$entityType"]!! }
+        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl) { context.typeMapping[aggregateType]!! }
 
         // 准备列字段数据
         val fields = columns
@@ -43,6 +67,12 @@ class SchemaGenerator : TemplateGenerator {
                 val columnType = SqlSchemaUtils.getColumnType(column)
                 val fieldName = toLowerCamelCase(columnName) ?: columnName
                 val comment = SqlSchemaUtils.getComment(column)
+
+                if (SqlSchemaUtils.hasEnum(column)) {
+                    if (context.typeMapping.containsKey(columnType)) {
+                        importManager.add(context.typeMapping[columnType]!!)
+                    }
+                }
 
                 mapOf(
                     "fieldName" to fieldName,
@@ -81,13 +111,19 @@ class SchemaGenerator : TemplateGenerator {
             resultContext.putContext(tag, "templatePackage", refPackage(schemaPackage))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
-            resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "Schema", "S$entityType")
+
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
+
+            resultContext.putContext(tag, "EntityVar", toLowerCamelCase(entityType) ?: entityType)
+            resultContext.putContext(tag, "Entity", entityType)
+            resultContext.putContext(tag, "SchemaBase", "Schema")
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
-            resultContext.putContext(tag, "FullSchemaBaseType", typeMapping["SchemaBase"]!!)
-            resultContext.putContext(tag, "FullEntityType", fullEntityType)
             resultContext.putContext(tag, "fields", fields)
             resultContext.putContext(tag, "relationFields", relationFields)
+
+            resultContext.putContext(tag, "isAggregateRoot", isAggregateRoot)
+            resultContext.putContext(tag, "generateAggregate", generateAggregate)
         }
 
         // 准备注释行

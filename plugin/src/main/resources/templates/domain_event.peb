@@ -1,4 +1,4 @@
-package {{ basePackage }}{{ templatePackage }}{{ package }}
+package {{ basePackage }}{{ templatePackage }}{{ package }}.{{ DEFAULT_DOMAIN_EVENT_PACKAGE }}
 
 import {{ fullEntityType }}
 import com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate

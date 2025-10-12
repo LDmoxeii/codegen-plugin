@@ -1,19 +1,11 @@
 package com.only.codegen.generators.manager
 
-/**
- * 实体类 Import 管理器，用于智能管理实体类的 import 语句
- */
-class EntityImportManager : ImportManager {
-    override val requiredImports = mutableSetOf<String>()
+class SchemaImportManager: ImportManager {
 
-    /**
-     * 添加实体类基础必需的 imports
-     */
+    override val requiredImports = mutableSetOf<String>()
     override fun addBaseImports() {
-        requiredImports.add("com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate")
-        requiredImports.add("jakarta.persistence.*")
-        requiredImports.add("org.hibernate.annotations.DynamicInsert")
-        requiredImports.add("org.hibernate.annotations.DynamicUpdate")
+        requiredImports.add("org.springframework.data.jpa.domain.Specification")
+        requiredImports.add("jakarta.persistence.criteria.*")
     }
 
     /**
@@ -31,8 +23,6 @@ class EntityImportManager : ImportManager {
         sorted.forEach { importStr ->
             // 判断当前包属于哪个组
             val currentGroup = when {
-                importStr.startsWith("jakarta") -> "jakarta"
-                importStr.startsWith("org.hibernate") -> "hibernate"
                 else -> "other"
             }
 

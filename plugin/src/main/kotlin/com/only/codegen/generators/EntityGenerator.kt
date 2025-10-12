@@ -194,7 +194,10 @@ class EntityGenerator : TemplateGenerator {
             val `package` = refPackage(aggregate)
 
             val fullEntityType = "$basePackage${templatePackage}${`package`}${refPackage(entityType)}"
+            val fullQEntityType = "$basePackage${templatePackage}${`package`}${refPackage("Q$entityType")}"
+
             typeMapping[entityType] = fullEntityType
+            typeMapping["Q$entityType"] = fullQEntityType
             generated.add(tableName)
         }
     }
@@ -633,11 +636,13 @@ class EntityGenerator : TemplateGenerator {
                 var fieldType = ""
                 var defaultValue = ""
                 var hasLoadMethod = false
-                val entityType = context.entityTypeMap[refTableName] ?: ""
-                val entityPackage = tablePackageMap[refTableName]!!
-                val fullEntityType = "$entityPackage${refPackage(entityType)}"
+                val refEntityType = context.entityTypeMap[refTableName] ?: ""
+                val refEntityPackage = tablePackageMap[refTableName]!!
+                val fullRefEntityType = "$refEntityPackage${refPackage(refEntityType)}"
 
-                importManager.add(fullEntityType)
+                val entityPackage = tablePackageMap[tableName]!!
+
+                importManager.addIfNeeded(entityPackage != refEntityPackage, fullRefEntityType)
 
                 when (relation) {
                     "OneToMany" -> {
@@ -648,8 +653,8 @@ class EntityGenerator : TemplateGenerator {
                         val countIsOne = SqlSchemaUtils.countIsOne(navTable)
 
 
-                        fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
-                        fieldType = "MutableList<$entityType>"
+                        fieldName = Inflector.pluralize(toLowerCamelCase(refEntityType) ?: refEntityType)
+                        fieldType = "MutableList<$refEntityType>"
                         defaultValue = " = mutableListOf()"
                         hasLoadMethod = countIsOne
                     }
@@ -658,8 +663,8 @@ class EntityGenerator : TemplateGenerator {
                         annotations.add("@${relation.replace("*", "")}(cascade = [], fetch = FetchType.$fetchType)")
                         annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false, insertable = false, updatable = false)")
 
-                        fieldName = toLowerCamelCase(entityType) ?: entityType
-                        fieldType = "$entityType?"
+                        fieldName = toLowerCamelCase(refEntityType) ?: refEntityType
+                        fieldType = "$refEntityType?"
                         defaultValue = " = null"
                     }
 
@@ -667,8 +672,8 @@ class EntityGenerator : TemplateGenerator {
                         annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
                         annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
 
-                        fieldName = toLowerCamelCase(entityType) ?: entityType
-                        fieldType = "$entityType?"
+                        fieldName = toLowerCamelCase(refEntityType) ?: refEntityType
+                        fieldType = "$refEntityType?"
                         defaultValue = " = null"
                     }
 
@@ -676,8 +681,8 @@ class EntityGenerator : TemplateGenerator {
                         annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
                         annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
 
-                        fieldName = toLowerCamelCase(entityType) ?: entityType
-                        fieldType = "$entityType?"
+                        fieldName = toLowerCamelCase(refEntityType) ?: refEntityType
+                        fieldType = "$refEntityType?"
                         defaultValue = " = null"
                     }
 
@@ -692,8 +697,8 @@ class EntityGenerator : TemplateGenerator {
                                     "inverseJoinColumns = [JoinColumn(name = \"$leftQuote$inverseJoinColumn$rightQuote\", nullable = false)])"
                         )
 
-                        fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
-                        fieldType = "MutableList<$entityType>"
+                        fieldName = Inflector.pluralize(toLowerCamelCase(refEntityType) ?: refEntityType)
+                        fieldType = "MutableList<$refEntityType>"
                         defaultValue = " = mutableListOf()"
                     }
 
@@ -710,8 +715,8 @@ class EntityGenerator : TemplateGenerator {
                         )
                         annotations.add("@Fetch(FetchMode.SUBSELECT)")
 
-                        fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
-                        fieldType = "MutableList<$entityType>"
+                        fieldName = Inflector.pluralize(toLowerCamelCase(refEntityType) ?: refEntityType)
+                        fieldType = "MutableList<$refEntityType>"
                         defaultValue = " = mutableListOf()"
                     }
                 }
@@ -724,8 +729,8 @@ class EntityGenerator : TemplateGenerator {
                         "defaultValue" to defaultValue,
                         "annotations" to annotations,
                         "hasLoadMethod" to hasLoadMethod,
-                        "entityType" to entityType,
-                        "fullEntityType" to fullEntityType
+                        "entityType" to refEntityType,
+                        "fullEntityType" to fullRefEntityType
                     )
                 )
             }

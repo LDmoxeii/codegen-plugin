@@ -92,9 +92,39 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
             return File(configuredPath)
         }
 
-        // 默认路径：项目根目录的 build/generated/ksp/main/kotlin/metadata/
-        val projectRoot = project.rootDir
-        return File(projectRoot, "build/generated/ksp/main/kotlin/metadata")
+        // 多模块项目：优先查找 domain 模块
+        val ext = extension.get()
+        if (ext.multiModule.get()) {
+            val domainModuleName = "${projectName.get()}${ext.moduleNameSuffix4Domain.get()}"
+            val domainModulePath = File(projectDir.get(), domainModuleName)
+            val domainKspPath = File(domainModulePath, "build/generated/ksp/main/kotlin/metadata")
+
+            if (domainKspPath.exists()) {
+                logger.info("Found KSP metadata in domain module: ${domainKspPath.absolutePath}")
+                return domainKspPath
+            }
+
+            // 如果 domain 模块没有，尝试查找其他子模块
+            val projectRoot = File(projectDir.get())
+            val subModules = projectRoot.listFiles { file ->
+                file.isDirectory && file.name.startsWith(projectName.get())
+            }?.toList() ?: emptyList()
+
+            for (subModule in subModules) {
+                val kspPath = File(subModule, "build/generated/ksp/main/kotlin/metadata")
+                if (kspPath.exists()) {
+                    logger.info("Found KSP metadata in module ${subModule.name}: ${kspPath.absolutePath}")
+                    return kspPath
+                }
+            }
+
+            // 没找到就返回 domain 模块的默认路径（即使不存在，让后续逻辑处理）
+            logger.warn("KSP metadata not found in any submodule, returning domain module default path")
+            return domainKspPath
+        }
+
+        // 单模块项目：项目根目录的 build/generated/ksp/main/kotlin/metadata/
+        return File(projectDir.get(), "build/generated/ksp/main/kotlin/metadata")
     }
 
     /**

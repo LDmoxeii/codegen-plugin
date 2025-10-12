@@ -17,6 +17,18 @@ open class GenArchTask : AbstractCodegenTask() {
     override val extension: Property<CodegenExtension> =
         project.objects.property(CodegenExtension::class.java)
 
+    @get:Input
+    override val projectName: Property<String> = project.objects.property(String::class.java)
+
+    @get:Input
+    override val projectGroup: Property<String> = project.objects.property(String::class.java)
+
+    @get:Input
+    override val projectVersion: Property<String> = project.objects.property(String::class.java)
+
+    @get:Input
+    override val projectDir: Property<String> = project.objects.property(String::class.java)
+
     @TaskAction
     open fun generate() = genArch()
 
@@ -30,14 +42,14 @@ open class GenArchTask : AbstractCodegenTask() {
         val archTemplate = validateAndGetArchTemplate(ext) ?: return
 
         template = loadTemplate(archTemplate, ext)
-        render(template!!, project.projectDir.absolutePath)
+        render(template!!, projectDir.get())
 
     }
 
     private fun loadTemplate(templatePath: String, ext: CodegenExtension): Template {
         val templateContent = loadFileContent(templatePath, ext.archTemplateEncoding.get())
 
-        PathNode.setDirectory(resolveDirectory(templatePath, project.projectDir.absolutePath))
+        PathNode.setDirectory(resolveDirectory(templatePath, projectDir.get()))
 
         return JSON.parseObject(templateContent, Template::class.java).apply {
             resolve(baseMap)
