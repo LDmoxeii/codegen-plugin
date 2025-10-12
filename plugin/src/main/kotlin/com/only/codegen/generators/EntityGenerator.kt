@@ -95,7 +95,7 @@ class EntityGenerator : TemplateGenerator {
         }
 
         // 准备关系数据
-        val relationDataList = prepareRelationData(table, context.relationsMap, context.tablePackageMap, context)
+        val relationDataList = prepareRelationData(table, context, importManager)
 
         // 1. 检查软删除字段
         val deletedField = context.getString("deletedField")
@@ -335,31 +335,47 @@ class EntityGenerator : TemplateGenerator {
             var startMapperLine = 0
             var endMapperLine = 0
             var startClassLine = 0
+            var inAnnotationBlock = false
 
             for (i in 1 until lines.size) {
                 val line = lines[i]
+                val trimmedLine = line.trim()
+
                 when {
-                    annotationLines.isEmpty() && startClassLine == 0 && line.trim().startsWith("import ") -> {
-                        importLines.add(line.trim().removePrefix("import").trim())
+                    // 收集 import 语句（必须在注解之前且在 class 之前）
+                    !inAnnotationBlock && startClassLine == 0 && trimmedLine.startsWith("import ") -> {
+                        importLines.add(trimmedLine.removePrefix("import").trim())
                     }
 
-                    (line.trim().startsWith("@") || annotationLines.isNotEmpty()) && startClassLine == 0 -> {
+                    // 开始收集注解（遇到第一个 @ 开头的行）
+                    !inAnnotationBlock && startClassLine == 0 && trimmedLine.startsWith("@") -> {
+                        inAnnotationBlock = true
                         annotationLines.add(line)
                     }
 
-                    line.trim().startsWith("class") && startClassLine == 0 -> {
-                        startClassLine = i
+                    // 继续收集注解（在注解块中，但还没遇到 class）
+                    inAnnotationBlock && startClassLine == 0 && trimmedLine.startsWith("@") -> {
+                        annotationLines.add(line)
                     }
 
+                    // 遇到 class 声明，停止收集注解
+                    trimmedLine.startsWith("class") && startClassLine == 0 -> {
+                        startClassLine = i
+                        inAnnotationBlock = false
+                    }
+
+                    // 标记字段映射开始
                     line.contains("【字段映射开始】") -> {
                         startMapperLine = i
                     }
 
+                    // 标记字段映射结束
                     line.contains("【字段映射结束】") -> {
                         endMapperLine = i
                     }
 
-                    startMapperLine == 0 || endMapperLine > 0 -> {
+                    // 收集自定义代码（在字段映射之后）
+                    endMapperLine > 0 -> {
                         customerLines.add(line)
                     }
                 }
@@ -582,146 +598,139 @@ class EntityGenerator : TemplateGenerator {
 
     private fun prepareRelationData(
         table: Map<String, Any?>,
-        relations: Map<String, Map<String, String>>,
-        tablePackageMap: Map<String, String>,
         context: EntityContext,
+        importManager: EntityImportManager,
     ): List<Map<String, Any?>> {
-        val tableName = SqlSchemaUtils.getTableName(table)
-        val result = mutableListOf<Map<String, Any?>>()
+        return with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val result = mutableListOf<Map<String, Any?>>()
 
-        if (!relations.containsKey(tableName)) {
-            return result
-        }
-
-        for ((refTableName, relationInfo) in relations[tableName]!!) {
-            val refInfos = relationInfo.split(";")
-            val navTable = context.tableMap[refTableName] ?: continue
-
-            if (refInfos[0] == "PLACEHOLDER") {
-                continue
+            if (!relationsMap.containsKey(tableName)) {
+                return result
             }
 
-            val fetchType = when {
-                relationInfo.endsWith(";LAZY") -> "LAZY"
-                SqlSchemaUtils.hasLazy(navTable) -> if (SqlSchemaUtils.isLazy(navTable, false)) "LAZY" else "EAGER"
-                else -> "EAGER"
-            }
+            for ((refTableName, relationInfo) in relationsMap[tableName]!!) {
+                val refInfos = relationInfo.split(";")
+                val navTable = context.tableMap[refTableName]!!
 
-            val relation = refInfos[0]
-            val joinColumn = refInfos[1]
-            val leftQuote = LEFT_QUOTES_4_ID_ALIAS.replace("\"", "\\\"")
-            val rightQuote = RIGHT_QUOTES_4_ID_ALIAS.replace("\"", "\\\"")
-
-            val annotations = mutableListOf<String>()
-            var fieldName = ""
-            var fieldType = ""
-            var defaultValue = ""
-            var hasLoadMethod = false
-            var fullEntityType = ""
-            val entityType = context.entityTypeMap[refTableName] ?: ""
-
-            when (relation) {
-                "OneToMany" -> {
-                    annotations.add("@${relation}(cascade = [CascadeType.ALL], fetch = FetchType.$fetchType, orphanRemoval = true)")
-                    annotations.add("@Fetch(FetchMode.SUBSELECT)")
-                    annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
-
-                    val countIsOne = SqlSchemaUtils.countIsOne(navTable)
-
-                    val entityPackage = tablePackageMap[refTableName] ?: ""
-                    fullEntityType = "$entityPackage.$entityType"
-                    fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
-                    fieldType = "MutableList<$fullEntityType>"
-                    defaultValue = " = mutableListOf()"
-                    hasLoadMethod = countIsOne
+                if (refInfos[0] == "PLACEHOLDER") {
+                    continue
                 }
 
-                "*ManyToOne" -> {
-                    annotations.add("@${relation.replace("*", "")}(cascade = [], fetch = FetchType.$fetchType)")
-                    annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false, insertable = false, updatable = false)")
-
-                    val entityPackage = tablePackageMap[refTableName] ?: ""
-                    fullEntityType = "$entityPackage.$entityType"
-                    fieldName = toLowerCamelCase(entityType) ?: entityType
-                    fieldType = "$fullEntityType?"
-                    defaultValue = " = null"
+                val fetchType = when {
+                    relationInfo.endsWith(";LAZY") -> "LAZY"
+                    SqlSchemaUtils.hasLazy(navTable) -> if (SqlSchemaUtils.isLazy(navTable, false)) "LAZY" else "EAGER"
+                    else -> "EAGER"
                 }
 
-                "ManyToOne" -> {
-                    annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
-                    annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
+                val relation = refInfos[0]
+                val joinColumn = refInfos[1]
+                val leftQuote = LEFT_QUOTES_4_ID_ALIAS.replace("\"", "\\\"")
+                val rightQuote = RIGHT_QUOTES_4_ID_ALIAS.replace("\"", "\\\"")
 
-                    val entityPackage = tablePackageMap[refTableName] ?: ""
-                    fullEntityType = "$entityPackage.$entityType"
-                    fieldName = toLowerCamelCase(entityType) ?: entityType
-                    fieldType = "$fullEntityType?"
-                    defaultValue = " = null"
+                val annotations = mutableListOf<String>()
+                var fieldName = ""
+                var fieldType = ""
+                var defaultValue = ""
+                var hasLoadMethod = false
+                val entityType = context.entityTypeMap[refTableName] ?: ""
+                val entityPackage = tablePackageMap[refTableName]!!
+                val fullEntityType = "$entityPackage${refPackage(entityType)}"
+
+                importManager.add(fullEntityType)
+
+                when (relation) {
+                    "OneToMany" -> {
+                        annotations.add("@${relation}(cascade = [CascadeType.ALL], fetch = FetchType.$fetchType, orphanRemoval = true)")
+                        annotations.add("@Fetch(FetchMode.SUBSELECT)")
+                        annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
+
+                        val countIsOne = SqlSchemaUtils.countIsOne(navTable)
+
+
+                        fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
+                        fieldType = "MutableList<$entityType>"
+                        defaultValue = " = mutableListOf()"
+                        hasLoadMethod = countIsOne
+                    }
+
+                    "*ManyToOne" -> {
+                        annotations.add("@${relation.replace("*", "")}(cascade = [], fetch = FetchType.$fetchType)")
+                        annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false, insertable = false, updatable = false)")
+
+                        fieldName = toLowerCamelCase(entityType) ?: entityType
+                        fieldType = "$entityType?"
+                        defaultValue = " = null"
+                    }
+
+                    "ManyToOne" -> {
+                        annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
+                        annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
+
+                        fieldName = toLowerCamelCase(entityType) ?: entityType
+                        fieldType = "$entityType?"
+                        defaultValue = " = null"
+                    }
+
+                    "OneToOne" -> {
+                        annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
+                        annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
+
+                        fieldName = toLowerCamelCase(entityType) ?: entityType
+                        fieldType = "$entityType?"
+                        defaultValue = " = null"
+                    }
+
+                    "ManyToMany" -> {
+                        annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
+                        annotations.add("@Fetch(FetchMode.SUBSELECT)")
+                        val joinTableName = refInfos[3]
+                        val inverseJoinColumn = refInfos[2]
+                        annotations.add(
+                            "@JoinTable(name = \"$leftQuote$joinTableName$rightQuote\", " +
+                                    "joinColumns = [JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)], " +
+                                    "inverseJoinColumns = [JoinColumn(name = \"$leftQuote$inverseJoinColumn$rightQuote\", nullable = false)])"
+                        )
+
+                        fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
+                        fieldType = "MutableList<$entityType>"
+                        defaultValue = " = mutableListOf()"
+                    }
+
+                    "*ManyToMany" -> {
+                        val entityTypeName = context.entityTypeMap[tableName] ?: ""
+                        val fieldNameFromTable = Inflector.pluralize(toLowerCamelCase(entityTypeName) ?: entityTypeName)
+                        annotations.add(
+                            "@${
+                                relation.replace(
+                                    "*",
+                                    ""
+                                )
+                            }(mappedBy = \"$fieldNameFromTable\", cascade = [], fetch = FetchType.$fetchType)"
+                        )
+                        annotations.add("@Fetch(FetchMode.SUBSELECT)")
+
+                        fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
+                        fieldType = "MutableList<$entityType>"
+                        defaultValue = " = mutableListOf()"
+                    }
                 }
 
-                "OneToOne" -> {
-                    annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
-                    annotations.add("@JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)")
-
-                    val entityPackage = tablePackageMap[refTableName] ?: ""
-                    fullEntityType = "$entityPackage.$entityType"
-                    fieldName = toLowerCamelCase(entityType) ?: entityType
-                    fieldType = "$fullEntityType?"
-                    defaultValue = " = null"
-                }
-
-                "ManyToMany" -> {
-                    annotations.add("@${relation}(cascade = [], fetch = FetchType.$fetchType)")
-                    annotations.add("@Fetch(FetchMode.SUBSELECT)")
-                    val joinTableName = refInfos[3]
-                    val inverseJoinColumn = refInfos[2]
-                    annotations.add(
-                        "@JoinTable(name = \"$leftQuote$joinTableName$rightQuote\", " +
-                                "joinColumns = [JoinColumn(name = \"$leftQuote$joinColumn$rightQuote\", nullable = false)], " +
-                                "inverseJoinColumns = [JoinColumn(name = \"$leftQuote$inverseJoinColumn$rightQuote\", nullable = false)])"
+                result.add(
+                    mapOf(
+                        "relation" to relation,
+                        "fieldName" to fieldName,
+                        "fieldType" to fieldType,
+                        "defaultValue" to defaultValue,
+                        "annotations" to annotations,
+                        "hasLoadMethod" to hasLoadMethod,
+                        "entityType" to entityType,
+                        "fullEntityType" to fullEntityType
                     )
-
-                    val entityPackage = tablePackageMap[refTableName] ?: ""
-                    fullEntityType = "$entityPackage.$entityType"
-                    fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
-                    fieldType = "MutableList<$fullEntityType>"
-                    defaultValue = " = mutableListOf()"
-                }
-
-                "*ManyToMany" -> {
-                    val entityTypeName = context.entityTypeMap[tableName] ?: ""
-                    val fieldNameFromTable = Inflector.pluralize(toLowerCamelCase(entityTypeName) ?: entityTypeName)
-                    annotations.add(
-                        "@${
-                            relation.replace(
-                                "*",
-                                ""
-                            )
-                        }(mappedBy = \"$fieldNameFromTable\", cascade = [], fetch = FetchType.$fetchType)"
-                    )
-                    annotations.add("@Fetch(FetchMode.SUBSELECT)")
-
-                    val entityPackage = tablePackageMap[refTableName] ?: ""
-                    fullEntityType = "$entityPackage.$entityType"
-                    fieldName = Inflector.pluralize(toLowerCamelCase(entityType) ?: entityType)
-                    fieldType = "MutableList<$fullEntityType>"
-                    defaultValue = " = mutableListOf()"
-                }
-            }
-
-            result.add(
-                mapOf(
-                    "relation" to relation,
-                    "fieldName" to fieldName,
-                    "fieldType" to fieldType,
-                    "defaultValue" to defaultValue,
-                    "annotations" to annotations,
-                    "hasLoadMethod" to hasLoadMethod,
-                    "entityType" to entityType,
-                    "fullEntityType" to fullEntityType
                 )
-            )
-        }
+            }
 
-        return result
+            result
+        }
     }
 }

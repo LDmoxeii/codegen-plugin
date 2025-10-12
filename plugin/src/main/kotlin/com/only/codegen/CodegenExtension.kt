@@ -236,7 +236,7 @@ open class GenerationConfig @Inject constructor(objects: ObjectFactory) {
     /**
      * 是否生成关联父实体字段
      */
-    val generateParent: Property<Boolean> = objects.property(Boolean::class.java).convention(false)
+    val generateParent: Property<Boolean> = objects.property(Boolean::class.java).convention(true)
 
     /**
      * 仓储名称模板

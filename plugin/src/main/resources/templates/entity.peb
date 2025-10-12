@@ -48,7 +48,7 @@ class {{ entityType }}{{ extendsClause }}{{ implementsClause }} (
     // 【字段映射结束】本段落由[cap4k-ddd-codegen-gradle-plugin]维护，请不要手工改动
 {%- if customerLines is not empty %}
 {%- for line in customerLines %}
-    {{ line }}
+{{ line }}
 {%- endfor %}
 {%- else %}
 
