@@ -1,0 +1,22 @@
+package {{ basePackage }}.{{ package }}
+
+    {%- for import in imports %}
+import {{ import }}
+    {%- endfor %}
+
+/**
+ * {{ Comment }}
+ *
+ * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
+ * @author cap4k-ddd-codegen
+ * @date {{ date }}
+ */
+@Repository
+interface {{ Repository }} : {{ parentInterface }} {
+
+    // 在此添加自定义查询方法
+    // 例如:
+    // fun findByName(name: String): {{ AggregateRoot }}?
+    // fun findAllByStatus(status: String): List<{{ AggregateRoot }}>
+
+}

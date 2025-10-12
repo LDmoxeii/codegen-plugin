@@ -20,6 +20,11 @@ class CodegenPlugin : Plugin<Project> {
             task.description = "Generate entity classes from database schema"
             task.extension.set(extension)
         }
+
+        project.tasks.register("genAnnotation", GenAnnotationTask::class.java) { task ->
+            task.description = "Generate code from annotations (Repository, Service, etc.)"
+            task.extension.set(extension)
+        }
 //
 //        project.tasks.register("genRepository", GenRepositoryTask::class.java) { task ->
 //            task.group = "cap4k codegen"

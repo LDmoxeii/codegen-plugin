@@ -68,6 +68,11 @@ open class CodegenExtension @Inject constructor(objects: ObjectFactory) {
     val generation: GenerationConfig = objects.newInstance(GenerationConfig::class.java, objects)
 
     /**
+     * 基于注解的代码生成配置
+     */
+    val annotation: AnnotationConfig = objects.newInstance(AnnotationConfig::class.java, objects)
+
+    /**
      * 配置数据库连接
      */
     fun database(action: Action<DatabaseConfig>) {
@@ -79,6 +84,13 @@ open class CodegenExtension @Inject constructor(objects: ObjectFactory) {
      */
     fun generation(action: Action<GenerationConfig>) {
         action.execute(generation)
+    }
+
+    /**
+     * 配置基于注解的代码生成选项
+     */
+    fun annotation(action: Action<AnnotationConfig>) {
+        action.execute(annotation)
     }
 }
 
@@ -254,3 +266,50 @@ open class GenerationConfig @Inject constructor(objects: ObjectFactory) {
      */
     val aggregateTypeTemplate: Property<String> = objects.property(String::class.java).convention("Agg{{ Entity }}")
 }
+
+/**
+ * 基于注解的代码生成配置
+ */
+open class AnnotationConfig @Inject constructor(objects: ObjectFactory) {
+
+    /**
+     * KSP 元数据路径
+     *
+     * 默认: build/generated/ksp/main/kotlin/metadata/
+     */
+    val metadataPath: Property<String> = objects.property(String::class.java).convention("")
+
+    /**
+     * 源代码根目录列表
+     *
+     * 用于 KSP 扫描（如果需要）
+     */
+    val sourceRoots = objects.listProperty(String::class.java).convention(
+        listOf("src/main/kotlin")
+    )
+
+    /**
+     * 扫描的包路径列表
+     *
+     * 只扫描指定包下的注解（可选）
+     */
+    val scanPackages = objects.listProperty(String::class.java).convention(
+        emptyList()
+    )
+
+    /**
+     * 是否生成 Repository 接口
+     */
+    val generateRepository: Property<Boolean> = objects.property(Boolean::class.java).convention(true)
+
+    /**
+     * 是否生成 Service 类
+     */
+    val generateService: Property<Boolean> = objects.property(Boolean::class.java).convention(false)
+
+    /**
+     * 是否生成 Controller 类
+     */
+    val generateController: Property<Boolean> = objects.property(Boolean::class.java).convention(false)
+}
+

@@ -4,7 +4,7 @@
 
 ---
 
-## 📊 总体进度：Phase 1-3 完成 100% ✅ | Phase 4 准备开始 🚀
+## 📊 总体进度：Phase 1-5 完成 100% ✅ | Phase 6 准备开始 🚀
 
 ---
 
@@ -125,25 +125,109 @@ context/
 
 ---
 
-## ⏳ Phase 4: Generators 实现（未开始 0/4）
+## ✅ Phase 4: Generators 实现（已完成 3/3）⚠️ Service 部分已排除
 
-### 待实施任务
+### 实施范围调整 ⚠️
 
-- [ ] 创建 AnnotationTemplateGenerator 接口（独立）
-- [ ] 实现 RepositoryGenerator
-- [ ] 实现 ServiceGenerator
-- [ ] 创建模板文件（repository.peb, service.peb）
+**包含**: Repository 相关功能（AnnotationTemplateGenerator, RepositoryGenerator, repository.peb）✅
+**排除**: Service 相关功能（ServiceGenerator, service.peb）- 留待后续版本实现
+
+### 已完成内容
+
+- ✅ 4.1 创建 AnnotationTemplateGenerator 接口（独立于 TemplateGenerator）
+- ✅ 4.2 实现 RepositoryGenerator（基于 AnnotationContext）
+- ✅ 4.3 创建 repository.peb 模板文件
+- ❌ ~~4.x 实现 ServiceGenerator~~（**已排除**）
+- ❌ ~~4.x 创建 service.peb 模板~~（**已排除**）
+
+### 创建的文件（3个）
+
+```
+plugin/src/main/kotlin/com/only/codegen/generators/annotation/
+├── AnnotationTemplateGenerator.kt    # Generator 接口（80+ 行）
+└── RepositoryGenerator.kt            # Repository 生成器（170+ 行）
+
+plugin/src/main/resources/templates/
+└── repository.peb                    # Repository 模板文件
+```
+
+### 技术要点
+
+1. **AnnotationTemplateGenerator 接口设计**
+   - 独立于 TemplateGenerator
+   - 参数为 AggregateInfo 而不是 table
+   - 使用 AnnotationContext 而不是 EntityContext
+   - 相同的生命周期：shouldGenerate → buildContext → getDefaultTemplateNode → onGenerated
+
+2. **RepositoryGenerator 实现**
+   - 只为聚合根生成 Repository
+   - 支持 JpaRepository 和 QuerydslPredicateExecutor（可选）
+   - 自动解析 ID 类型（单一主键、复合主键、自定义 ID 类）
+   - 生成后更新 typeMapping 供后续引用
+
+3. **repository.peb 模板**
+   - 简洁的 Spring Data JPA Repository 接口
+   - 包含示例注释提示用户添加自定义方法
+   - 使用 conflict="skip" 避免覆盖用户自定义内容
 
 ---
 
-## ⏳ Phase 5: Task 和 Plugin 集成（未开始 0/4）
+## ✅ Phase 5: Task 和 Plugin 集成（已完成 3/3）⚠️ 集成测试已排除
 
-### 待实施任务
+### 实施范围调整 ⚠️
 
-- [ ] 实现 GenAnnotationTask
-- [ ] 扩展 CodegenExtension（添加 AnnotationGenerationConfig）
-- [ ] 更新 CodegenPlugin（注册 genAnnotation 任务）
-- [ ] 编写集成测试
+**包含**: 核心任务和插件集成（GenAnnotationTask, CodegenExtension, CodegenPlugin）✅
+**排除**: 集成测试 - 留待后续迭代实现
+
+### 已完成内容
+
+- ✅ 5.1 实现 GenAnnotationTask（继承 GenArchTask 复用模板基础设施）
+- ✅ 5.2 扩展 CodegenExtension（添加 AnnotationConfig）
+- ✅ 5.3 更新 CodegenPlugin（注册 genAnnotation 任务）
+- ❌ ~~5.4 编写集成测试~~（**已排除**）
+
+### 创建的文件（3个）
+
+```
+plugin/src/main/kotlin/com/only/codegen/
+├── GenAnnotationTask.kt              # 注解任务（180+ 行）
+├── CodegenExtension.kt               # 扩展 AnnotationConfig（+50 行）
+└── CodegenPlugin.kt                  # 注册 genAnnotation 任务（+4 行）
+```
+
+### 技术要点
+
+1. **GenAnnotationTask 继承 GenArchTask**
+   - 复用 Pebble 模板引擎初始化逻辑
+   - 使用 `renderFileSwitch = false` 跳过架构文件生成
+   - 与 GenEntityTask 保持一致的设计模式
+
+2. **AnnotationConfig 配置**
+   - `metadataPath`: KSP 元数据路径（默认 build/generated/ksp/main/kotlin/metadata/）
+   - `sourceRoots`: 源代码根目录（用于扫描）
+   - `scanPackages`: 扫描的包路径（可选过滤）
+   - `generateRepository`: 是否生成 Repository（默认 true）
+   - `generateService`: 是否生成 Service（默认 false）
+
+3. **任务执行流程**
+   - 初始化 Pebble 引擎（super.generate()）
+   - 读取 KSP JSON 元数据
+   - 构建 AnnotationContext（3个 Builder 按顺序执行）
+   - 生成文件（RepositoryGenerator）
+
+### 设计优化 ⭐
+
+**用户反馈**: 为什么不继承 GenArchTask？模板解析逻辑在 GenArch 中。
+
+**修改前**: GenAnnotationTask → AbstractCodegenTask
+**修改后**: GenAnnotationTask → GenArchTask → AbstractCodegenTask
+
+**收益**:
+
+- ✅ 复用 Pebble 引擎初始化（PebbleInitializer.initPebble）
+- ✅ 复用模板目录设置（PathNode.setDirectory）
+- ✅ 与 GenEntityTask 保持一致的设计模式
+- ✅ 避免重复代码
 
 ---
 
@@ -163,8 +247,10 @@ context/
 - ✅ **2025-10-12**: Phase 1 完成 - KSP Processor 开发完成并测试通过
 - ✅ **2025-10-12**: Phase 2 完成 - BaseContext 重构完成，用户优化版
 - ✅ **2025-10-12**: Phase 3 完成 - AnnotationContext 和 Builders 全部实现，包结构重组
-- 🚀 **准备开始**: Phase 4 - Generators 实现（RepositoryGenerator, ServiceGenerator）
-- ⏳ **计划中**: Phase 5-6
+- ✅ **2025-10-12**: Phase 4 完成 - Repository 生成器实现（Service 部分已排除）
+- ✅ **2025-10-12**: Phase 5 完成 - Task 和 Plugin 集成完成（集成测试已排除）
+- 🚀 **准备开始**: Phase 6 - 文档和示例（可选）
+- ⏳ **后续迭代**: 集成测试、Service 生成器
 
 ---
 
@@ -218,16 +304,37 @@ context/
 
 ## 🚀 下次继续点
 
-**从 Phase 4.1 开始**：创建 AnnotationTemplateGenerator 接口
+**Phase 5 已完成** - 核心功能全部实现 ✅
 
-**预计完成时间**: Phase 4 约需 2 周
-
-**当前状态**: Phase 1-3 全部完成，基础框架已搭建完毕 ✅
+**当前状态**: Phase 1-5 全部完成，功能可用，编译通过
 
 **已完成文件统计**:
 
 - Phase 1: 10 个文件（KSP Processor 模块）
 - Phase 2: 修改 4 个文件（BaseContext 重构）
 - Phase 3: 5 个文件（AnnotationContext 和 Builders）
-- **总计**: 15 个新文件 + 4 个修改
+- Phase 4: 3 个文件（AnnotationTemplateGenerator, RepositoryGenerator, repository.peb）
+- Phase 5: 3 个文件（GenAnnotationTask, CodegenExtension, CodegenPlugin）
+- **总计**: 21 个新文件 + 5 个修改
+
+**可用功能**:
+
+```bash
+# 生成实体类（从数据库）
+./gradlew genEntity
+
+# 生成 Repository 接口（从注解）
+./gradlew genAnnotation
+
+# 组合使用
+./gradlew genEntity genAnnotation
+```
+
+**后续可选任务**:
+
+- Phase 6: 文档和示例
+- 集成测试
+- Service 生成器
+- Controller 生成器
+
 
