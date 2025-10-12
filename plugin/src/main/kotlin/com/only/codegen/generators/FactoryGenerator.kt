@@ -79,7 +79,7 @@ class FactoryGenerator : TemplateGenerator {
         return TemplateNode().apply {
             type = "file"
             tag = this@FactoryGenerator.tag
-            name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_FAC_PACKAGE }{{ SEPARATOR }}{{ Factory }}.kt"
+            name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
             format = "resource"
             data = "factory"
             conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件
