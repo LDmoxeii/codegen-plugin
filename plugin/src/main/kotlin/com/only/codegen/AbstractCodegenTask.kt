@@ -131,7 +131,7 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
             put("SEPARATOR", File.separator)
             put("separator", File.separator)
 
-        }
+        }.toMap()
     }
 
     @get:Internal
