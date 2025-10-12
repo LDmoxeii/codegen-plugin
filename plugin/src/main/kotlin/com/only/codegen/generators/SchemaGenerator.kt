@@ -30,10 +30,11 @@ class SchemaGenerator : TemplateGenerator {
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
-        val columns = context.columnsMap[tableName]!!
-        val entityType = context.entityTypeMap[tableName] ?: return emptyMap()
-        val entityFullPackage = context.tablePackageMap[tableName] ?: ""
         val aggregate = context.resolveAggregateWithModule(tableName)
+        val columns = context.columnsMap[tableName]!!
+
+        val entityType = context.entityTypeMap[tableName]!!
+        val FullEntityType = context.typeRemapping[entityType]!!
 
         // 准备列字段数据
         val fields = columns
@@ -76,17 +77,18 @@ class SchemaGenerator : TemplateGenerator {
 
         val resultContext = context.baseMap.toMutableMap()
 
-        val fullPackage = resolveEntityPackage(tableName, context)
-        val schemaFullPackage = concatPackage(context.getString("basePackage"), context.schemaPackage)
-
         with(context) {
-            resultContext.putContext(tag, "templatePackage", refPackage(schemaFullPackage, context.getString("basePackage")))
-            resultContext.putContext(tag, "package", "")
-            resultContext.putContext(tag, "path", fullPackage.replace(".", File.separator))
+            resultContext.putContext(tag, "modulePath", domainPath)
+            resultContext.putContext(tag, "templatePackage", refPackage(schemaPackage))
+            resultContext.putContext(tag, "package", refPackage(aggregate))
+
+            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
+
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "Schema", "S$entityType")
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
-            resultContext.putContext(tag, "entityPackage", refPackage(entityFullPackage, context.getString("basePackage")))
+            resultContext.putContext(tag, "FullSchemaBaseType", typeRemapping["SchemaBase"]!!)
+            resultContext.putContext(tag, "FullEntityType", FullEntityType)
             resultContext.putContext(tag, "fields", fields)
             resultContext.putContext(tag, "relationFields", relationFields)
         }

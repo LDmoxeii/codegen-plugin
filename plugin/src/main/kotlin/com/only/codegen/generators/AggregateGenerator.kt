@@ -47,11 +47,12 @@ class AggregateGenerator : TemplateGenerator {
         val aggregateNameTemplate = context.getString("aggregateNameTemplate")
 
         with(context) {
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
-            resultContext.putContext(tag, "AggregateName", aggregateNameTemplate)
-
+            resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
             resultContext.putContext(tag, "package", refPackage(refPackage(aggregate)))
+
+            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
+            resultContext.putContext(tag, "AggregateName", aggregateNameTemplate)
 
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "IdentityType", identityType)

@@ -72,12 +72,14 @@ class EnumGenerator : TemplateGenerator {
             }
 
             val resultContext = baseMap.toMutableMap()
-            resultContext["DEFAULT_ENUM_PACKAGE"] = "enums"
 
+            resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
+            resultContext["DEFAULT_ENUM_PACKAGE"] = "enums"
             resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
+
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
             resultContext.putContext(tag, "Comment", "")
             resultContext.putContext(tag, "CommentEscaped", "")
@@ -132,7 +134,7 @@ class EnumGenerator : TemplateGenerator {
             val templatePackage = refPackage(aggregatesPackage)
             val `package` = refPackage(aggregate)
 
-            val fullEnumType = "$basePackage${templatePackage}${`package`}`$enumPackageSuffix.${currentEnumType}"
+            val fullEnumType = "$basePackage${templatePackage}${`package`}$enumPackageSuffix.${currentEnumType}"
 
             typeRemapping[currentEnumType] = fullEnumType
             generated.add(currentEnumType)

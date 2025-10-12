@@ -62,9 +62,11 @@ class DomainEventHandlerGenerator : TemplateGenerator {
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
+            resultContext.putContext(tag, "modulePath", applicationPath)
             resultContext.putContext(tag, "templatePackage", refPackage(context.subscriberPackage))
             resultContext.putContext(tag, "package",refPackage(aggregate))
+
+            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
             resultContext.putContext(tag, "fullDomainEventType", typeRemapping[domainEvent]!!)
 
             resultContext.putContext(tag, "DomainEventHandler", currentDomainEventHandler)

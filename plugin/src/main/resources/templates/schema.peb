@@ -1,9 +1,7 @@
-{# Schema 查询结构类模板 #}
-{# 生成实体的查询结构类，提供类型安全的查询条件构建 #}
 package {{ basePackage }}{{ templatePackage }}{{ package }}.meta
 
 import {{ basePackage }}{{ schemaPackage }}.{{ SchemaBase }}
-import {{ basePackage }}{{ entityPackage }}.{{ Entity }}
+import {{ FullEntityType }}
 import org.springframework.data.jpa.domain.Specification
 import jakarta.persistence.criteria.*
 

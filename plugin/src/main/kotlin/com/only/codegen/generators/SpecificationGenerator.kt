@@ -47,11 +47,12 @@ class SpecificationGenerator : TemplateGenerator {
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
-            resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
-
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
+            resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
             resultContext.putContext(tag, "package",refPackage(aggregate))
+
+            resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
+            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
             resultContext.putContext(tag, "entityPackage", refPackage(entityFullPackage, context.getString("basePackage")))
 
             resultContext.putContext(tag, "Specification", "${entityType}Specification")

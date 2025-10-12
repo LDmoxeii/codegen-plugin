@@ -155,11 +155,12 @@ class EntityGenerator : TemplateGenerator {
             } else {
                 ".$fullPackage"
             }
-            resultContext.putContext(tag, "path", fullPackage.replace(".", File.separator))
 
+            resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
             resultContext.putContext(tag, "package", relativePackage)
 
+            resultContext.putContext(tag, "path", fullPackage.replace(".", File.separator))
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "entityType", entityType)
             resultContext.putContext(tag, "extendsClause", extendsClause)

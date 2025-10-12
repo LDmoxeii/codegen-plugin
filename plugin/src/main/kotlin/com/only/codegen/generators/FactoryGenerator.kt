@@ -45,11 +45,12 @@ class FactoryGenerator : TemplateGenerator {
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
-            resultContext.putContext(tag, "DEFAULT_FAC_PACKAGE", DEFAULT_FAC_PACKAGE)
-
-            resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
+            resultContext.putContext(tag, "modulePath", domainPath)
+            resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
             resultContext.putContext(tag, "package", refPackage(aggregate))
+
+            resultContext.putContext(tag, "DEFAULT_FAC_PACKAGE", DEFAULT_FAC_PACKAGE)
+            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
 
             resultContext.putContext(tag, "Factory", "${entityType}Factory")
             resultContext.putContext(tag, "Payload", "${entityType}Payload")

@@ -65,9 +65,11 @@ class DomainEventGenerator : TemplateGenerator {
         with(context) {
             resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_DOMAIN_EVENT_PACKAGE)
 
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
+            resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
             resultContext.putContext(tag, "package",refPackage(aggregate))
+
+            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
             resultContext.putContext(tag, "fullEntityType", fullEntityPackage)
 
             resultContext.putContext(tag, "DomainEvent", currentDomainEvent)

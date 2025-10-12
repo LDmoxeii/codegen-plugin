@@ -1,7 +1,6 @@
 package com.only.codegen.generators
 
 import com.only.codegen.context.EntityContext
-import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
 
@@ -22,16 +21,13 @@ class SchemaBaseGenerator : TemplateGenerator {
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
-        val schemaFullPackage = concatPackage(context.getString("basePackage"), context.schemaPackage)
-
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
-            resultContext.putContext(
-                tag,
-                "templatePackage",
-                refPackage(schemaFullPackage, context.getString("basePackage"))
-            )
+            resultContext.putContext(tag, "modulePath", domainPath)
+            resultContext.putContext(tag, "templatePackage", refPackage(schemaPackage))
+            resultContext.putContext(tag, "package", "")
+
             resultContext.putContext(tag, "SchemaBase", "Schema")
         }
 
@@ -50,6 +46,12 @@ class SchemaBaseGenerator : TemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
+        with(context) {
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(schemaPackage)
+
+            typeRemapping["SchemaBase"] = "$basePackage$templatePackage"
+        }
         generated = true
     }
 }
