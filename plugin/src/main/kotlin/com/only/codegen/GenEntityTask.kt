@@ -3,8 +3,7 @@ package com.only.codegen
 import com.only.codegen.context.EntityContext
 import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.context.builders.*
-import com.only.codegen.generators.SchemaBaseGenerator
-import com.only.codegen.generators.TemplateGenerator
+import com.only.codegen.generators.*
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.resolvePackage
@@ -211,9 +210,9 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
     private fun generateFiles(context: EntityContext) {
         val generators = listOf(
             SchemaBaseGenerator(),           // order=5  - Schema 基类
-//            EnumGenerator(),                 // order=10 - 枚举类
-//            SchemaGenerator(),               // order=15 - Schema 类
-//            EntityGenerator(),               // order=20 - 实体类
+            EnumGenerator(),                 // order=10 - 枚举类
+            EntityGenerator(),               // order=15 - 实体类
+            SchemaGenerator(),               // order=20 - Schema 类
 //            SpecificationGenerator(),        // order=25 - 规约类
 //            FactoryGenerator(),              // order=30 - 工厂类
 //            DomainEventGenerator(),          // order=35 - 领域事件类

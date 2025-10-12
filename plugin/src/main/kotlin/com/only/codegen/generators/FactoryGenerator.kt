@@ -6,7 +6,6 @@ import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
-import java.io.File
 
 /**
  * Factory 文件生成器
@@ -50,7 +49,6 @@ class FactoryGenerator : TemplateGenerator {
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_FAC_PACKAGE", DEFAULT_FAC_PACKAGE)
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
 
             resultContext.putContext(tag, "Factory", "${entityType}Factory")
             resultContext.putContext(tag, "Payload", "${entityType}Payload")
@@ -80,7 +78,7 @@ class FactoryGenerator : TemplateGenerator {
         return TemplateNode().apply {
             type = "file"
             tag = this@FactoryGenerator.tag
-            name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
+            name = "{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
             format = "resource"
             data = "factory"
             conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件

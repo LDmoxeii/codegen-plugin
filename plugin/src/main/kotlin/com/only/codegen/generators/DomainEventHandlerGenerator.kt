@@ -6,7 +6,6 @@ import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
-import java.io.File
 
 /**
  * 领域事件处理器文件生成器
@@ -66,7 +65,6 @@ class DomainEventHandlerGenerator : TemplateGenerator {
             resultContext.putContext(tag, "templatePackage", refPackage(context.subscriberPackage))
             resultContext.putContext(tag, "package",refPackage(aggregate))
 
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
             resultContext.putContext(tag, "fullDomainEventType", typeRemapping[domainEvent]!!)
 
             resultContext.putContext(tag, "DomainEventHandler", currentDomainEventHandler)

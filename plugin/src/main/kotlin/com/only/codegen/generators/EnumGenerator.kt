@@ -6,7 +6,6 @@ import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toLowerCamelCase
 import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
-import java.io.File
 
 /**
  * 枚举文件生成器
@@ -78,7 +77,6 @@ class EnumGenerator : TemplateGenerator {
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext["DEFAULT_ENUM_PACKAGE"] = "enums"
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
 
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
             resultContext.putContext(tag, "Comment", "")
@@ -100,7 +98,7 @@ class EnumGenerator : TemplateGenerator {
         return TemplateNode().apply {
             type = "file"
             tag = this@EnumGenerator.tag
-            name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
+            name = "{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
             format = "resource"
             data = "enum"
             conflict = "overwrite"

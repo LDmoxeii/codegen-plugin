@@ -4,7 +4,6 @@ import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.EntityContext
 import com.only.codegen.misc.*
 import com.only.codegen.template.TemplateNode
-import java.io.File
 
 /**
  * Schema 文件生成器
@@ -12,7 +11,7 @@ import java.io.File
  */
 class SchemaGenerator : TemplateGenerator {
     override val tag = "schema"
-    override val order = 15
+    override val order = 20
 
     private val generated = mutableSetOf<String>()
 
@@ -34,7 +33,7 @@ class SchemaGenerator : TemplateGenerator {
         val columns = context.columnsMap[tableName]!!
 
         val entityType = context.entityTypeMap[tableName]!!
-        val FullEntityType = context.typeRemapping[entityType]!!
+        val fullEntityType = context.typeRemapping[entityType]!!
 
         // 准备列字段数据
         val fields = columns
@@ -82,13 +81,11 @@ class SchemaGenerator : TemplateGenerator {
             resultContext.putContext(tag, "templatePackage", refPackage(schemaPackage))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
-
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "Schema", "S$entityType")
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
             resultContext.putContext(tag, "FullSchemaBaseType", typeRemapping["SchemaBase"]!!)
-            resultContext.putContext(tag, "FullEntityType", FullEntityType)
+            resultContext.putContext(tag, "FullEntityType", fullEntityType)
             resultContext.putContext(tag, "fields", fields)
             resultContext.putContext(tag, "relationFields", relationFields)
         }

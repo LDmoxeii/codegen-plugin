@@ -6,7 +6,6 @@ import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
-import java.io.File
 
 /**
  * Specification 文件生成器
@@ -52,7 +51,6 @@ class SpecificationGenerator : TemplateGenerator {
             resultContext.putContext(tag, "package",refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
             resultContext.putContext(tag, "entityPackage", refPackage(entityFullPackage, context.getString("basePackage")))
 
             resultContext.putContext(tag, "Specification", "${entityType}Specification")
@@ -82,7 +80,7 @@ class SpecificationGenerator : TemplateGenerator {
         return TemplateNode().apply {
             type = "file"
             tag = this@SpecificationGenerator.tag
-            name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_SPEC_PACKAGE }}{{ SEPARATOR }}{{ Specification }}.kt"
+            name = "{{ DEFAULT_SPEC_PACKAGE }}{{ SEPARATOR }}{{ Specification }}.kt"
             format = "resource"
             data = "specification"
             conflict = "skip" // Specification 通常包含业务逻辑，不覆盖已有文件

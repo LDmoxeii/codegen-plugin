@@ -5,7 +5,6 @@ import com.only.codegen.context.EntityContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
-import java.io.File
 
 /**
  * 聚合封装类生成器
@@ -51,7 +50,6 @@ class AggregateGenerator : TemplateGenerator {
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
             resultContext.putContext(tag, "package", refPackage(refPackage(aggregate)))
 
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
             resultContext.putContext(tag, "AggregateName", aggregateNameTemplate)
 
             resultContext.putContext(tag, "Entity", entityType)
@@ -81,7 +79,7 @@ class AggregateGenerator : TemplateGenerator {
         return TemplateNode().apply {
             type = "file"
             tag = this@AggregateGenerator.tag
-            name = "{{ path }}{{ SEPARATOR }}{{ AggregateName }}.kt"
+            name = "{{ AggregateName }}.kt"
             format = "resource"
             data = "aggregate"
             conflict = "skip"

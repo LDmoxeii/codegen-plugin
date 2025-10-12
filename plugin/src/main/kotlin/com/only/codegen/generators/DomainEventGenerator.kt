@@ -6,7 +6,6 @@ import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
-import java.io.File
 
 /**
  * 领域事件文件生成器
@@ -69,7 +68,6 @@ class DomainEventGenerator : TemplateGenerator {
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
             resultContext.putContext(tag, "package",refPackage(aggregate))
 
-            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
             resultContext.putContext(tag, "fullEntityType", fullEntityPackage)
 
             resultContext.putContext(tag, "DomainEvent", currentDomainEvent)
@@ -100,7 +98,7 @@ class DomainEventGenerator : TemplateGenerator {
         return TemplateNode().apply {
             type = "file"
             tag = this@DomainEventGenerator.tag
-            name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_DOMAIN_EVENT_PACKAGE }{{ SEPARATOR }}{{ DomainEvent }}.kt"
+            name = "{{ DEFAULT_DOMAIN_EVENT_PACKAGE }{{ SEPARATOR }}{{ DomainEvent }}.kt"
             format = "resource"
             data = "domain_event"
             conflict = "skip" // 领域事件基类通常包含业务逻辑，不覆盖已有文件

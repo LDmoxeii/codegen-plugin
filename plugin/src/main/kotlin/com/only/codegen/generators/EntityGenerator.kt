@@ -14,7 +14,7 @@ import java.io.File
  */
 class EntityGenerator : TemplateGenerator {
     override val tag = "entity"
-    override val order = 20
+    override val order = 15
 
     private val generated = mutableSetOf<String>()
 
@@ -32,7 +32,7 @@ class EntityGenerator : TemplateGenerator {
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
         val columns = context.columnsMap[tableName]!!
-        val entityType = context.entityTypeMap[tableName] ?: return emptyMap()
+        val entityType = context.entityTypeMap[tableName]!!
         val entityFullPackage = context.tablePackageMap[tableName] ?: ""
         val ids = resolveIdColumns(columns)
 
@@ -160,7 +160,6 @@ class EntityGenerator : TemplateGenerator {
             resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
             resultContext.putContext(tag, "package", relativePackage)
 
-            resultContext.putContext(tag, "path", fullPackage.replace(".", File.separator))
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "entityType", entityType)
             resultContext.putContext(tag, "extendsClause", extendsClause)
@@ -193,18 +192,9 @@ class EntityGenerator : TemplateGenerator {
     ) {
         with(context) {
             val tableName = SqlSchemaUtils.getTableName(table)
-            val fullPackage = resolveEntityPackage(tableName, context)
 
-            val templatePackage = refPackage(aggregatesPackage)
-            val `package` = if (fullPackage.startsWith(aggregatesPackage)) {
-                val relative = fullPackage.substring(aggregatesPackage.length)
-                if (relative.startsWith(".")) relative else ".$relative"
-            } else {
-                ".$fullPackage"
-            }
-            val fullEntityType = "${getString("basePackage")}.${templatePackage}.${`package`}"
 
-            typeRemapping[tableName] = fullEntityType
+//            typeRemapping[tableName] = fullEntityType
             generated.add(tableName)
         }
     }
