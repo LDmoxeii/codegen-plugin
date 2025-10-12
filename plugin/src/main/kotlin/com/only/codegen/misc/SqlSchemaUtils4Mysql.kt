@@ -99,17 +99,15 @@ object SqlSchemaUtils4Mysql : SqlSchemaUtils.SqlSchemaDialect {
 
         if (hasType(column)) {
             val customType = getType(column)
-            TODO("后续不用处理前缀")
-            if (hasEnum(column) && context.enumPackageMap.containsKey(customType)) {
-                val enumFqnPrefix = "${context.enumPackageMap[customType]}.$customType"
+            if (hasEnum(column)) {
                 return if (columnType.endsWith("?")) {
                     if (columnDefault.isNullOrEmpty()) "null"
-                    else "$enumFqnPrefix.valueOf($columnDefault)"
+                    else "$customType.valueOf($columnDefault)"
                 } else {
                     require(!columnDefault.isNullOrEmpty()) {
                         "Enum type $customType column ${SqlSchemaUtils.getColumnName(column)} can not have null default value"
                     }
-                    "$enumFqnPrefix.valueOf($columnDefault)"
+                    "$customType.valueOf($columnDefault)"
                 }
             }
             return customType
