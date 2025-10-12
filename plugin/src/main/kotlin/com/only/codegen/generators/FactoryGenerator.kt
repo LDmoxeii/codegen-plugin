@@ -40,7 +40,9 @@ class FactoryGenerator : TemplateGenerator {
         val tableName = SqlSchemaUtils.getTableName(table)
         val aggregate = context.resolveAggregateWithModule(tableName)
 
-        val entityType = context.entityTypeMap[tableName] ?: return emptyMap()
+        val entityType = context.entityTypeMap[tableName]!!
+        val fullEntityType = context.typeMapping[entityType]!!
+
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
@@ -49,10 +51,10 @@ class FactoryGenerator : TemplateGenerator {
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_FAC_PACKAGE", DEFAULT_FAC_PACKAGE)
-
             resultContext.putContext(tag, "Factory", "${entityType}Factory")
             resultContext.putContext(tag, "Payload", "${entityType}Payload")
 
+            resultContext.putContext(tag, "fullEntityType", fullEntityType)
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
         }
@@ -86,7 +88,21 @@ class FactoryGenerator : TemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-        generated.add(SqlSchemaUtils.getTableName(table))
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+            val entityType = entityTypeMap[tableName]!!
+
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = refPackage(aggregate)
+
+            val factoryType = "${entityType}Factory"
+            val fullFactoryType = "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_FAC_PACKAGE)}${refPackage(factoryType)}"
+            typeMapping[factoryType] = fullFactoryType
+
+            generated.add(tableName)
+        }
     }
 
 }

@@ -13,7 +13,7 @@ import com.only.codegen.template.TemplateNode
  */
 class DomainEventGenerator : TemplateGenerator {
     override val tag = "domain_event"
-    override val order = 35
+    override val order = 30
 
     @Volatile
     private lateinit var currentDomainEvent: String
@@ -38,7 +38,7 @@ class DomainEventGenerator : TemplateGenerator {
         val domainEvents = SqlSchemaUtils.getDomainEvents(table)
 
         return domainEvents.any {domainEventInfo ->
-            val infos = domainEvents.toString().split(":")
+            val infos = domainEventInfo.split(":")
             generateDomainEventName(infos[0]) !in generated
         }
     }
@@ -48,9 +48,9 @@ class DomainEventGenerator : TemplateGenerator {
         val aggregate = context.resolveAggregateWithModule(tableName)
 
         val entityType = context.entityTypeMap[tableName]!!
-        val fullEntityPackage = context.typeRemapping[entityType]!!
+        val fullEntityType = context.typeMapping[entityType]!!
 
-        SqlSchemaUtils.getDomainEvents(table).firstOrNull { domainEventInfo ->
+        SqlSchemaUtils.getDomainEvents(table).first { domainEventInfo ->
             val infos = domainEventInfo.split(":")
             val eventName = generateDomainEventName(infos[0])
             if (!generated.contains(eventName)) {
@@ -62,18 +62,17 @@ class DomainEventGenerator : TemplateGenerator {
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
-            resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_DOMAIN_EVENT_PACKAGE)
-
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
             resultContext.putContext(tag, "package",refPackage(aggregate))
 
-            resultContext.putContext(tag, "fullEntityType", fullEntityPackage)
-
+            resultContext.putContext(tag, "DEFAULT_DOMAIN_EVENT_PACKAGE", DEFAULT_DOMAIN_EVENT_PACKAGE)
             resultContext.putContext(tag, "DomainEvent", currentDomainEvent)
-            resultContext.putContext(tag, "persist", context.getBoolean("domainEventPersist", false))
 
+            resultContext.putContext(tag, "fullEntityType", fullEntityType)
             resultContext.putContext(tag, "Entity", entityType)
+
+            resultContext.putContext(tag, "persist", context.getBoolean("domainEventPersist", false))
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
         }
 
@@ -98,7 +97,7 @@ class DomainEventGenerator : TemplateGenerator {
         return TemplateNode().apply {
             type = "file"
             tag = this@DomainEventGenerator.tag
-            name = "{{ DEFAULT_DOMAIN_EVENT_PACKAGE }{{ SEPARATOR }}{{ DomainEvent }}.kt"
+            name = "{{ DEFAULT_DOMAIN_EVENT_PACKAGE }}{{ SEPARATOR }}{{ DomainEvent }}.kt"
             format = "resource"
             data = "domain_event"
             conflict = "skip" // 领域事件基类通常包含业务逻辑，不覆盖已有文件
@@ -114,7 +113,7 @@ class DomainEventGenerator : TemplateGenerator {
             val `package` = refPackage(aggregate)
 
             val fullDomainEventType = "${getString("basePackage")}${templatePackage}${`package`}${refPackage(currentDomainEvent)}"
-            typeRemapping[currentDomainEvent] = fullDomainEventType
+            typeMapping[currentDomainEvent] = fullDomainEventType
             generated.add(currentDomainEvent)
         }
     }

@@ -13,7 +13,7 @@ import com.only.codegen.template.TemplateNode
  */
 class SpecificationGenerator : TemplateGenerator {
     override val tag = "specification"
-    override val order = 25
+    override val order = 30
 
     private val generated = mutableSetOf<String>()
 
@@ -40,8 +40,7 @@ class SpecificationGenerator : TemplateGenerator {
         val tableName = SqlSchemaUtils.getTableName(table)
         val aggregate = context.resolveAggregateWithModule(tableName)
         val entityType = context.entityTypeMap[tableName]!!
-        val fullEntityType = context.typeRemapping[entityType]!!
-
+        val fullEntityType = context.typeMapping[entityType]!!
 
         val resultContext = context.baseMap.toMutableMap()
 
@@ -86,6 +85,20 @@ class SpecificationGenerator : TemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-        generated.add(SqlSchemaUtils.getTableName(table))
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+            val entityType = entityTypeMap[tableName]!!
+
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = refPackage(aggregate)
+
+            val specificationType = "${entityType}Specification"
+            val fullSpecificationType = "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_SPEC_PACKAGE)}${refPackage(specificationType)}"
+            typeMapping[specificationType] = fullSpecificationType
+
+            generated.add(tableName)
+        }
     }
 }

@@ -4,6 +4,7 @@ import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.EntityContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
+import com.only.codegen.pebble.PebbleTemplateRenderer.renderString
 import com.only.codegen.template.TemplateNode
 
 /**
@@ -12,7 +13,7 @@ import com.only.codegen.template.TemplateNode
  */
 class AggregateGenerator : TemplateGenerator {
     override val tag = "aggregate"
-    override val order = 45
+    override val order = 40
 
     private val generated = mutableSetOf<String>()
 
@@ -35,7 +36,8 @@ class AggregateGenerator : TemplateGenerator {
         val columns = context.columnsMap[tableName]
         val aggregate = context.resolveAggregateWithModule(tableName)
 
-        val entityType = context.entityTypeMap[tableName] ?: return emptyMap()
+        val entityType = context.entityTypeMap[tableName]!!
+        val fullFactoryType = context.typeMapping["${entityType}Factory"]!!
 
         val ids = columns!!.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
         val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
@@ -50,11 +52,12 @@ class AggregateGenerator : TemplateGenerator {
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
             resultContext.putContext(tag, "package", refPackage(refPackage(aggregate)))
 
-            resultContext.putContext(tag, "AggregateName", aggregateTypeTemplate)
-
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "IdentityType", identityType)
 
+            resultContext.putContext(tag, "AggregateName", renderString(aggregateTypeTemplate, resultContext))
+
+            resultContext.putContext(tag, "fullFactoryType", fullFactoryType)
             resultContext.putContext(tag, "Factory", "${entityType}Factory")
         }
 
@@ -91,15 +94,17 @@ class AggregateGenerator : TemplateGenerator {
             val tableName = SqlSchemaUtils.getTableName(table)
             val aggregate = resolveAggregateWithModule(tableName)
             val entityType = entityTypeMap[tableName]!!
-            var aggregateType = context.getString("aggregateTypeTemplate")
-            aggregateType = aggregateType.replace("{{ Entity }}", entityType)
 
             val basePackage = getString("basePackage")
             val templatePackage = refPackage(aggregatesPackage)
             val `package` = refPackage(aggregate)
 
-            val fullEntityType = "$basePackage${templatePackage}${`package`}${refPackage(aggregateType)}"
-            typeRemapping[entityType] = fullEntityType
+            val aggregateTypeTemplate = getString("aggregateTypeTemplate")
+            val aggregateType = renderString(aggregateTypeTemplate, mapOf("Entity" to entityType))
+
+            val fullAggregateType = "$basePackage${templatePackage}${`package`}${refPackage(aggregateType)}"
+            typeMapping[aggregateType] = fullAggregateType
+
             generated.add(tableName)
         }
     }

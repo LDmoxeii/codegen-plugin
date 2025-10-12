@@ -11,7 +11,7 @@ import com.only.codegen.template.TemplateNode
  */
 class SchemaGenerator : TemplateGenerator {
     override val tag = "schema"
-    override val order = 20
+    override val order = 30
 
     private val generated = mutableSetOf<String>()
 
@@ -33,7 +33,7 @@ class SchemaGenerator : TemplateGenerator {
         val columns = context.columnsMap[tableName]!!
 
         val entityType = context.entityTypeMap[tableName]!!
-        val fullEntityType = context.typeRemapping[entityType]!!
+        val fullEntityType = context.typeMapping[entityType]!!
 
         // 准备列字段数据
         val fields = columns
@@ -84,7 +84,7 @@ class SchemaGenerator : TemplateGenerator {
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "Schema", "S$entityType")
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
-            resultContext.putContext(tag, "FullSchemaBaseType", typeRemapping["SchemaBase"]!!)
+            resultContext.putContext(tag, "FullSchemaBaseType", typeMapping["SchemaBase"]!!)
             resultContext.putContext(tag, "FullEntityType", fullEntityType)
             resultContext.putContext(tag, "fields", fields)
             resultContext.putContext(tag, "relationFields", relationFields)
@@ -130,7 +130,7 @@ class SchemaGenerator : TemplateGenerator {
 
             val schemaType = "S$entityType"
             val fullSchemaType = "$basePackage${templatePackage}${`package`}${refPackage(schemaType)}"
-            typeRemapping[entityType] = fullSchemaType
+            typeMapping[schemaType] = fullSchemaType
 
             generated.add(tableName)
         }

@@ -33,8 +33,8 @@ class DomainEventHandlerGenerator : TemplateGenerator {
 
         val domainEvents = SqlSchemaUtils.getDomainEvents(table)
 
-        return domainEvents.any {domainEventInfo ->
-            val infos = domainEvents.toString().split(":")
+        return domainEvents.any { domainEventInfo ->
+            val infos = domainEventInfo.split(":")
             "${generateDomainEventName(infos[0])}Subscriber" !in generated
         }
     }
@@ -48,7 +48,8 @@ class DomainEventHandlerGenerator : TemplateGenerator {
         SqlSchemaUtils.getDomainEvents(table).firstOrNull { domainEventInfo ->
             val infos = domainEventInfo.split(":")
             val eventName = generateDomainEventName(infos[0])
-            if (!generated.contains(eventName)) {
+            val handlerName = "${eventName}Subscriber"
+            if (!generated.contains(handlerName)) {
                 currentDomainEventHandler = "${eventName}Subscriber"
                 domainEvent = eventName
                 true
@@ -60,9 +61,9 @@ class DomainEventHandlerGenerator : TemplateGenerator {
         with(context) {
             resultContext.putContext(tag, "modulePath", applicationPath)
             resultContext.putContext(tag, "templatePackage", refPackage(context.subscriberPackage))
-            resultContext.putContext(tag, "package",refPackage(aggregate))
+            resultContext.putContext(tag, "package", refPackage(aggregate))
 
-            resultContext.putContext(tag, "fullDomainEventType", typeRemapping[domainEvent]!!)
+            resultContext.putContext(tag, "fullDomainEventType", typeMapping[domainEvent]!!)
 
             resultContext.putContext(tag, "DomainEventHandler", currentDomainEventHandler)
         }
@@ -103,8 +104,9 @@ class DomainEventHandlerGenerator : TemplateGenerator {
             val templatePackage = refPackage(context.aggregatesPackage)
             val `package` = refPackage(aggregate)
 
-            val fullDomainEventType = "${getString("basePackage")}${templatePackage}${`package`}${refPackage(currentDomainEventHandler)}"
-            typeRemapping[currentDomainEventHandler] = fullDomainEventType
+            val fullDomainEventType =
+                "${getString("basePackage")}${templatePackage}${`package`}${refPackage(currentDomainEventHandler)}"
+            typeMapping[currentDomainEventHandler] = fullDomainEventType
             generated.add(currentDomainEventHandler)
         }
     }

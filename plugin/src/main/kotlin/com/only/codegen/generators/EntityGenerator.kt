@@ -14,7 +14,7 @@ import java.io.File
  */
 class EntityGenerator : TemplateGenerator {
     override val tag = "entity"
-    override val order = 15
+    override val order = 20
 
     private val generated = mutableSetOf<String>()
 
@@ -43,8 +43,8 @@ class EntityGenerator : TemplateGenerator {
         importManager.addBaseImports()
 
         val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
-        if (context.typeRemapping.containsKey(identityType)) {
-            importManager.add(context.typeRemapping[identityType]!!)
+        if (context.typeMapping.containsKey(identityType)) {
+            importManager.add(context.typeMapping[identityType]!!)
         }
 
         // 处理基类
@@ -194,7 +194,7 @@ class EntityGenerator : TemplateGenerator {
             val `package` = refPackage(aggregate)
 
             val fullEntityType = "$basePackage${templatePackage}${`package`}${refPackage(entityType)}"
-            typeRemapping[entityType] = fullEntityType
+            typeMapping[entityType] = fullEntityType
             generated.add(tableName)
         }
     }
@@ -550,8 +550,8 @@ class EntityGenerator : TemplateGenerator {
         }
 
         if (SqlSchemaUtils.hasEnum(column)) {
-            if (context.typeRemapping.containsKey(columnType)) {
-                importManager.add(context.typeRemapping[columnType]!!)
+            if (context.typeMapping.containsKey(columnType)) {
+                importManager.add(context.typeMapping[columnType]!!)
             }
             annotations.add("@Convert(converter = $columnType.Converter::class)")
         }

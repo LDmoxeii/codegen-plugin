@@ -123,7 +123,7 @@ class EnumGenerator : TemplateGenerator {
 
             val fullEnumType = "$basePackage${templatePackage}${`package`}$enumPackageSuffix${refPackage(currentEnumType)}"
 
-            typeRemapping[currentEnumType] = fullEnumType
+            typeMapping[currentEnumType] = fullEnumType
             generated.add(currentEnumType)
         }
 

@@ -10,7 +10,7 @@ import com.only.codegen.template.TemplateNode
  */
 class SchemaBaseGenerator : TemplateGenerator {
     override val tag = "schema_base"
-    override val order = 5
+    override val order = 10
 
     @Volatile
     private var generated = false
@@ -50,7 +50,7 @@ class SchemaBaseGenerator : TemplateGenerator {
             val basePackage = getString("basePackage")
             val templatePackage = refPackage(schemaPackage)
 
-            typeRemapping["SchemaBase"] = "$basePackage$templatePackage${refPackage("Schema")}"
+            typeMapping["SchemaBase"] = "$basePackage$templatePackage${refPackage("Schema")}"
         }
         generated = true
     }

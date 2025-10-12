@@ -1,15 +1,15 @@
 package {{ basePackage }}{{ templatePackage }}{{ package }}
 
-import {{ basePackage }}{{ entityPackage }}.{{ Entity }}
+import {{ fullEntityType }}
 import com.only4.cap4k.ddd.core.domain.aggregate.AggregateFactory
 import com.only4.cap4k.ddd.core.domain.aggregate.AggregatePayload
 import com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate
 import org.springframework.stereotype.Service
 
 /**
-{% for line in commentLines %}
+{%- for line in commentLines %}
  * {{ line }}
-{% endfor %}
+{%- endfor %}
  *
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
  * @author cap4k-ddd-codegen
@@ -30,9 +30,6 @@ class {{ Factory }} : AggregateFactory<{{ Factory }}.Payload, {{ Entity }}> {
         )
     }
 
-    /**
-     * 工厂载荷，包含创建实体所需的所有参数
-     */
      @Aggregate(
         aggregate = "{{ Entity }}",
         name = "{{ Payload }}",
