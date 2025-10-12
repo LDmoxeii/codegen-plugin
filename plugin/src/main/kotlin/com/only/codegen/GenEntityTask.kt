@@ -123,8 +123,6 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
     @Internal
     override val enumPackageMap: MutableMap<String, String> = mutableMapOf()
 
-    @Internal
-    override val enumTableNameMap: MutableMap<String, String> = mutableMapOf()
     override fun resolveAggregateWithModule(tableName: String): String {
         val module = tableModuleMap[tableName]
         return if (!(module.isNullOrBlank())) {
