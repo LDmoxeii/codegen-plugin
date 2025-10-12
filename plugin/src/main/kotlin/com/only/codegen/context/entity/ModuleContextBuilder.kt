@@ -1,6 +1,5 @@
-package com.only.codegen.context.builders
+package com.only.codegen.context.entity
 
-import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils
 
 class ModuleContextBuilder:EntityContextBuilder {

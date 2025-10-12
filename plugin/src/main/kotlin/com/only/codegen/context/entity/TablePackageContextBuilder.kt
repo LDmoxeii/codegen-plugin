@@ -1,6 +1,5 @@
-package com.only.codegen.context.builders
+package com.only.codegen.context.entity
 
-import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 
@@ -12,7 +11,8 @@ class TablePackageContextBuilder: EntityContextBuilder {
             with(context) {
                 val tableName = SqlSchemaUtils.getTableName(table)
                 val aggregate = resolveAggregateWithModule(tableName)
-                context.tablePackageMap[tableName] = "${getString("basePackage")}${refPackage(aggregatesPackage)}${refPackage(aggregate)}"
+                tablePackageMap[tableName] =
+                    "${getString("basePackage")}${refPackage(aggregatesPackage)}${refPackage(aggregate)}"
             }
         }
     }

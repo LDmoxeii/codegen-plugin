@@ -1,6 +1,8 @@
 package com.only.codegen
 
 import com.only.codegen.context.BaseContext
+import com.only.codegen.misc.resolvePackage
+import com.only.codegen.misc.resolvePackageDirectory
 import com.only.codegen.template.PathNode
 import com.only.codegen.template.Template
 import com.only.codegen.template.TemplateNode
@@ -141,30 +143,45 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     @get:Internal
     override val domainPath: String by lazy { extension.get().domainPath }
 
-    // === 包路径信息（默认实现，子类可以覆盖） ===
+    // === 包路径信息 ===
     @get:Internal
-    override val aggregatesPath: String
-        get() = ""
+    override var aggregatesPath: String = ""
+        get() = field.takeIf { it.isNotBlank() } ?: resolvePackageDirectory(
+            domainPath,
+            "${getString("basePackage")}.$AGGREGATE_PACKAGE"
+        ).also { field = it }
 
     @get:Internal
-    override val schemaPath: String
-        get() = ""
+    override var schemaPath: String = ""
+        get() = field.takeIf { it.isNotBlank() } ?: resolvePackageDirectory(
+            domainPath,
+            "${getString("basePackage")}.${getString("entitySchemaOutputPackage").takeIf { it.isNotBlank() } ?: "domain._share.meta"}"
+        ).also { field = it }
 
     @get:Internal
-    override val subscriberPath: String
-        get() = ""
+    override var subscriberPath: String = ""
+        get() = field.takeIf { it.isNotBlank() } ?: resolvePackageDirectory(
+            domainPath,
+            "${getString("basePackage")}.$DOMAIN_EVENT_SUBSCRIBER_PACKAGE"
+        ).also { field = it }
 
     @get:Internal
-    override val aggregatesPackage: String
-        get() = ""
+    override val aggregatesPackage: String by lazy {
+        resolvePackage("${aggregatesPath}${File.separator}X.kt")
+            .substring(getString("basePackage").length + 1)
+    }
 
     @get:Internal
-    override val schemaPackage: String
-        get() = ""
+    override val schemaPackage: String by lazy {
+        resolvePackage("${schemaPath}${File.separator}X.kt")
+            .substring(getString("basePackage").length + 1)
+    }
 
     @get:Internal
-    override val subscriberPackage: String
-        get() = ""
+    override val subscriberPackage: String by lazy {
+        resolvePackage("${subscriberPath}${File.separator}X.kt")
+            .substring(getString("basePackage").length + 1)
+    }
 
     @get:Internal
     override val typeMapping: MutableMap<String, String> by lazy {

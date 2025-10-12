@@ -1,17 +1,13 @@
 package com.only.codegen
 
-import com.only.codegen.context.EntityContext
-import com.only.codegen.context.MutableEntityContext
-import com.only.codegen.context.builders.*
+import com.only.codegen.context.entity.*
 import com.only.codegen.generators.*
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.concatPackage
-import com.only.codegen.misc.resolvePackage
 import com.only.codegen.misc.resolvePackageDirectory
 import com.only.codegen.template.TemplateNode
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 /**
  * 生成实体类任务
@@ -34,45 +30,6 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
 
     @Internal
     override val dbType: String = "dbType"
-
-    @get:Internal
-    override var aggregatesPath: String = ""
-        get() = field.takeIf { it.isNotBlank() } ?: resolvePackageDirectory(
-            domainPath,
-            "${getString("basePackage")}.$AGGREGATE_PACKAGE"
-        ).also { field = it }
-
-    @get:Internal
-    override var schemaPath: String = ""
-        get() = field.takeIf { it.isNotBlank() } ?: resolvePackageDirectory(
-            domainPath,
-            "${getString("basePackage")}.${getString("entitySchemaOutputPackage").takeIf { it.isNotBlank() } ?: "domain._share.meta"}"
-        ).also { field = it }
-
-    @get:Internal
-    override var subscriberPath: String = ""
-        get() = field.takeIf { it.isNotBlank() } ?: resolvePackageDirectory(
-            domainPath,
-            "${getString("basePackage")}.$DOMAIN_EVENT_SUBSCRIBER_PACKAGE"
-        ).also { field = it }
-
-    @get:Internal
-    override val aggregatesPackage: String by lazy {
-        resolvePackage("${aggregatesPath}${File.separator}X.kt")
-            .substring(getString("basePackage").length + 1)
-    }
-
-    @get:Internal
-    override val schemaPackage: String by lazy {
-        resolvePackage("${schemaPath}${File.separator}X.kt")
-            .substring(getString("basePackage").length + 1)
-    }
-
-    @get:Internal
-    override val subscriberPackage: String by lazy {
-        resolvePackage("${subscriberPath}${File.separator}X.kt")
-            .substring(getString("basePackage").length + 1)
-    }
 
     @get:Internal
     override val entityClassExtraImports: List<String> by lazy {

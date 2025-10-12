@@ -1,6 +1,4 @@
-package com.only.codegen.context.builders
-
-import com.only.codegen.context.MutableEntityContext
+package com.only.codegen.context.entity
 
 /**
  * 上下文构建器（负责收集和处理数据）

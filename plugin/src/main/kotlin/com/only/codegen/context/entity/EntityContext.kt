@@ -1,4 +1,6 @@
-package com.only.codegen.context
+package com.only.codegen.context.entity
+
+import com.only.codegen.context.BaseContext
 
 interface EntityContext : BaseContext {
 

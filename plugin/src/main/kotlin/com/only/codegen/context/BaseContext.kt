@@ -7,17 +7,17 @@ interface BaseContext {
     // === 基础配置 Map（包含所有项目、数据库、生成配置等） ===
     val baseMap: Map<String, Any?>
 
-    // === 模块路径信息（由 AbstractCodegenTask 提供实现） ===
+    // === 模块路径信息 ===
     val adapterPath: String
     val domainPath: String
     val applicationPath: String
 
-    // === 包路径信息（由 GenEntityTask/GenAnnotationTask 提供实现） ===
+    // === 包路径信息 ===
     val aggregatesPath: String
     val schemaPath: String
     val subscriberPath: String
 
-    // === 包名信息（由 GenEntityTask/GenAnnotationTask 提供实现） ===
+    // === 包名信息 ===
     val aggregatesPackage: String
     val schemaPackage: String
     val subscriberPackage: String

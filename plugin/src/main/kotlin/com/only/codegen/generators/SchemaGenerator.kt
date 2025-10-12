@@ -1,7 +1,7 @@
 package com.only.codegen.generators
 
 import com.only.codegen.AbstractCodegenTask
-import com.only.codegen.context.EntityContext
+import com.only.codegen.context.entity.EntityContext
 import com.only.codegen.misc.*
 import com.only.codegen.template.TemplateNode
 

@@ -1,6 +1,6 @@
 package com.only.codegen.misc
 
-import com.only.codegen.context.EntityContext
+import com.only.codegen.context.entity.EntityContext
 import java.sql.DriverManager
 import java.util.regex.Pattern
 
