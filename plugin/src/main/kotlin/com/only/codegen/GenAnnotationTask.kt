@@ -84,7 +84,7 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
     /**
      * 解析 KSP 元数据路径
      *
-     * 默认路径: build/generated/ksp/{variant}/kotlin/metadata/
+     * 默认路径: build/generated/ksp/{variant}/resources/metadata/
      */
     private fun resolveMetadataPath(): File {
         val configuredPath = extension.get().annotation.metadataPath.orNull
@@ -97,7 +97,9 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
         if (ext.multiModule.get()) {
             val domainModuleName = "${projectName.get()}${ext.moduleNameSuffix4Domain.get()}"
             val domainModulePath = File(projectDir.get(), domainModuleName)
-            val domainKspPath = File(domainModulePath, "build/generated/ksp/main/kotlin/metadata")
+
+            // KSP 默认将 resources 输出到 build/generated/ksp/main/resources/
+            val domainKspPath = File(domainModulePath, "build/generated/ksp/main/resources/metadata")
 
             if (domainKspPath.exists()) {
                 logger.info("Found KSP metadata in domain module: ${domainKspPath.absolutePath}")
@@ -111,7 +113,7 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
             }?.toList() ?: emptyList()
 
             for (subModule in subModules) {
-                val kspPath = File(subModule, "build/generated/ksp/main/kotlin/metadata")
+                val kspPath = File(subModule, "build/generated/ksp/main/resources/metadata")
                 if (kspPath.exists()) {
                     logger.info("Found KSP metadata in module ${subModule.name}: ${kspPath.absolutePath}")
                     return kspPath
@@ -123,8 +125,8 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
             return domainKspPath
         }
 
-        // 单模块项目：项目根目录的 build/generated/ksp/main/kotlin/metadata/
-        return File(projectDir.get(), "build/generated/ksp/main/kotlin/metadata")
+        // 单模块项目：项目根目录的 build/generated/ksp/main/resources/metadata/
+        return File(projectDir.get(), "build/generated/ksp/main/resources/metadata")
     }
 
     /**
@@ -147,6 +149,9 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
             .forEach { builder ->
                 logger.lifecycle("Building context: ${builder.javaClass.simpleName}")
                 builder.build(this)
+                // 输出调试信息
+                logger.lifecycle("  - classMap size: ${classMap.size}")
+                logger.lifecycle("  - aggregateMap size: ${aggregateMap.size}")
             }
 
         return this

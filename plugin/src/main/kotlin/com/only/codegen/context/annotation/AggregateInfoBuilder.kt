@@ -48,6 +48,7 @@ class AggregateInfoBuilder : AnnotationContextBuilder {
         val roots = mutableMapOf<String, ClassInfo>()
 
         context.classMap.values.forEach { classInfo ->
+            println("Checking class: ${classInfo.simpleName}, isAggregateRoot: ${classInfo.isAggregateRoot}, annotations: ${classInfo.annotations.map { it.name }}")
             if (classInfo.isAggregateRoot) {
                 // 从 @Aggregate 注解中获取聚合名称
                 val aggregateAnnotation = classInfo.annotations.find { it.name == "Aggregate" }
@@ -55,10 +56,12 @@ class AggregateInfoBuilder : AnnotationContextBuilder {
                     ?.attributes?.get("aggregate") as? String
                     ?: classInfo.simpleName
 
+                println("Found aggregate root: $aggregateName -> ${classInfo.simpleName}")
                 roots[aggregateName] = classInfo
             }
         }
 
+        println("Total aggregate roots found: ${roots.size}")
         return roots
     }
 

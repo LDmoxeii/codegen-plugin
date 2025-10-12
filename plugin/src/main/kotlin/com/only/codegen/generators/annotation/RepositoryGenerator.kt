@@ -4,6 +4,8 @@ import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.annotation.AggregateInfo
 import com.only.codegen.context.annotation.AnnotationContext
 import com.only.codegen.misc.refPackage
+import com.only.codegen.pebble.PebbleTemplateRenderer
+import com.only.codegen.pebble.PebbleTemplateRenderer.renderString
 import com.only.codegen.template.TemplateNode
 
 /**
@@ -88,7 +90,7 @@ class RepositoryGenerator : AnnotationTemplateGenerator {
             resultContext.putContext(tag, "AggregateRoot", rootEntityType)
 
             // Repository 信息
-            resultContext.putContext(tag, "Repository", repositoryName)
+            resultContext.putContext(tag, "Repository",  renderString(repositoryName, mapOf("Entity" to rootEntityType)))
             resultContext.putContext(tag, "parentInterface", parentInterface)
 
             // ID 类型

@@ -129,6 +129,12 @@ class KspMetadataContextBuilder(
         context: MutableAnnotationContext,
     ) {
         entities.forEach { metadata ->
+            // 如果已经处理过（在 aggregates 中），跳过或合并注解
+            if (context.classMap.containsKey(metadata.qualifiedName)) {
+                // 跳过，保留 aggregate 信息
+                return@forEach
+            }
+
             // 1. 构建 ClassInfo
             val classInfo = ClassInfo(
                 packageName = metadata.packageName,
