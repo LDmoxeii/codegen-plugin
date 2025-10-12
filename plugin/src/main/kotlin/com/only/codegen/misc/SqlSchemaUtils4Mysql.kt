@@ -99,8 +99,9 @@ object SqlSchemaUtils4Mysql : SqlSchemaUtils.SqlSchemaDialect {
 
         if (hasType(column)) {
             val customType = getType(column)
-            if (hasEnum(column) && context!!.enumPackageMap.containsKey(customType)) {
-                val enumFqnPrefix = "${context!!.enumPackageMap[customType]}.$customType"
+            TODO("后续不用处理前缀")
+            if (hasEnum(column) && context.enumPackageMap.containsKey(customType)) {
+                val enumFqnPrefix = "${context.enumPackageMap[customType]}.$customType"
                 return if (columnType.endsWith("?")) {
                     if (columnDefault.isNullOrEmpty()) "null"
                     else "$enumFqnPrefix.valueOf($columnDefault)"

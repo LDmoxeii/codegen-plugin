@@ -12,6 +12,9 @@ interface BaseContext {
     val domainPath: String
     val applicationPath: String
 
+    // === 类型映射 ===
+    val typeRemapping: MutableMap<String, String>
+
     // === 模板信息 ===
     val templateNodeMap: MutableMap<String, MutableList<TemplateNode>>
 

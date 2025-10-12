@@ -142,6 +142,11 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     @get:Internal
     override val domainPath: String by lazy { extension.get().domainPath }
 
+    @get:Internal
+    override val typeRemapping: MutableMap<String, String> by lazy {
+        extension.get().generation.typeMapping.get().toMutableMap()
+    }
+
     @Internal
     override val templateNodeMap = mutableMapOf<String, MutableList<TemplateNode>>()
 

@@ -31,7 +31,6 @@ interface EntityContext : BaseContext {
     // === 枚举信息 ===
     val enumConfigMap: Map<String, Map<Int, Array<String>>>
     val enumPackageMap: Map<String, String>
-    val enumTableNameMap: Map<String, String>
 
     fun resolveAggregateWithModule(tableName: String): String
 }

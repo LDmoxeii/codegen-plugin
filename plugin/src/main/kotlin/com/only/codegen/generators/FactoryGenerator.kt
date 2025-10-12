@@ -1,0 +1,93 @@
+package com.only.codegen.generators
+
+import com.only.codegen.AbstractCodegenTask
+import com.only.codegen.context.EntityContext
+import com.only.codegen.misc.SqlSchemaUtils
+import com.only.codegen.misc.refPackage
+import com.only.codegen.misc.toUpperCamelCase
+import com.only.codegen.template.TemplateNode
+import java.io.File
+
+/**
+ * Factory 文件生成器
+ * 为聚合根生成工厂类
+ */
+class FactoryGenerator : TemplateGenerator {
+    override val tag = "factory"
+    override val order = 30
+
+    private val generated = mutableSetOf<String>()
+
+    companion object {
+        private const val DEFAULT_FAC_PACKAGE = "factory"
+    }
+
+    override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
+        if (SqlSchemaUtils.isIgnore(table)) return false
+        if (SqlSchemaUtils.hasRelation(table)) return false
+
+        if (!SqlSchemaUtils.isAggregateRoot(table)) return false
+
+        if (!(SqlSchemaUtils.hasFactory(table)) && context.getBoolean("generateAggregate")) return false
+
+        val tableName = SqlSchemaUtils.getTableName(table)
+        val columns = context.columnsMap[tableName] ?: return false
+        val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
+
+        return ids.isNotEmpty() && !generated.contains(tableName)
+    }
+
+    override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
+        val tableName = SqlSchemaUtils.getTableName(table)
+        val aggregate = context.resolveAggregateWithModule(tableName)
+
+        val entityType = context.entityTypeMap[tableName] ?: return emptyMap()
+        val resultContext = context.baseMap.toMutableMap()
+
+        with(context) {
+            resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
+            resultContext.putContext(tag, "DEFAULT_FAC_PACKAGE", DEFAULT_FAC_PACKAGE)
+
+            resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
+            resultContext.putContext(tag, "package", refPackage(aggregate))
+
+            resultContext.putContext(tag, "Factory", "${entityType}Factory")
+            resultContext.putContext(tag, "Payload", "${entityType}Payload")
+
+            resultContext.putContext(tag, "Entity", entityType)
+            resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
+        }
+
+        // 准备注释行
+        val commentLines = SqlSchemaUtils.getComment(table)
+            .split(Regex(AbstractCodegenTask.PATTERN_LINE_BREAK))
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .map { line ->
+                if (line.endsWith(";")) line.dropLast(1).trim() else line
+            }
+            .filter { it.isNotEmpty() }
+
+        with(context) {
+            resultContext.putContext(tag, "commentLines", commentLines)
+        }
+
+        return resultContext
+    }
+
+    override fun getDefaultTemplateNode(): TemplateNode {
+        return TemplateNode().apply {
+            type = "file"
+            tag = this@FactoryGenerator.tag
+            name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_FAC_PACKAGE }{{ SEPARATOR }}{{ Factory }}.kt"
+            format = "resource"
+            data = "factory"
+            conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件
+        }
+    }
+
+    override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
+        generated.add(SqlSchemaUtils.getTableName(table))
+    }
+
+}

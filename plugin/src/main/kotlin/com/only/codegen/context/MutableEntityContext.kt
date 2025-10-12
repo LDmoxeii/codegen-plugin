@@ -13,8 +13,6 @@ interface MutableEntityContext : EntityContext {
     override val relationsMap: MutableMap<String, Map<String, String>>
 
     override val enumConfigMap: MutableMap<String, Map<Int, Array<String>>>
-    override val enumPackageMap: MutableMap<String, String>
-    override val enumTableNameMap: MutableMap<String, String>
 
     override val templateNodeMap: MutableMap<String, MutableList<TemplateNode>>
 }

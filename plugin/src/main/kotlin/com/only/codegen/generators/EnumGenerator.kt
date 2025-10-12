@@ -18,22 +18,24 @@ class EnumGenerator : TemplateGenerator {
     @Volatile
     private lateinit var currentEnumType: String
 
-    private val generatedEnumTypes = mutableSetOf<String>()
+    private val generated = mutableSetOf<String>()
 
     override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
-        if (SqlSchemaUtils.isIgnore(table)) return false
-        if (SqlSchemaUtils.hasRelation(table)) return false
+        with(context) {
+            if (SqlSchemaUtils.isIgnore(table)) return false
+            if (SqlSchemaUtils.hasRelation(table)) return false
 
-        val tableName = SqlSchemaUtils.getTableName(table)
-        val columns = context.columnsMap[tableName] ?: return false
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val columns = columnsMap[tableName] ?: return false
 
-        // 检查是否有未生成的枚举列
-        return columns.any { column ->
-            if (!SqlSchemaUtils.hasEnum(column) || SqlSchemaUtils.isIgnore(column)) {
-                false
-            } else {
-                val enumType = SqlSchemaUtils.getType(column)
-                !(generatedEnumTypes.contains(enumType))
+            // 检查是否有未生成的枚举列
+            return columns.any { column ->
+                if (!SqlSchemaUtils.hasEnum(column) || SqlSchemaUtils.isIgnore(column)) {
+                    false
+                } else {
+                    val enumType = SqlSchemaUtils.getType(column)
+                    !(generated.contains(enumType))
+                }
             }
         }
     }
@@ -48,25 +50,18 @@ class EnumGenerator : TemplateGenerator {
             val entityType = entityTypeMap[tableName] ?: return emptyMap()
             val entityVar = toLowerCamelCase(entityType) ?: entityType
 
-            // 收集本表的所有未生成的枚举
-            val newEnums = mutableListOf<String>()
-
-            columns.forEach { column ->
+            columns.first { column ->
                 if (SqlSchemaUtils.hasEnum(column) && !SqlSchemaUtils.isIgnore(column)) {
                     val enumType = SqlSchemaUtils.getType(column)
                     val enumConfig = enumConfigMap[enumType]
-                    if (enumConfig != null && enumConfig.isNotEmpty()) {
-                        newEnums.add(enumType)
-                    }
-                }
+                    if (!(generated.contains(entityType)) && enumConfig != null && enumConfig.isNotEmpty()) {
+                        currentEnumType = enumType
+                        true
+                    } else false
+                } else false
             }
 
-            val enumType = newEnums.firstOrNull { !(generatedEnumTypes.contains(entityType)) }
-                ?: return emptyMap()
-            currentEnumType = enumType
-
-            val enumConfig = enumConfigMap[enumType]!!
-
+            val enumConfig = enumConfigMap[currentEnumType]!!
 
             val enumItems = enumConfig.toSortedMap().map { (value, arr) ->
                 mapOf(
@@ -81,6 +76,7 @@ class EnumGenerator : TemplateGenerator {
 
             resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
             resultContext.putContext(tag, "package", refPackage(aggregate))
+
             resultContext.putContext(tag, "path", aggregate.replace(".", File.separator))
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
             resultContext.putContext(tag, "Comment", "")
@@ -89,7 +85,7 @@ class EnumGenerator : TemplateGenerator {
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "AggregateRoot", entityType)
             resultContext.putContext(tag, "EntityVar", entityVar)
-            resultContext.putContext(tag, "Enum", enumType)
+            resultContext.putContext(tag, "Enum", currentEnumType)
             resultContext.putContext(tag, "EnumValueField", getString("enumValueField"))
             resultContext.putContext(tag, "EnumNameField", getString("enumNameField"))
             resultContext.putContext(tag, "EnumItems", enumItems)
@@ -103,7 +99,7 @@ class EnumGenerator : TemplateGenerator {
             type = "file"
             tag = this@EnumGenerator.tag
             name = "{{ path }}{{ SEPARATOR }}{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
-            format = "resouce"
+            format = "resource"
             data = "enum"
             conflict = "overwrite"
         }
@@ -113,6 +109,34 @@ class EnumGenerator : TemplateGenerator {
         table: Map<String, Any?>,
         context: EntityContext,
     ) {
-        generatedEnumTypes.add(currentEnumType)
+        with(context) {
+            val defaultEnumPackage = "enums"
+
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+
+            // 计算枚举包路径
+            val enumPackageSuffix = buildString {
+                val packageName = templateNodeMap["enum"]
+                    ?.takeIf { it.isNotEmpty() }
+                    ?.get(0)?.name
+                    ?.takeIf { it.isNotBlank() }
+                    ?: defaultEnumPackage
+
+                if (packageName.isNotBlank()) {
+                    append(".$packageName")
+                }
+            }
+
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = refPackage(aggregate)
+
+            val fullEnumType = "$basePackage${templatePackage}${`package`}`$enumPackageSuffix.${currentEnumType}"
+
+            typeRemapping[currentEnumType] = fullEnumType
+            generated.add(currentEnumType)
+        }
+
     }
 }

@@ -5,7 +5,6 @@ import com.only.codegen.misc.SqlSchemaUtils
 
 /**
  * 枚举信息构建器
- * 扫描所有列的枚举配置，预填充 enumPackageMap
  */
 class EnumContextBuilder : ContextBuilder {
     override val order = 50
@@ -23,9 +22,7 @@ class EnumContextBuilder : ContextBuilder {
                     if (enumConfig.isNotEmpty()) {
                         val enumType = SqlSchemaUtils.getType(column)
 
-                        // 记录枚举配置
                         context.enumConfigMap[enumType] = enumConfig
-                        context.enumTableNameMap[enumType] = tableName
                     }
                 }
             }

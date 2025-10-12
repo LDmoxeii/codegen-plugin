@@ -169,7 +169,7 @@ open class GenerationConfig @Inject constructor(objects: ObjectFactory) {
     /**
      * 实体Schema类名模板
      */
-    val entitySchemaNameTemplate: Property<String> = objects.property(String::class.java).convention("S${'$'}{Entity}")
+    val entitySchemaNameTemplate: Property<String> = objects.property(String::class.java).convention("S{{ Entity }}")
 
     /**
      * 关联实体加载模式 LAZY | EAGER
@@ -215,7 +215,7 @@ open class GenerationConfig @Inject constructor(objects: ObjectFactory) {
     /**
      * 类型映射
      */
-    val typeRemapping: MapProperty<String, String> =
+    val typeMapping: MapProperty<String, String> =
         objects.mapProperty(String::class.java, String::class.java).convention(mutableMapOf())
 
     /**
@@ -242,7 +242,7 @@ open class GenerationConfig @Inject constructor(objects: ObjectFactory) {
      * 仓储名称模板
      */
     val repositoryNameTemplate: Property<String> =
-        objects.property(String::class.java).convention("${'$'}{Entity}Repository")
+        objects.property(String::class.java).convention("{{ Entity }}Repository")
 
     /**
      * 仓储是否支持Querydsl
@@ -252,5 +252,5 @@ open class GenerationConfig @Inject constructor(objects: ObjectFactory) {
     /**
      * 聚合名称模板
      */
-    val aggregateNameTemplate: Property<String> = objects.property(String::class.java).convention("Agg${'$'}{Entity}")
+    val aggregateNameTemplate: Property<String> = objects.property(String::class.java).convention("Agg{{ Entity }}")
 }

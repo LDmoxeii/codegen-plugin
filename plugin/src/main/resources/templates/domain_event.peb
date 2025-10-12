@@ -1,0 +1,24 @@
+package {{ basePackage }}{{ templatePackage }}{{ package }}
+
+import {{ fullEntityType }}
+import com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate
+import com.only4.cap4k.ddd.core.domain.event.annotation.DomainEvent
+
+/**
+{% for line in commentLines %}
+ * {{ line }}
+{% endfor %}
+ *
+ * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
+ * 警告：可以在本文件中添加自定义领域事件类型
+ * @author cap4k-ddd-codegen
+ * @date {{ date }}
+ */
+@DomainEvent(persist = {{ persist }})
+@Aggregate(
+    aggregate = "{{ Aggregate }}",
+    name = "{{ DomainEvent }}",
+    type = Aggregate.TYPE_DOMAIN_EVENT,
+    description = ""
+)
+class {{ DomainEvent }}(val entity: {{ Entity }})

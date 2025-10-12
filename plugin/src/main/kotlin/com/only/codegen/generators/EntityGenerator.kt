@@ -36,11 +36,14 @@ class EntityGenerator : TemplateGenerator {
         val entityFullPackage = context.tablePackageMap[tableName] ?: ""
         val ids = resolveIdColumns(columns)
 
-        val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
-
         // 创建 ImportManager
         val importManager = EntityImportManager()
         importManager.addBaseImports()
+
+        val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
+        if (context.typeRemapping.containsKey(identityType)) {
+            importManager.add(context.typeRemapping[identityType]!!)
+        }
 
         // 处理基类
         var baseClass: String? = null
@@ -67,7 +70,6 @@ class EntityGenerator : TemplateGenerator {
         val existingImportLines = mutableListOf<String>()
         val annotationLines = mutableListOf<String>()
         val customerLines = mutableListOf<String>()
-        val enums = mutableListOf<String>()
 
         // 处理现有文件的自定义内容
         val filePath = resolveSourceFile(
@@ -78,22 +80,16 @@ class EntityGenerator : TemplateGenerator {
         processEntityCustomerSourceFile(filePath, existingImportLines, annotationLines, customerLines, context)
         processAnnotationLines(table, columns, annotationLines, context, ids)
 
-        // 将现有文件中的自定义导入添加到 importManager
-        // 只处理真正的 import 语句，过滤掉空行、注释等
         existingImportLines.forEach { line ->
-            val trimmed = line.trim()
-            if (trimmed.startsWith("import ")) {
-                val importPath = trimmed.removePrefix("import").trim()
-                // 只添加不在 importManager 中的导入（避免重复）
-                if (importPath.isNotBlank() && !importManager.contains(importPath)) {
-                    importManager.add(importPath)
-                }
-            }
+            importManager.add(line)
         }
 
         // 准备列数据
         val columnDataList = columns.map { column ->
-            prepareColumnData(table, column, ids, context.relationsMap, enums, context)
+            prepareColumnData(
+                table, column,
+                ids, context, importManager
+            )
         }
 
         // 准备关系数据
@@ -150,21 +146,20 @@ class EntityGenerator : TemplateGenerator {
 
         // 构建上下文
         val resultContext = context.baseMap.toMutableMap()
-
-        val fullPackage = resolveEntityPackage(tableName, context)
-        val aggregatesPackage = context.aggregatesPackage
-
-        val relativePackage = if (fullPackage.startsWith(aggregatesPackage)) {
-            val relative = fullPackage.substring(aggregatesPackage.length)
-            if (relative.startsWith(".")) relative else ".$relative"
-        } else {
-            ".$fullPackage"
-        }
-
         with(context) {
-            resultContext.putContext(tag, "templatePackage", ".$aggregatesPackage")
-            resultContext.putContext(tag, "package", relativePackage)
+
+            val fullPackage = resolveEntityPackage(tableName, context)
+            val relativePackage = if (fullPackage.startsWith(aggregatesPackage)) {
+                val relative = fullPackage.substring(aggregatesPackage.length)
+                if (relative.startsWith(".")) relative else ".$relative"
+            } else {
+                ".$fullPackage"
+            }
             resultContext.putContext(tag, "path", fullPackage.replace(".", File.separator))
+
+            resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
+            resultContext.putContext(tag, "package", relativePackage)
+
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "entityType", entityType)
             resultContext.putContext(tag, "extendsClause", extendsClause)
@@ -195,7 +190,22 @@ class EntityGenerator : TemplateGenerator {
         table: Map<String, Any?>,
         context: EntityContext,
     ) {
-        generated.add(SqlSchemaUtils.getTableName(table))
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val fullPackage = resolveEntityPackage(tableName, context)
+
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = if (fullPackage.startsWith(aggregatesPackage)) {
+                val relative = fullPackage.substring(aggregatesPackage.length)
+                if (relative.startsWith(".")) relative else ".$relative"
+            } else {
+                ".$fullPackage"
+            }
+            val fullEntityType = "${getString("basePackage")}.${templatePackage}.${`package`}"
+
+            typeRemapping[tableName] = fullEntityType
+            generated.add(tableName)
+        }
     }
 
     private fun resolveIdColumns(columns: List<Map<String, Any?>>): List<Map<String, Any?>> {
@@ -203,9 +213,11 @@ class EntityGenerator : TemplateGenerator {
     }
 
     private fun resolveEntityPackage(tableName: String, context: EntityContext): String {
-        val module = context.tableModuleMap[tableName] ?: ""
-        val aggregate = context.tableAggregateMap[tableName] ?: ""
-        return concatPackage(context.aggregatesPackage, module, aggregate.lowercase())
+        with(context) {
+            val module = tableModuleMap[tableName] ?: ""
+            val aggregate = tableAggregateMap[tableName] ?: ""
+            return concatPackage(aggregatesPackage, module, aggregate.lowercase())
+        }
     }
 
     private fun resolveSourceFile(
@@ -218,19 +230,21 @@ class EntityGenerator : TemplateGenerator {
     }
 
     private fun resolveEntityIdGenerator(table: Map<String, Any?>, context: EntityContext): String {
-        return when {
-            SqlSchemaUtils.hasIdGenerator(table) -> {
-                SqlSchemaUtils.getIdGenerator(table)
-            }
-
-            SqlSchemaUtils.isValueObject(table) -> {
-                context.getString("idGenerator4ValueObject").ifBlank {
-                    "com.only4.cap4k.ddd.domain.repo.Md5HashIdentifierGenerator"
+        with(context) {
+            return when {
+                SqlSchemaUtils.hasIdGenerator(table) -> {
+                    SqlSchemaUtils.getIdGenerator(table)
                 }
-            }
 
-            else -> {
-                context.getString("idGenerator")
+                SqlSchemaUtils.isValueObject(table) -> {
+                    getString("idGenerator4ValueObject").ifBlank {
+                        "com.only4.cap4k.ddd.domain.repo.Md5HashIdentifierGenerator"
+                    }
+                }
+
+                else -> {
+                    getString("idGenerator")
+                }
             }
         }
     }
@@ -271,51 +285,55 @@ class EntityGenerator : TemplateGenerator {
     }
 
     private fun isReadOnlyColumn(column: Map<String, Any?>, context: EntityContext): Boolean {
-        if (SqlSchemaUtils.hasReadOnly(column)) return true
+        with(context) {
+            if (SqlSchemaUtils.hasReadOnly(column)) return true
 
-        val columnName = SqlSchemaUtils.getColumnName(column).lowercase()
-        val readonlyFields = context.getString("readonlyFields")
+            val columnName = SqlSchemaUtils.getColumnName(column).lowercase()
+            val readonlyFields = getString("readonlyFields")
 
-        return readonlyFields.isNotBlank() && readonlyFields
-            .lowercase()
-            .split(Regex(AbstractCodegenTask.PATTERN_SPLITTER))
-            .any { pattern -> columnName.matches(pattern.replace("%", ".*").toRegex()) }
+            return readonlyFields.isNotBlank() && readonlyFields
+                .lowercase()
+                .split(Regex(AbstractCodegenTask.PATTERN_SPLITTER))
+                .any { pattern -> columnName.matches(pattern.replace("%", ".*").toRegex()) }
+        }
     }
 
-    private fun isVersionColumn(column: Map<String, Any?>, context: EntityContext)
-        = SqlSchemaUtils.getColumnName(column) == context.getString("versionField")
+    private fun isVersionColumn(column: Map<String, Any?>, context: EntityContext) = with(context) {
+        SqlSchemaUtils.getColumnName(column) == getString("versionField")
+    }
 
-    private fun isIdColumn(column: Map<String, Any?>)
-        = SqlSchemaUtils.isColumnPrimaryKey(column)
+    private fun isIdColumn(column: Map<String, Any?>) = SqlSchemaUtils.isColumnPrimaryKey(column)
 
     private fun generateFieldComment(column: Map<String, Any?>, context: EntityContext): List<String> {
         val fieldName = SqlSchemaUtils.getColumnName(column)
         val fieldType = SqlSchemaUtils.getColumnType(column)
 
-        return buildList {
-            add("/**")
+        with(context) {
+            return buildList {
+                add("/**")
 
-            SqlSchemaUtils.getComment(column)
-                .split(Regex(AbstractCodegenTask.PATTERN_LINE_BREAK))
-                .filter { it.isNotEmpty() }
-                .forEach { add(" * $it") }
+                SqlSchemaUtils.getComment(column)
+                    .split(Regex(AbstractCodegenTask.PATTERN_LINE_BREAK))
+                    .filter { it.isNotEmpty() }
+                    .forEach { add(" * $it") }
 
-            if (SqlSchemaUtils.hasEnum(column)) {
-                val enumMap = context.enumConfigMap[fieldType] ?: context.enumConfigMap[SqlSchemaUtils.getType(column)]
-                enumMap?.entries?.forEach { (key, value) ->
-                    add(" * $key:${value[0]}:${value[1]}")
+                if (SqlSchemaUtils.hasEnum(column)) {
+                    val enumMap = enumConfigMap[fieldType] ?: enumConfigMap[SqlSchemaUtils.getType(column)]
+                    enumMap?.entries?.forEach { (key, value) ->
+                        add(" * $key:${value[0]}:${value[1]}")
+                    }
                 }
-            }
 
-            if (fieldName == context.getString("versionField")) {
-                add(" * 数据版本（支持乐观锁）")
-            }
+                if (fieldName == getString("versionField")) {
+                    add(" * 数据版本（支持乐观锁）")
+                }
 
-            if (context.getBoolean("generateDbType")) {
-                add(" * ${SqlSchemaUtils.getColumnDbType(column)}")
-            }
+                if (getBoolean("generateDbType")) {
+                    add(" * ${SqlSchemaUtils.getColumnDbType(column)}")
+                }
 
-            add(" */")
+                add(" */")
+            }
         }
     }
 
@@ -324,7 +342,7 @@ class EntityGenerator : TemplateGenerator {
         importLines: MutableList<String>,
         annotationLines: MutableList<String>,
         customerLines: MutableList<String>,
-        context: EntityContext
+        context: EntityContext,
     ): Boolean {
         val file = File(filePath)
         if (file.exists()) {
@@ -391,7 +409,7 @@ class EntityGenerator : TemplateGenerator {
         columns: List<Map<String, Any?>>,
         annotationLines: MutableList<String>,
         context: EntityContext,
-        ids: List<Map<String, Any?>>
+        ids: List<Map<String, Any?>>,
     ) {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = context.entityTypeMap[tableName] ?: ""
@@ -484,14 +502,13 @@ class EntityGenerator : TemplateGenerator {
         table: Map<String, Any?>,
         column: Map<String, Any?>,
         ids: List<Map<String, Any?>>,
-        relations: Map<String, Map<String, String>>,
-        enums: MutableList<String>,
-        context: EntityContext
+        context: EntityContext,
+        importManager: EntityImportManager,
     ): Map<String, Any?> {
         val columnName = SqlSchemaUtils.getColumnName(column)
         val columnType = SqlSchemaUtils.getColumnType(column)
 
-        val needGenerate = isColumnNeedGenerate(table, column, relations) ||
+        val needGenerate = isColumnNeedGenerate(table, column, context.relationsMap) ||
                 columnName == context.getString("versionField")
 
         if (!needGenerate) {
@@ -550,7 +567,9 @@ class EntityGenerator : TemplateGenerator {
         }
 
         if (SqlSchemaUtils.hasEnum(column)) {
-            enums.add(columnType)
+            if (context.typeRemapping.containsKey(columnType)) {
+                importManager.add(context.typeRemapping[columnType]!!)
+            }
             annotations.add("@Convert(converter = $columnType.Converter::class)")
         }
 
@@ -582,7 +601,7 @@ class EntityGenerator : TemplateGenerator {
         table: Map<String, Any?>,
         relations: Map<String, Map<String, String>>,
         tablePackageMap: Map<String, String>,
-        context: EntityContext
+        context: EntityContext,
     ): List<Map<String, Any?>> {
         val tableName = SqlSchemaUtils.getTableName(table)
         val result = mutableListOf<Map<String, Any?>>()

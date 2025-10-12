@@ -83,7 +83,7 @@ object SqlSchemaUtils {
         }
 
     private fun pickByTask(): SqlSchemaDialect =
-        when (context!!.dbType) {
+        when (context.dbType) {
             DB_TYPE_POSTGRESQL -> SqlSchemaUtils4Postgresql
             else -> SqlSchemaUtils4Mysql
         }
@@ -121,11 +121,7 @@ object SqlSchemaUtils {
     // 方言驱动的列/表属性访问
     fun getColumnType(column: Map<String, Any?>): String =
         if (hasType(column)) {
-            val custom = getType(column)
-            if (hasEnum(column) && context!!.enumPackageMap.containsKey(custom)) {
-                val prefix = context!!.enumPackageMap[custom]!!
-                if (isColumnNullable(column)) "$prefix.$custom?" else "$prefix.$custom"
-            } else custom
+             getType(column)
         } else pickByTask().getColumnType(column)
 
     fun getColumnDefaultLiteral(column: Map<String, Any?>) =
