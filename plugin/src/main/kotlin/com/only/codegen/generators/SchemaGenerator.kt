@@ -119,12 +119,20 @@ class SchemaGenerator : TemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-        generated.add(SqlSchemaUtils.getTableName(table))
-    }
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+            val entityType = entityTypeMap[tableName]!!
 
-    private fun resolveEntityPackage(tableName: String, context: EntityContext): String {
-        val module = context.tableModuleMap[tableName] ?: ""
-        val aggregate = context.tableAggregateMap[tableName] ?: ""
-        return concatPackage(context.aggregatesPackage, module, aggregate.lowercase())
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = refPackage(aggregate)
+
+            val schemaType = "S$entityType"
+            val fullSchemaType = "$basePackage${templatePackage}${`package`}${refPackage(schemaType)}"
+            typeRemapping[entityType] = fullSchemaType
+
+            generated.add(tableName)
+        }
     }
 }

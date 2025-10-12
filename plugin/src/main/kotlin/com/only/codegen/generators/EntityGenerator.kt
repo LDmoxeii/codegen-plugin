@@ -32,8 +32,10 @@ class EntityGenerator : TemplateGenerator {
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
         val columns = context.columnsMap[tableName]!!
+        val aggregate = context.resolveAggregateWithModule(tableName)
+        val fullEntityPackage = context.tablePackageMap[tableName]!!
+
         val entityType = context.entityTypeMap[tableName]!!
-        val entityFullPackage = context.tablePackageMap[tableName] ?: ""
         val ids = resolveIdColumns(columns)
 
         // 创建 ImportManager
@@ -74,7 +76,7 @@ class EntityGenerator : TemplateGenerator {
         // 处理现有文件的自定义内容
         val filePath = resolveSourceFile(
             context.getString("domainModulePath"),
-            entityFullPackage,
+            fullEntityPackage,
             entityType,
         )
         processEntityCustomerSourceFile(filePath, existingImportLines, annotationLines, customerLines, context)
@@ -147,20 +149,12 @@ class EntityGenerator : TemplateGenerator {
         // 构建上下文
         val resultContext = context.baseMap.toMutableMap()
         with(context) {
-
-            val fullPackage = resolveEntityPackage(tableName, context)
-            val relativePackage = if (fullPackage.startsWith(aggregatesPackage)) {
-                val relative = fullPackage.substring(aggregatesPackage.length)
-                if (relative.startsWith(".")) relative else ".$relative"
-            } else {
-                ".$fullPackage"
-            }
-
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
-            resultContext.putContext(tag, "package", relativePackage)
+            resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "Entity", entityType)
+
             resultContext.putContext(tag, "entityType", entityType)
             resultContext.putContext(tag, "extendsClause", extendsClause)
             resultContext.putContext(tag, "implementsClause", implementsClause)
@@ -192,23 +186,21 @@ class EntityGenerator : TemplateGenerator {
     ) {
         with(context) {
             val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+            val entityType = entityTypeMap[tableName]!!
 
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = refPackage(aggregate)
 
-//            typeRemapping[tableName] = fullEntityType
+            val fullEntityType = "$basePackage${templatePackage}${`package`}${refPackage(entityType)}"
+            typeRemapping[entityType] = fullEntityType
             generated.add(tableName)
         }
     }
 
     private fun resolveIdColumns(columns: List<Map<String, Any?>>): List<Map<String, Any?>> {
         return columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
-    }
-
-    private fun resolveEntityPackage(tableName: String, context: EntityContext): String {
-        with(context) {
-            val module = tableModuleMap[tableName] ?: ""
-            val aggregate = tableAggregateMap[tableName] ?: ""
-            return concatPackage(aggregatesPackage, module, aggregate.lowercase())
-        }
     }
 
     private fun resolveSourceFile(

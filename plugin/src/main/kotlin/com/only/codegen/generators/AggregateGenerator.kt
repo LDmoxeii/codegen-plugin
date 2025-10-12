@@ -43,14 +43,14 @@ class AggregateGenerator : TemplateGenerator {
         val resultContext = context.baseMap.toMutableMap()
 
         // 获取聚合名称模板
-        val aggregateNameTemplate = context.getString("aggregateNameTemplate")
+        val aggregateTypeTemplate = context.getString("aggregateTypeTemplate")
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
             resultContext.putContext(tag, "package", refPackage(refPackage(aggregate)))
 
-            resultContext.putContext(tag, "AggregateName", aggregateNameTemplate)
+            resultContext.putContext(tag, "AggregateName", aggregateTypeTemplate)
 
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "IdentityType", identityType)
@@ -87,6 +87,20 @@ class AggregateGenerator : TemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-        generated.add(SqlSchemaUtils.getTableName(table))
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+            val entityType = entityTypeMap[tableName]!!
+            var aggregateType = context.getString("aggregateTypeTemplate")
+            aggregateType = aggregateType.replace("{{ Entity }}", entityType)
+
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = refPackage(aggregate)
+
+            val fullEntityType = "$basePackage${templatePackage}${`package`}${refPackage(aggregateType)}"
+            typeRemapping[entityType] = fullEntityType
+            generated.add(tableName)
+        }
     }
 }

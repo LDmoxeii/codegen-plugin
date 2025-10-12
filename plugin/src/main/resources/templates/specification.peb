@@ -1,6 +1,6 @@
 package {{ basePackage }}{{ templatePackage }}{{ package }}
 
-import {{ basePackage }}{{ entityPackage }}.{{ Entity }}
+import {{ fullEntityType }}
 import com.only4.cap4k.ddd.core.domain.aggregate.Specification
 import com.only4.cap4k.ddd.core.domain.aggregate.Specification.Result
 import com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate

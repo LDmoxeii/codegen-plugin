@@ -187,14 +187,14 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
     private fun buildGenerationContext(): EntityContext {
 
         val contextBuilders = listOf(
-            TableContextBuilder(),
-            EntityTypeContextBuilder(),
-            ModuleContextBuilder(),
-            AggregateContextBuilder(),
-            TablePackageContextBuilder(),
-            AnnotationContextBuilder(),
-            RelationContextBuilder(),
-            EnumContextBuilder(),
+            TableContextBuilder(),          // order=10  - 表和列信息
+            EntityTypeContextBuilder(),     // order=20  - 实体类型
+            AnnotationContextBuilder(),     // order=20  - 注解信息
+            ModuleContextBuilder(),         // order=20  - 模块信息
+            RelationContextBuilder(),       // order=20  - 表关系
+            EnumContextBuilder(),           // order=20  - 枚举信息
+            AggregateContextBuilder(),      // order=30  - 聚合信息
+            TablePackageContextBuilder(),   // order=40  - 表包信息
         )
 
         contextBuilders

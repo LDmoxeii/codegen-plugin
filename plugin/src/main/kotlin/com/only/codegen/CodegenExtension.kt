@@ -252,5 +252,5 @@ open class GenerationConfig @Inject constructor(objects: ObjectFactory) {
     /**
      * 聚合名称模板
      */
-    val aggregateNameTemplate: Property<String> = objects.property(String::class.java).convention("Agg{{ Entity }}")
+    val aggregateTypeTemplate: Property<String> = objects.property(String::class.java).convention("Agg{{ Entity }}")
 }

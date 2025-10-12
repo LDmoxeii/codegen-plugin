@@ -4,7 +4,7 @@ import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils
 
 class ModuleContextBuilder:ContextBuilder {
-    override val order: Int = 30
+    override val order: Int = 20
 
     override fun build(context: MutableEntityContext) {
         context.tableMap.values.forEach { table ->

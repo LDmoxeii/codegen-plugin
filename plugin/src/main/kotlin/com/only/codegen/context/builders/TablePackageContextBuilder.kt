@@ -2,19 +2,17 @@ package com.only.codegen.context.builders
 
 import com.only.codegen.context.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils
-import com.only.codegen.misc.concatPackage
+import com.only.codegen.misc.refPackage
 
 class TablePackageContextBuilder: ContextBuilder {
-    override val order: Int = 30
+    override val order: Int = 40
 
     override fun build(context: MutableEntityContext) {
         context.tableMap.values.forEach { table ->
-            val tableName = SqlSchemaUtils.getTableName(table)
-            val module = context.tableModuleMap[tableName]!!
-            val aggregate = context.tableAggregateMap[tableName]!!
-            context.tablePackageMap[tableName] = concatPackage(context.aggregatesPackage, module, aggregate.lowercase())
-                .let { entityPackage ->
-                "${context.getString("basePackage")}.$entityPackage"
+            with(context) {
+                val tableName = SqlSchemaUtils.getTableName(table)
+                val aggregate = resolveAggregateWithModule(tableName)
+                context.tablePackageMap[tableName] = "${getString("basePackage")}${refPackage(aggregatesPackage)}${refPackage(aggregate)}"
             }
         }
     }

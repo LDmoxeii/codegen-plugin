@@ -1,14 +1,14 @@
 package {{ basePackage }}{{ templatePackage }}{{ package }}.meta
 
-import {{ basePackage }}{{ schemaPackage }}.{{ SchemaBase }}
+import {{ FullSchemaBaseType }}
 import {{ FullEntityType }}
 import org.springframework.data.jpa.domain.Specification
 import jakarta.persistence.criteria.*
 
 /**
-{% for line in commentLines %}
+{%- for line in commentLines %}
  * {{ line }}
-{% endfor %}
+{%- endfor %}
  *
  * Schema 类用于类型安全的 JPA Criteria 查询
  *

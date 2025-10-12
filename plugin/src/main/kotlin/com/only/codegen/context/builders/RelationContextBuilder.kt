@@ -7,7 +7,7 @@ import com.only.codegen.misc.SqlSchemaUtils
  * 表关系构建器
  */
 class RelationContextBuilder : ContextBuilder {
-    override val order = 40
+    override val order = 20
 
     override fun build(context: MutableEntityContext) {
         context.tableMap.values.forEach { table ->

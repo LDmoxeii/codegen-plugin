@@ -43,9 +43,6 @@ class DomainEventHandlerGenerator : TemplateGenerator {
         val tableName = SqlSchemaUtils.getTableName(table)
         val aggregate = context.resolveAggregateWithModule(tableName)
 
-        val entityFullPackage = context.tablePackageMap[tableName] ?: ""
-        val entityType = context.entityTypeMap[tableName] ?: return emptyMap()
-
         var domainEvent = ""
 
         SqlSchemaUtils.getDomainEvents(table).firstOrNull { domainEventInfo ->
@@ -99,6 +96,16 @@ class DomainEventHandlerGenerator : TemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-        generated.add(SqlSchemaUtils.getTableName(table))
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = context.resolveAggregateWithModule(tableName)
+
+            val templatePackage = refPackage(context.aggregatesPackage)
+            val `package` = refPackage(aggregate)
+
+            val fullDomainEventType = "${getString("basePackage")}${templatePackage}${`package`}${refPackage(currentDomainEventHandler)}"
+            typeRemapping[currentDomainEventHandler] = fullDomainEventType
+            generated.add(currentDomainEventHandler)
+        }
     }
 }
