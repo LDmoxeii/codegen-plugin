@@ -19,14 +19,9 @@ class RepositoryGenerator : AggregateTemplateGenerator {
     override fun shouldGenerate(aggregateInfo: AggregateInfo, context: AnnotationContext): Boolean {
         if (!aggregateInfo.aggregateRoot.isAggregateRoot) return false
 
-        val aggregateName = aggregateInfo.name
-        val repositoryNameTemplate = context.getString("repositoryNameTemplate")
-        val repositoryName = renderString(repositoryNameTemplate, mapOf("Aggregate" to aggregateName))
+        if (context.typeMapping.containsKey(generatorName(aggregateInfo, context))) return false
 
-        if (context.typeMapping.containsKey(repositoryName)) return false
-
-        val generateRepository = context.getBoolean("generateRepository", true)
-        return generateRepository
+        return true
     }
 
     override fun buildContext(aggregateInfo: AggregateInfo, context: AnnotationContext): Map<String, Any?> {
@@ -35,8 +30,6 @@ class RepositoryGenerator : AggregateTemplateGenerator {
 
         val fullRootEntityType = aggregateRoot.fullName  // 如 "com.example.domain.aggregates.user.User"
         val identityType = aggregateInfo.identityType  // 如 "Long" 或 "UserId"
-
-        val repositoryNameTemplate = context.getString("repositoryNameTemplate")
 
         val imports = RepositoryImportManager()
         imports.addBaseImports()
@@ -61,13 +54,35 @@ class RepositoryGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "Aggregate", aggregateName)
             resultContext.putContext(tag, "IdentityType", identityType)
 
-            resultContext.putContext(tag, "Repository", renderString(repositoryNameTemplate, resultContext))
+            resultContext.putContext(tag, "Repository", generatorName(aggregateInfo, context))
 
             val comment = "Repository for $aggregateName aggregate"
             resultContext.putContext(tag, "Comment", comment)
         }
 
         return resultContext
+    }
+
+    override fun generatorFullName(
+        aggregateInfo: AggregateInfo,
+        context: AnnotationContext
+    ): String {
+        val aggregateName = aggregateInfo.name
+        val repositoryNameTemplate = context.getString("repositoryNameTemplate")  // 如 "UserRepository"
+        val repositoryName = renderString(repositoryNameTemplate, mapOf("Aggregate" to aggregateName))
+
+        val basePackage = context.getString("basePackage")
+        return "$basePackage.$AGGREGATE_REPOSITORY_PACKAGE.$repositoryName"
+    }
+
+    override fun generatorName(
+        aggregateInfo: AggregateInfo,
+        context: AnnotationContext
+    ): String {
+        val aggregateName = aggregateInfo.name
+        val repositoryNameTemplate = context.getString("repositoryNameTemplate")
+
+        return renderString(repositoryNameTemplate, mapOf("Aggregate" to aggregateName))
     }
 
     override fun getDefaultTemplateNode(): TemplateNode {
@@ -82,13 +97,6 @@ class RepositoryGenerator : AggregateTemplateGenerator {
     }
 
     override fun onGenerated(aggregateInfo: AggregateInfo, context: AnnotationContext) {
-        val aggregateName = aggregateInfo.name
-        val repositoryNameTemplate = context.getString("repositoryNameTemplate")  // 如 "UserRepository"
-
-        val repositoryName = renderString(repositoryNameTemplate, mapOf("Aggregate" to aggregateName))
-
-        val basePackage = context.getString("basePackage")
-        val fullRepositoryType = "$basePackage.$AGGREGATE_REPOSITORY_PACKAGE.$repositoryName"
-        context.typeMapping[repositoryName] = fullRepositoryType
+        context.typeMapping[generatorName(aggregateInfo, context)] = generatorFullName(aggregateInfo, context)
     }
 }

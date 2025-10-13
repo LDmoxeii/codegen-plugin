@@ -144,6 +144,27 @@ class SchemaGenerator : EntityTemplateGenerator {
         return resultContext
     }
 
+    override fun generatorFullName(table: Map<String, Any?>, context: EntityContext): String {
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+            val entityType = entityTypeMap[tableName]!!
+
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = refPackage(aggregate)
+
+            val schemaType = "S$entityType"
+            return "$basePackage${templatePackage}${`package`}${refPackage(schemaType)}"
+        }
+    }
+
+    override fun generatorName(table: Map<String, Any?>, context: EntityContext): String {
+        val tableName = SqlSchemaUtils.getTableName(table)
+        val entityType = context.entityTypeMap[tableName]!!
+        return "S$entityType"
+    }
+
     override fun getDefaultTemplateNode(): TemplateNode {
         return TemplateNode().apply {
             type = "file"
@@ -156,18 +177,6 @@ class SchemaGenerator : EntityTemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-        with(context) {
-            val tableName = SqlSchemaUtils.getTableName(table)
-            val aggregate = resolveAggregateWithModule(tableName)
-            val entityType = entityTypeMap[tableName]!!
-
-            val basePackage = getString("basePackage")
-            val templatePackage = refPackage(aggregatesPackage)
-            val `package` = refPackage(aggregate)
-
-            val schemaType = "S$entityType"
-            val fullSchemaType = "$basePackage${templatePackage}${`package`}${refPackage(schemaType)}"
-            typeMapping[schemaType] = fullSchemaType
-        }
+        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

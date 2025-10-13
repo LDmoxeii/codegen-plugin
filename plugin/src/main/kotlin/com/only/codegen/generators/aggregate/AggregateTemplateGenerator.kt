@@ -14,6 +14,10 @@ interface AggregateTemplateGenerator {
 
     fun buildContext(aggregateInfo: AggregateInfo, context: AnnotationContext): Map<String, Any?>
 
+    fun generatorFullName(aggregateInfo: AggregateInfo, context: AnnotationContext): String
+
+    fun generatorName(aggregateInfo: AggregateInfo, context: AnnotationContext): String
+
     fun getDefaultTemplateNode(): TemplateNode
 
     fun onGenerated(aggregateInfo: AggregateInfo, context: AnnotationContext) {}

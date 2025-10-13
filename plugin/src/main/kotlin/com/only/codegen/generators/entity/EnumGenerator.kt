@@ -81,21 +81,7 @@ class EnumGenerator : EntityTemplateGenerator {
         }
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@EnumGenerator.tag
-            name = "{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
-            format = "resource"
-            data = "templates/enum.peb"
-            conflict = "overwrite"
-        }
-    }
-
-    override fun onGenerated(
-        table: Map<String, Any?>,
-        context: EntityContext,
-    ) {
+    override fun generatorFullName(table: Map<String, Any?>, context: EntityContext): String {
         with(context) {
             val defaultEnumPackage = "enums"
 
@@ -119,11 +105,29 @@ class EnumGenerator : EntityTemplateGenerator {
             val templatePackage = refPackage(aggregatesPackage)
             val `package` = refPackage(aggregate)
 
-            val fullEnumType =
-                "$basePackage${templatePackage}${`package`}$enumPackageSuffix${refPackage(currentEnumType)}"
-
-            typeMapping[currentEnumType] = fullEnumType
+            return "$basePackage${templatePackage}${`package`}$enumPackageSuffix${refPackage(currentEnumType)}"
         }
+    }
 
+    override fun generatorName(table: Map<String, Any?>, context: EntityContext): String {
+        return currentEnumType
+    }
+
+    override fun getDefaultTemplateNode(): TemplateNode {
+        return TemplateNode().apply {
+            type = "file"
+            tag = this@EnumGenerator.tag
+            name = "{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
+            format = "resource"
+            data = "templates/enum.peb"
+            conflict = "overwrite"
+        }
+    }
+
+    override fun onGenerated(
+        table: Map<String, Any?>,
+        context: EntityContext,
+    ) {
+        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

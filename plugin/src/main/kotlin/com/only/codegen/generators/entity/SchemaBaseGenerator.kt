@@ -13,7 +13,7 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
     override val order = 10
 
     override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean
-        = !context.typeMapping.containsKey("Schema")
+        = !context.typeMapping.containsKey(generatorName(table, context))
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
         val resultContext = context.baseMap.toMutableMap()
@@ -23,11 +23,28 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
             resultContext.putContext(tag, "templatePackage", refPackage(schemaPackage))
             resultContext.putContext(tag, "package", "")
 
-            resultContext.putContext(tag, "SchemaBase", "Schema")
+            resultContext.putContext(tag, "SchemaBase", generatorName(table, context))
         }
 
         return resultContext
     }
+
+    override fun generatorFullName(
+        table: Map<String, Any?>,
+        context: EntityContext
+    ): String {
+        with(context) {
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(schemaPackage)
+
+            return "$basePackage$templatePackage${refPackage(generatorName(table, context))}"
+        }
+    }
+
+    override fun generatorName(
+        table: Map<String, Any?>,
+        context: EntityContext
+    ): String = "Schema"
 
     override fun getDefaultTemplateNode(): TemplateNode {
         return TemplateNode().apply {
@@ -41,11 +58,6 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-        with(context) {
-            val basePackage = getString("basePackage")
-            val templatePackage = refPackage(schemaPackage)
-
-            typeMapping["Schema"] = "$basePackage$templatePackage${refPackage("Schema")}"
-        }
+        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

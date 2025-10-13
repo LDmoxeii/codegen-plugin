@@ -51,7 +51,7 @@ class FactoryGenerator : EntityTemplateGenerator {
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_FAC_PACKAGE", DEFAULT_FAC_PACKAGE)
-            resultContext.putContext(tag, "Factory", "${entityType}Factory")
+            resultContext.putContext(tag, "Factory", generatorName(table, context))
             resultContext.putContext(tag, "Payload", "${entityType}Payload")
 
             resultContext.putContext(tag, "fullEntityType", fullEntityType)
@@ -76,18 +76,10 @@ class FactoryGenerator : EntityTemplateGenerator {
         return resultContext
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@FactoryGenerator.tag
-            name = "{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
-            format = "resource"
-            data = "templates/factory.peb"
-            conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件
-        }
-    }
-
-    override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
+    override fun generatorFullName(
+        table: Map<String, Any?>,
+        context: EntityContext
+    ): String {
         with(context) {
             val tableName = SqlSchemaUtils.getTableName(table)
             val aggregate = resolveAggregateWithModule(tableName)
@@ -100,8 +92,36 @@ class FactoryGenerator : EntityTemplateGenerator {
             val factoryType = "${entityType}Factory"
             val fullFactoryType =
                 "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_FAC_PACKAGE)}${refPackage(factoryType)}"
-            typeMapping[factoryType] = fullFactoryType
+            return fullFactoryType
         }
+    }
+
+    override fun generatorName(
+        table: Map<String, Any?>,
+        context: EntityContext
+    ): String {
+        return with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val entityType = entityTypeMap[tableName]!!
+
+            "${entityType}Factory"
+        }
+    }
+
+    override fun getDefaultTemplateNode(): TemplateNode {
+        return TemplateNode().apply {
+            type = "file"
+            tag = this@FactoryGenerator.tag
+            name = "{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
+            format = "resource"
+            data = "templates/factory.peb"
+            conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件
+        }
+    }
+
+    override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
+        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
+
     }
 
 }

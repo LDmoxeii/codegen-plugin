@@ -50,7 +50,7 @@ class SpecificationGenerator : EntityTemplateGenerator {
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
-            resultContext.putContext(tag, "Specification", "${entityType}Specification")
+            resultContext.putContext(tag, "Specification", generatorName(table, context))
 
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "fullEntityType", fullEntityType)
@@ -74,6 +74,27 @@ class SpecificationGenerator : EntityTemplateGenerator {
         return resultContext
     }
 
+    override fun generatorFullName(table: Map<String, Any?>, context: EntityContext): String {
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+            val entityType = entityTypeMap[tableName]!!
+
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = refPackage(aggregate)
+
+            val specificationType = "${entityType}Specification"
+            return "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_SPEC_PACKAGE)}${refPackage(specificationType)}"
+        }
+    }
+
+    override fun generatorName(table: Map<String, Any?>, context: EntityContext): String {
+        val tableName = SqlSchemaUtils.getTableName(table)
+        val entityType = context.entityTypeMap[tableName]!!
+        return "${entityType}Specification"
+    }
+
     override fun getDefaultTemplateNode(): TemplateNode {
         return TemplateNode().apply {
             type = "file"
@@ -86,20 +107,6 @@ class SpecificationGenerator : EntityTemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-        with(context) {
-            val tableName = SqlSchemaUtils.getTableName(table)
-            val aggregate = resolveAggregateWithModule(tableName)
-            val entityType = entityTypeMap[tableName]!!
-
-            val basePackage = getString("basePackage")
-            val templatePackage = refPackage(aggregatesPackage)
-            val `package` = refPackage(aggregate)
-
-            val specificationType = "${entityType}Specification"
-            val fullSpecificationType = "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_SPEC_PACKAGE)}${
-                refPackage(specificationType)
-            }"
-            typeMapping[specificationType] = fullSpecificationType
-        }
+        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

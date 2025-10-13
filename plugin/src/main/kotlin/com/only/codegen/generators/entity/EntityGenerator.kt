@@ -168,6 +168,25 @@ class EntityGenerator : EntityTemplateGenerator {
         return resultContext
     }
 
+    override fun generatorFullName(table: Map<String, Any?>, context: EntityContext): String {
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+            val entityType = entityTypeMap[tableName]!!
+
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(aggregatesPackage)
+            val `package` = refPackage(aggregate)
+
+            return "$basePackage${templatePackage}${`package`}${refPackage(entityType)}"
+        }
+    }
+
+    override fun generatorName(table: Map<String, Any?>, context: EntityContext): String {
+        val tableName = SqlSchemaUtils.getTableName(table)
+        return context.entityTypeMap[tableName]!!
+    }
+
     override fun getDefaultTemplateNode(): TemplateNode {
         return TemplateNode().apply {
             type = "file"
@@ -185,17 +204,16 @@ class EntityGenerator : EntityTemplateGenerator {
     ) {
         with(context) {
             val tableName = SqlSchemaUtils.getTableName(table)
-            val aggregate = resolveAggregateWithModule(tableName)
             val entityType = entityTypeMap[tableName]!!
 
+            typeMapping[generatorName(table, context)] = generatorFullName(table, context)
+
+            // Q类型（QueryDSL）
+            val aggregate = resolveAggregateWithModule(tableName)
             val basePackage = getString("basePackage")
             val templatePackage = refPackage(aggregatesPackage)
             val `package` = refPackage(aggregate)
-
-            val fullEntityType = "$basePackage${templatePackage}${`package`}${refPackage(entityType)}"
             val fullQEntityType = "$basePackage${templatePackage}${`package`}${refPackage("Q$entityType")}"
-
-            typeMapping[entityType] = fullEntityType
             typeMapping["Q$entityType"] = fullQEntityType
         }
     }
