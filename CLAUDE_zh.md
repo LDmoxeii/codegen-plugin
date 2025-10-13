@@ -32,29 +32,56 @@
 
 ## 核心架构
 
+### 可扩展插件框架
+
+该插件采用**高度可扩展的架构**，允许通过组合以下要素创建新的代码生成管道：
+- **不同的数据源**（数据库元数据、KSP 注解、设计文件等）
+- **自定义上下文类型**（EntityContext、AnnotationContext 或用户自定义）
+- **专门的构建器和生成器**（扩展通用基础接口）
+
+这种设计支持以下场景：
+- 数据库驱动的领域生成（当前：`GenEntityTask`）
+- 注解驱动的基础设施生成（计划中：`GenAnnotationTask`）
+- 设计文件驱动的应用层生成（示例：`GenDesignTask`）
+- **KSP 元数据 + 模板 + 自定义设计上下文**（未来扩展性）
+
 ### 两阶段执行模型
 
-代码生成过程遵循两阶段模式：
+所有生成任务遵循一致的两阶段模式：
 
-1. **阶段 1：上下文构建** - 从数据库和配置中收集所有元数据
-   - 上下文构建器按顺序运行（由 `order` 属性控制）
-   - 每个构建器填充 `EntityContext` 中的特定 Map（表、列、关系、枚举等）
+1. **阶段 1：上下文构建** - 从数据源收集元数据到类型化上下文中
+   - 上下文构建器实现带有泛型类型参数的 `ContextBuilder<T>` 接口
+   - 构建器按顺序运行（由 `order` 属性控制）
+   - 每个构建器填充上下文中的特定 Map（如 `tableMap`、`classMap`、`aggregateMap`）
    - 在生成开始前解决所有依赖关系
 
 2. **阶段 2：文件生成** - 使用构建好的上下文生成文件
-   - 生成器按顺序运行（EnumGenerator 在 EntityGenerator 之前）
+   - 生成器实现生成器接口（如 `TemplateGenerator`、`AnnotationTemplateGenerator`）
+   - 生成器根据 `order` 属性按顺序运行
    - 每个生成器实现 `shouldGenerate()`、`buildContext()` 和 `getDefaultTemplateNode()`
    - 使用 Pebble 模板引擎渲染模板
+   - 生成的类型缓存在 `typeMapping` 中以便交叉引用
 
 ### 核心接口
 
+插件使用**通用、可组合的接口**，支持不同的代码生成管道：
+
 **上下文层** (`com.only.codegen.context`):
-- `BaseContext` - 基础配置和模板别名系统
-- `EntityContext` - 所有共享上下文数据的只读接口
-- `MutableEntityContext` - 上下文构建阶段的可变版本
+- `BaseContext` - 基础配置和模板别名系统（所有上下文共享）
+- `EntityContext : BaseContext` - 数据库驱动生成上下文（表、列、关系、枚举）
+- `AnnotationContext : BaseContext` - 注解驱动生成上下文（类、注解、聚合）
+- `MutableEntityContext` - EntityContext 的可变版本，用于上下文构建阶段
+- `MutableAnnotationContext` - AnnotationContext 的可变版本，用于上下文构建阶段
 
 **构建器层** (`com.only.codegen.context.builders`)：
-- `ContextBuilder` - 带有 `order` 和 `build()` 方法的接口
+- `ContextBuilder<T>` - **泛型基础接口**，带有类型参数 `T`
+  - 定义 `order: Int` 属性用于执行排序
+  - 定义 `build(context: T)` 方法用于填充上下文数据
+  - **支持为不同上下文类型进行类型安全的构建器组合**
+- `EntityContextBuilder : ContextBuilder<MutableEntityContext>` - 专门用于实体生成
+- `AggregateContextBuilder : ContextBuilder<MutableAnnotationContext>` - 专门用于基于注解的生成
+
+**实体上下文构建器**（用于数据库驱动生成）：
 - 构建器按顺序执行：
   - `TableContextBuilder` (order=10) - 从数据库收集表和列元数据
   - `EntityTypeContextBuilder` (order=20) - 从表名确定实体类名
@@ -67,7 +94,13 @@
 - 每个构建器填充 `EntityContext` 中的特定 Map
 
 **生成器层** (`com.only.codegen.generators`):
-- `TemplateGenerator` - 带有 `tag`、`order` 和生成方法的接口
+- `TemplateGenerator` - 实体/数据库驱动生成器接口
+  - 属性：`tag: String`、`order: Int`
+  - 方法：`shouldGenerate()`、`buildContext()`、`getDefaultTemplateNode()`、`onGenerated()`
+- `AnnotationTemplateGenerator` - 注解驱动生成器接口（计划中）
+  - 类似结构，但操作 `AggregateInfo` 和 `AnnotationContext`
+
+**实体生成器**（用于数据库驱动生成，order 10-40）：
 - `SchemaBaseGenerator` (order=10) - 生成 SchemaBase 基类用于元数据跟踪
 - `EnumGenerator` (order=10) - 生成枚举类，跟踪已生成的枚举以避免重复
 - `EntityGenerator` (order=20) - 生成具有完整 DDD 支持的实体类，处理自定义代码保留
@@ -80,14 +113,51 @@
 
 ### 任务
 
-**GenEntityTask** - 实体生成的主任务
-- 位置：`com.only.codegen.GenEntityTask`
-- 同时实现 `MutableEntityContext`（用于构建）并提供执行流程
-- 入口点：`genEntity()` 方法调用 `buildGenerationContext()` 然后调用 `generateFiles()`
+**任务层次结构** - 所有任务从共同的基类扩展，具有模板渲染能力：
 
-**GenArchTask** - 生成项目架构结构
+```
+AbstractCodegenTask                  # 基类：Pebble 渲染 + 模板别名
+    ├── GenArchTask                  # 架构脚手架
+    │   ├── GenDesignTask            # 设计文件驱动生成（案例研究）
+    │   └── [自定义任务...]          # 用户可扩展
+    ├── GenEntityTask                # 数据库 → 领域层
+    └── GenAnnotationTask（计划中）  # 注解 → 基础设施层
+```
+
+**GenEntityTask** - 数据库驱动的领域生成
+- 位置：`com.only.codegen.GenEntityTask`
+- 数据源：通过 JDBC 获取数据库元数据
+- 上下文：实现 `MutableEntityContext`
+- 工作流：`genEntity()` → `buildGenerationContext()` → `generateFiles()`
+- 输出：领域实体、枚举、Schema、规约、工厂、领域事件
+
+**GenArchTask** - 架构脚手架基础任务
 - 读取架构模板并创建目录结构
-- 其他生成任务的基类
+- 提供通用脚手架功能的基类
+- 可以扩展用于自定义生成场景
+
+**GenDesignTask** - 设计文件驱动生成（案例研究，位于 `Case/GenDesignTask.kt`）
+- 位置：`Case/GenDesignTask.kt`（示例实现，演示框架可扩展性）
+- 数据源：声明式设计文件（基于文本的 DSL）
+- 从设计声明生成 DDD 设计元素
+- 演示**替代数据源集成模式**
+- 支持的设计元素类型：
+  - **应用层**：Command、Saga、Query、Client（防腐层）、集成事件
+  - **领域层**：领域事件、规约、工厂、领域服务
+- 设计格式：`element_type:ElementName:param1:param2:...`
+- 功能特性：
+  - 元素类型规范化的别名系统（如 "cmd"、"command"、"commands" → "command"）
+  - 用于过滤设计的正则表达式模式匹配
+  - 针对每种元素类型的专门渲染方法
+- 关键方法：
+  - `resolveLiteralDesign(design: String)` - 将设计文件解析为结构化 Map
+  - `alias4Design(name: String)` - 规范化元素类型名称
+  - `renderAppLayerCommand()`、`renderDomainLayerDomainEvent()` 等 - 元素特定渲染
+- **架构启示**：展示如何通过以下方式创建自定义生成任务：
+  1. 扩展 `GenArchTask`
+  2. 为替代数据源实现自定义解析逻辑
+  3. 复用模板渲染基础设施
+  4. 定义元素特定的上下文构建
 
 ### 模板别名系统
 
@@ -152,6 +222,143 @@ codegen {
 - 保留 "【字段映射开始】" 和 "【字段映射结束】" 标记之外的自定义代码
 - **关键**：使用状态机和 `inAnnotationBlock` 避免收集字段级别的注解
 - 重新生成的字段放置在标记之间，自定义方法保留在标记之外
+
+## 框架扩展指南
+
+### 创建新的生成管道
+
+要创建新的代码生成管道（例如 KSP 元数据 + 模板 + 自定义设计）：
+
+**步骤 1：定义自定义上下文**
+```kotlin
+// 1. 定义只读上下文接口
+interface MyCustomContext : BaseContext {
+    val myDataMap: Map<String, MyData>
+    // ... 其他上下文数据
+}
+
+// 2. 定义用于构建的可变版本
+interface MutableMyCustomContext : MyCustomContext {
+    override val myDataMap: MutableMap<String, MyData>
+}
+```
+
+**步骤 2：创建上下文构建器**
+```kotlin
+// 使用您的上下文类型实现 ContextBuilder<T>
+class MyDataBuilder : ContextBuilder<MutableMyCustomContext> {
+    override val order: Int = 10
+
+    override fun build(context: MutableMyCustomContext) {
+        // 解析您的数据源（KSP、文件等）
+        // 填充 context.myDataMap
+    }
+}
+```
+
+**步骤 3：创建生成器**
+```kotlin
+// 实现生成器接口
+class MyCustomGenerator(private val context: MyCustomContext) : TemplateGenerator {
+    override val tag = "mycustom"
+    override val order = 20
+
+    override fun shouldGenerate(table: Map<String, Any?>): Boolean {
+        // 决策逻辑
+    }
+
+    override fun buildContext(table: Map<String, Any?>): MutableMap<String, Any?> {
+        // 使用 context.putContext() 构建模板上下文
+    }
+
+    override fun getDefaultTemplateNode(): TemplateNode {
+        // 定义模板路径和冲突处理
+    }
+
+    override fun onGenerated(table: Map<String, Any?>) {
+        // 在 typeMapping 中缓存生成的类型
+    }
+}
+```
+
+**步骤 4：创建任务**
+```kotlin
+open class MyCustomTask : AbstractCodegenTask(), MutableMyCustomContext {
+    // 实现上下文属性
+    override val myDataMap: MutableMap<String, MyData> = mutableMapOf()
+
+    @TaskAction
+    fun generate() {
+        // 阶段 1：构建上下文
+        val builders = listOf(MyDataBuilder(), /* ... */)
+        builders.sortedBy { it.order }.forEach { it.build(this) }
+
+        // 阶段 2：生成文件
+        val generators = listOf(MyCustomGenerator(this), /* ... */)
+        generators.sortedBy { it.order }.forEach { /* generate */ }
+    }
+}
+```
+
+### 向现有管道添加生成器
+
+**针对实体生成（EntityContext）**：
+
+1. 在 `com.only.codegen.generators` 中创建实现 `TemplateGenerator` 的类
+2. 设置 `tag`（例如 "repository"）和 `order`（数值越大，执行越晚）
+3. 实现 `shouldGenerate()` - 如果此表需要此生成器则返回 true
+4. 实现 `buildContext()` - 使用 `context.putContext(tag, key, value)` 准备模板上下文 Map
+5. 实现 `getDefaultTemplateNode()` - 定义默认模板路径和冲突解决方式
+6. 实现 `onGenerated()` - 在 `typeMapping` 中缓存生成的类型全名供其他生成器引用
+7. 在 `GenEntityTask.generateFiles()` 中注册，将其添加到 generators 列表
+
+**针对注解生成（AnnotationContext）**：
+
+1. 创建实现 `AnnotationTemplateGenerator` 的类
+2. 类似结构，但操作 `AggregateInfo` 和 `AnnotationContext`
+3. 在 `GenAnnotationTask` 中注册（实现后）
+
+### 向现有管道添加上下文构建器
+
+**针对实体上下文**：
+
+1. 创建实现 `EntityContextBuilder : ContextBuilder<MutableEntityContext>` 的类
+2. 根据依赖关系设置 `order`（数值越小，执行越早）
+3. 实现 `build(context: MutableEntityContext)` 以填充上下文 Map
+4. 在 `GenEntityTask.buildGenerationContext()` 中注册，将其添加到 contextBuilders 列表
+
+**针对注解上下文**：
+
+1. 创建实现 `AggregateContextBuilder : ContextBuilder<MutableAnnotationContext>` 的类
+2. 类似结构，但处理注解元数据
+3. 在 `GenAnnotationTask` 中注册（实现后）
+
+## 框架扩展性原则
+
+### 架构模式
+
+- **通用上下文系统**：所有上下文扩展 `BaseContext`，在 `ContextBuilder<T>` 中使用类型参数 `T`
+- **两阶段模式**：每个生成任务都遵循 上下文构建 → 文件生成
+- **基于顺序的执行**：构建器和生成器都使用 `order: Int` 进行排序
+- **类型安全**：泛型接口（`ContextBuilder<T>`）确保编译时类型安全
+- **关注点分离**：
+  - 上下文层 = 数据结构（只读 + 可变）
+  - 构建器层 = 数据收集/解析
+  - 生成器层 = 文件生成
+  - 任务层 = 工作流编排
+
+### 代码生成管道
+
+**当前实现**：
+1. **数据库 → 领域** (`GenEntityTask` + `EntityContext` + `EntityContextBuilder` + `TemplateGenerator`)
+2. **设计文件 → 应用/领域** (`GenDesignTask` - 案例研究)
+
+**计划中**：
+3. **注解 → 基础设施** (`GenAnnotationTask` + `AnnotationContext` + `AggregateContextBuilder` + `AnnotationTemplateGenerator`)
+
+**未来扩展性**：
+4. **KSP + 模板 + 自定义设计**（用户定义的上下文 + 构建器 + 生成器）
+5. 通过通用框架实现任意数据源组合
 
 ### 添加新的生成器
 

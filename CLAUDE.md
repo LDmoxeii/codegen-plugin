@@ -32,29 +32,56 @@ This is a Gradle plugin for code generation from database schemas. It generates 
 
 ## Key Architecture
 
+### Extensible Plugin Framework
+
+The plugin follows a **highly extensible architecture** that allows creating new code generation pipelines by composing:
+- **Different data sources** (database metadata, KSP annotations, design files, etc.)
+- **Custom context types** (EntityContext, AnnotationContext, or user-defined)
+- **Specialized builders and generators** (extending generic base interfaces)
+
+This design enables scenarios like:
+- Database-driven domain generation (current: `GenEntityTask`)
+- Annotation-driven infrastructure generation (planned: `GenAnnotationTask`)
+- Design file-driven application layer generation (example: `GenDesignTask`)
+- **KSP metadata + template + custom design context** (future extensibility)
+
 ### Two-Phase Execution Model
 
-The code generation process follows a two-phase pattern:
+All generation tasks follow a consistent two-phase pattern:
 
-1. **Phase 1: Context Building** - Collects all metadata from database and configuration
-   - Context builders run in order (controlled by `order` property)
-   - Each builder fills specific maps in `EntityContext` (tables, columns, relations, enums, etc.)
+1. **Phase 1: Context Building** - Collects metadata from data sources into typed contexts
+   - Context builders implement `ContextBuilder<T>` interface with generic type parameter
+   - Builders run in order (controlled by `order` property)
+   - Each builder fills specific maps in the context (e.g., `tableMap`, `classMap`, `aggregateMap`)
    - All dependencies are resolved before generation starts
 
 2. **Phase 2: File Generation** - Generates files using the built context
-   - Generators run in order (EnumGenerator before EntityGenerator)
+   - Generators implement generator interfaces (e.g., `TemplateGenerator`, `AnnotationTemplateGenerator`)
+   - Generators run in order based on `order` property
    - Each generator implements `shouldGenerate()`, `buildContext()`, and `getDefaultTemplateNode()`
    - Templates are rendered using Pebble template engine
+   - Generated types are cached in `typeMapping` for cross-referencing
 
 ### Core Interfaces
 
+The plugin uses **generic, composable interfaces** that enable different code generation pipelines:
+
 **Context Layer** (`com.only.codegen.context`):
-- `BaseContext` - Base configuration and template aliasing system
-- `EntityContext` - Read-only interface for all shared context data
-- `MutableEntityContext` - Mutable version for context building phase
+- `BaseContext` - Base configuration and template aliasing system (shared by all contexts)
+- `EntityContext : BaseContext` - Database-driven generation context (tables, columns, relations, enums)
+- `AnnotationContext : BaseContext` - Annotation-driven generation context (classes, annotations, aggregates)
+- `MutableEntityContext` - Mutable version of EntityContext for context building phase
+- `MutableAnnotationContext` - Mutable version of AnnotationContext for context building phase
 
 **Builder Layer** (`com.only.codegen.context.builders`):
-- `ContextBuilder` - Interface with `order` and `build()` method
+- `ContextBuilder<T>` - **Generic base interface** with type parameter `T`
+  - Defines `order: Int` property for execution sequencing
+  - Defines `build(context: T)` method for filling context data
+  - **Enables type-safe builder composition for different context types**
+- `EntityContextBuilder : ContextBuilder<MutableEntityContext>` - Specialized for entity generation
+- `AggregateContextBuilder : ContextBuilder<MutableAnnotationContext>` - Specialized for annotation-based generation
+
+**Entity Context Builders** (for database-driven generation):
 - Builders execute in order:
   - `TableContextBuilder` (order=10) - Collects table and column metadata from database
   - `EntityTypeContextBuilder` (order=20) - Determines entity class names from table names
@@ -67,7 +94,13 @@ The code generation process follows a two-phase pattern:
 - Each builder populates specific maps in `EntityContext`
 
 **Generator Layer** (`com.only.codegen.generators`):
-- `TemplateGenerator` - Interface with `tag`, `order`, and generation methods
+- `TemplateGenerator` - Interface for entity/database-driven generators
+  - Properties: `tag: String`, `order: Int`
+  - Methods: `shouldGenerate()`, `buildContext()`, `getDefaultTemplateNode()`, `onGenerated()`
+- `AnnotationTemplateGenerator` - Interface for annotation-driven generators (planned)
+  - Similar structure but operates on `AggregateInfo` and `AnnotationContext`
+
+**Entity Generators** (for database-driven generation, order 10-40):
 - `SchemaBaseGenerator` (order=10) - Generates SchemaBase base class for metadata tracking
 - `EnumGenerator` (order=10) - Generates enum classes, tracks generated enums to avoid duplicates
 - `EntityGenerator` (order=20) - Generates entity classes with full DDD support, handles custom code preservation
@@ -80,14 +113,51 @@ The code generation process follows a two-phase pattern:
 
 ### Tasks
 
-**GenEntityTask** - Main task for entity generation
-- Location: `com.only.codegen.GenEntityTask`
-- Implements both `MutableEntityContext` (for building) and provides the execution flow
-- Entry point: `genEntity()` method calls `buildGenerationContext()` then `generateFiles()`
+**Task Hierarchy** - All tasks extend from a common base with template rendering capabilities:
 
-**GenArchTask** - Generates project architecture structure
-- Reads architecture template and creates directory structure
-- Base class for other generation tasks
+```
+AbstractCodegenTask                  # Base: Pebble rendering + template aliasing
+    ├── GenArchTask                  # Architecture scaffolding
+    │   ├── GenDesignTask            # Design file-driven generation (Case study)
+    │   └── [Custom tasks...]        # User-extensible
+    ├── GenEntityTask                # Database → Domain layer
+    └── GenAnnotationTask (planned)  # Annotations → Infrastructure layer
+```
+
+**GenEntityTask** - Database-driven domain generation
+- Location: `com.only.codegen.GenEntityTask`
+- Data source: Database metadata via JDBC
+- Context: Implements `MutableEntityContext`
+- Workflow: `genEntity()` → `buildGenerationContext()` → `generateFiles()`
+- Output: Domain entities, enums, schemas, specifications, factories, domain events
+
+**GenArchTask** - Architecture scaffolding base task
+- Reads architecture templates and creates directory structure
+- Base class providing common scaffolding functionality
+- Can be extended for custom generation scenarios
+
+**GenDesignTask** - Design file-driven generation (Case study in `Case/GenDesignTask.kt`)
+- Location: `Case/GenDesignTask.kt` (example implementation demonstrating framework extensibility)
+- Data source: Declarative design files (text-based DSL)
+- Generates DDD design elements from design declarations
+- Demonstrates **alternative data source integration pattern**
+- Supported design element types:
+  - **Application Layer**: Command, Saga, Query, Client (Anti-Corruption Layer), Integration Events
+  - **Domain Layer**: Domain Events, Specifications, Factories, Domain Services
+- Design format: `element_type:ElementName:param1:param2:...`
+- Features:
+  - Alias system for element type normalization (e.g., "cmd", "command", "commands" → "command")
+  - Regex pattern matching for filtering designs
+  - Specialized rendering methods per element type
+- Key methods:
+  - `resolveLiteralDesign(design: String)` - Parses design file into structured map
+  - `alias4Design(name: String)` - Normalizes element type names
+  - `renderAppLayerCommand()`, `renderDomainLayerDomainEvent()`, etc. - Element-specific rendering
+- **Architecture lesson**: Shows how to create custom generation tasks by:
+  1. Extending `GenArchTask`
+  2. Implementing custom parsing logic for alternative data sources
+  3. Reusing template rendering infrastructure
+  4. Defining element-specific context building
 
 ### Template Alias System
 
@@ -153,7 +223,86 @@ The `EntityGenerator.processEntityCustomerSourceFile()` method preserves user-wr
 - **Critical**: Uses state machine with `inAnnotationBlock` to avoid collecting field-level annotations
 - Regenerated fields are placed between the markers, custom methods preserved outside
 
-### Adding a New Generator
+## Framework Extensibility Guide
+
+### Creating a New Generation Pipeline
+
+To create a new code generation pipeline (e.g., KSP metadata + templates + custom design):
+
+**Step 1: Define Custom Context**
+```kotlin
+// 1. Define read-only context interface
+interface MyCustomContext : BaseContext {
+    val myDataMap: Map<String, MyData>
+    // ... other context data
+}
+
+// 2. Define mutable version for building
+interface MutableMyCustomContext : MyCustomContext {
+    override val myDataMap: MutableMap<String, MyData>
+}
+```
+
+**Step 2: Create Context Builders**
+```kotlin
+// Implement ContextBuilder<T> with your context type
+class MyDataBuilder : ContextBuilder<MutableMyCustomContext> {
+    override val order: Int = 10
+
+    override fun build(context: MutableMyCustomContext) {
+        // Parse your data source (KSP, files, etc.)
+        // Fill context.myDataMap
+    }
+}
+```
+
+**Step 3: Create Generators**
+```kotlin
+// Implement generator interface
+class MyCustomGenerator(private val context: MyCustomContext) : TemplateGenerator {
+    override val tag = "mycustom"
+    override val order = 20
+
+    override fun shouldGenerate(table: Map<String, Any?>): Boolean {
+        // Decision logic
+    }
+
+    override fun buildContext(table: Map<String, Any?>): MutableMap<String, Any?> {
+        // Build template context using context.putContext()
+    }
+
+    override fun getDefaultTemplateNode(): TemplateNode {
+        // Define template path and conflict handling
+    }
+
+    override fun onGenerated(table: Map<String, Any?>) {
+        // Cache generated types in typeMapping
+    }
+}
+```
+
+**Step 4: Create Task**
+```kotlin
+open class MyCustomTask : AbstractCodegenTask(), MutableMyCustomContext {
+    // Implement context properties
+    override val myDataMap: MutableMap<String, MyData> = mutableMapOf()
+
+    @TaskAction
+    fun generate() {
+        // Phase 1: Build context
+        val builders = listOf(MyDataBuilder(), /* ... */)
+        builders.sortedBy { it.order }.forEach { it.build(this) }
+
+        // Phase 2: Generate files
+        val generators = listOf(MyCustomGenerator(this), /* ... */)
+        generators.sortedBy { it.order }.forEach { /* generate */ }
+    }
+}
+```
+
+### Adding a Generator to Existing Pipeline
+
+**For Entity Generation (EntityContext)**:
 
 1. Create class implementing `TemplateGenerator` in `com.only.codegen.generators`
 2. Set `tag` (e.g., "repository") and `order` (higher = later execution)
@@ -163,12 +312,26 @@ The `EntityGenerator.processEntityCustomerSourceFile()` method preserves user-wr
 6. Implement `onGenerated()` - cache generated type full name in `typeMapping` for reference by other generators
 7. Register in `GenEntityTask.generateFiles()` by adding to generators list
 
-### Adding a New Context Builder
+**For Annotation Generation (AnnotationContext)**:
 
-1. Create class implementing `ContextBuilder` in `com.only.codegen.context.builders`
+1. Create class implementing `AnnotationTemplateGenerator`
+2. Similar structure but operates on `AggregateInfo` and `AnnotationContext`
+3. Register in `GenAnnotationTask` (when implemented)
+
+### Adding a Context Builder to Existing Pipeline
+
+**For Entity Context**:
+
+1. Create class implementing `EntityContextBuilder : ContextBuilder<MutableEntityContext>`
 2. Set `order` based on dependencies (lower = earlier execution)
-3. Implement `build()` to populate `MutableEntityContext` maps
+3. Implement `build(context: MutableEntityContext)` to populate context maps
 4. Register in `GenEntityTask.buildGenerationContext()` by adding to contextBuilders list
+
+**For Annotation Context**:
+
+1. Create class implementing `AggregateContextBuilder : ContextBuilder<MutableAnnotationContext>`
+2. Similar structure but works with annotation metadata
+3. Register in `GenAnnotationTask` (when implemented)
 
 ### Import Management
 
@@ -255,6 +418,33 @@ codegen-plugin/
 ```
 
 ## Development Notes
+
+### Architecture Patterns
+
+- **Generic Context System**: All contexts extend `BaseContext` and use type parameter `T` in `ContextBuilder<T>`
+- **Two-Phase Pattern**: Every generation task follows Context Building → File Generation
+- **Order-based Execution**: Both builders and generators use `order: Int` for sequencing
+- **Type Safety**: Generic interfaces (`ContextBuilder<T>`) ensure compile-time type safety
+- **Separation of Concerns**:
+  - Context Layer = Data structures (read-only + mutable)
+  - Builder Layer = Data collection/parsing
+  - Generator Layer = File generation
+  - Task Layer = Workflow orchestration
+
+### Code Generation Pipelines
+
+**Current Implementations**:
+1. **Database → Domain** (`GenEntityTask` + `EntityContext` + `EntityContextBuilder` + `TemplateGenerator`)
+2. **Design Files → Application/Domain** (`GenDesignTask` - Case study)
+
+**Planned**:
+3. **Annotations → Infrastructure** (`GenAnnotationTask` + `AnnotationContext` + `AggregateContextBuilder` + `AnnotationTemplateGenerator`)
+
+**Future Extensibility**:
+4. **KSP + Templates + Custom Design** (user-defined context + builders + generators)
+5. Any combination of data sources via generic framework
+
+### Technical Details
 
 - The codebase uses extensive Kotlin properties with lazy initialization
 - Most configuration values come from `CodegenExtension` and are cached in `BaseContext.baseMap`
