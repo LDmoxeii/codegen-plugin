@@ -34,7 +34,7 @@ class RepositoryGenerator : AnnotationTemplateGenerator {
         val fullRootEntityType = aggregateRoot.fullName  // 如 "com.example.domain.aggregates.user.User"
         val identityType = aggregateInfo.identityType  // 如 "Long" 或 "UserId"
 
-        val repositoryNameTemplate = context.getString("repositoryNameTemplate")  // 如 "UserRepository"
+        val repositoryNameTemplate = context.getString("repositoryNameTemplate")
 
         val imports = RepositoryImportManager()
         imports.addBaseImports()
