@@ -1,8 +1,8 @@
-package com.only.codegen.generators
+package com.only.codegen.generators.entity
 
 import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.entity.EntityContext
-import com.only.codegen.generators.manager.EntityImportManager
+import com.only.codegen.manager.EntityImportManager
 import com.only.codegen.misc.*
 import com.only.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_ID_ALIAS
 import com.only.codegen.misc.SqlSchemaUtils.RIGHT_QUOTES_4_ID_ALIAS
@@ -12,7 +12,7 @@ import java.io.File
 /**
  * 实体文件生成器
  */
-class EntityGenerator : TemplateGenerator {
+class EntityGenerator : EntityTemplateGenerator {
     override val tag = "entity"
     override val order = 20
 

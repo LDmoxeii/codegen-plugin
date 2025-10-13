@@ -1,4 +1,4 @@
-package com.only.codegen.generators
+package com.only.codegen.generators.entity
 
 import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.entity.EntityContext
@@ -11,7 +11,7 @@ import com.only.codegen.template.TemplateNode
  * 领域事件处理器文件生成器
  * 为聚合根生成领域事件订阅者（处理器）基类
  */
-class DomainEventHandlerGenerator : TemplateGenerator {
+class DomainEventHandlerGenerator : EntityTemplateGenerator {
     override val tag = "domain_event_handler"
     override val order = 40
 

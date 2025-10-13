@@ -1,4 +1,4 @@
-package com.only.codegen.generators.manager
+package com.only.codegen.manager
 
 class SchemaImportManager: ImportManager {
 

@@ -1,14 +1,8 @@
-package com.only.codegen.generators.manager
+package com.only.codegen.manager
 
-/**
- * 实体类 Import 管理器，用于智能管理实体类的 import 语句
- */
 class EntityImportManager : ImportManager {
     override val requiredImports = mutableSetOf<String>()
 
-    /**
-     * 添加实体类基础必需的 imports
-     */
     override fun addBaseImports() {
         requiredImports.add("com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate")
         requiredImports.add("jakarta.persistence.*")
@@ -16,32 +10,24 @@ class EntityImportManager : ImportManager {
         requiredImports.add("org.hibernate.annotations.DynamicUpdate")
     }
 
-    /**
-     * 获取格式化的 import 列表，自动添加空行分隔
-     * @return 格式化后的 import 行列表（包含 "import " 前缀和空行）
-     */
     override fun toImportLines(): List<String> {
         val sorted = requiredImports.sorted()
         val result = mutableListOf<String>()
 
-        // 添加空行作为开始（package 和 import 之间的空行）
         result.add("")
 
         var lastPackageGroup: String? = null
         sorted.forEach { importStr ->
-            // 判断当前包属于哪个组
             val currentGroup = when {
                 importStr.startsWith("jakarta") -> "jakarta"
                 importStr.startsWith("org.hibernate") -> "hibernate"
                 else -> "other"
             }
 
-            // 在不同组之间添加空行分隔
             if (lastPackageGroup != null && lastPackageGroup != currentGroup) {
                 result.add("")
             }
 
-            // 添加 "import " 前缀
             result.add("import $importStr")
             lastPackageGroup = currentGroup
         }

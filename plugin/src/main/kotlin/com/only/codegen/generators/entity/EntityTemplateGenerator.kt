@@ -1,4 +1,4 @@
-package com.only.codegen.generators
+package com.only.codegen.generators.entity
 
 import com.only.codegen.context.entity.EntityContext
 import com.only.codegen.template.TemplateNode
@@ -6,7 +6,7 @@ import com.only.codegen.template.TemplateNode
 /**
  * 模板文件生成器
  */
-interface TemplateGenerator {
+interface EntityTemplateGenerator {
     /**
      * 模板标签（entity, enum, factory 等）
      */

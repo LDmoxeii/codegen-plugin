@@ -1,4 +1,4 @@
-package com.only.codegen.generators
+package com.only.codegen.generators.entity
 
 import com.only.codegen.context.entity.EntityContext
 import com.only.codegen.misc.refPackage
@@ -8,7 +8,7 @@ import com.only.codegen.template.TemplateNode
  * Schema 基类生成器
  * 生成包含 JPA Criteria API 辅助类的 Schema 基类
  */
-class SchemaBaseGenerator : TemplateGenerator {
+class SchemaBaseGenerator : EntityTemplateGenerator {
     override val tag = "schema_base"
     override val order = 10
 

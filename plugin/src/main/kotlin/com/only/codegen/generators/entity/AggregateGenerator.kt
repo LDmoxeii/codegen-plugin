@@ -1,4 +1,4 @@
-package com.only.codegen.generators
+package com.only.codegen.generators.entity
 
 import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.entity.EntityContext
@@ -11,7 +11,7 @@ import com.only.codegen.template.TemplateNode
  * 聚合封装类生成器
  * 为聚合根生成聚合封装类，用于管理聚合根及其相关操作
  */
-class AggregateGenerator : TemplateGenerator {
+class AggregateGenerator : EntityTemplateGenerator {
     override val tag = "aggregate"
     override val order = 40
 

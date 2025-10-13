@@ -1,8 +1,8 @@
 package {{ basePackage }}.{{ package }}
 
-    {%- for import in imports %}
+{%- for import in imports %}
 import {{ import }}
-    {%- endfor %}
+{%- endfor %}
 
 /**
  * {{ Comment }}
@@ -14,9 +14,23 @@ import {{ import }}
 @Repository
 interface {{ Repository }} : {{ parentInterface }} {
 
-    // 在此添加自定义查询方法
-    // 例如:
-    // fun findByName(name: String): {{ AggregateRoot }}?
-    // fun findAllByStatus(status: String): List<{{ AggregateRoot }}>
+    @Component
+    @Aggregate(aggregate = "{{ Aggregate }}", name = "{{ Entity }}Repo", type = Aggregate.TYPE_REPOSITORY, description = "")
+    class {{ Entity }}JpaRepositoryAdapter(
+        jpaSpecificationExecutor: JpaSpecificationExecutor<{{ Entity }}>,
+        jpaRepository: JpaRepository<{{ Entity }}, {{ IdentityType }}>
+    ) : AbstractJpaRepository<{{ Entity }}, {{ IdentityType }}>(
+        jpaSpecificationExecutor,
+        jpaRepository
+    )
 
+{%- if supportQuerydsl %}
+    @Component
+    @Aggregate(aggregate = "{{ Aggregate }}", name = "{{ Entity }}QuerydslRepo", type = Aggregate.TYPE_REPOSITORY, description = "")
+    class {{ Entity }}QuerydslRepositoryAdapter(
+        querydslPredicateExecutor: QuerydslPredicateExecutor<{{ Entity }}>
+    ) : AbstractQuerydslRepository<{{ Entity }}>(
+        querydslPredicateExecutor
+    )
+{%- endif %}
 }

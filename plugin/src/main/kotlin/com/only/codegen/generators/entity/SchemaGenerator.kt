@@ -1,8 +1,8 @@
-package com.only.codegen.generators
+package com.only.codegen.generators.entity
 
 import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.entity.EntityContext
-import com.only.codegen.generators.manager.SchemaImportManager
+import com.only.codegen.manager.SchemaImportManager
 import com.only.codegen.misc.*
 import com.only.codegen.pebble.PebbleTemplateRenderer.renderString
 import com.only.codegen.template.TemplateNode
@@ -11,7 +11,7 @@ import com.only.codegen.template.TemplateNode
  * Schema 文件生成器
  * 为每个实体生成对应的 Schema 类（类似 JPA Metamodel）
  */
-class SchemaGenerator : TemplateGenerator {
+class SchemaGenerator : EntityTemplateGenerator {
     override val tag = "schema"
     override val order = 50
 

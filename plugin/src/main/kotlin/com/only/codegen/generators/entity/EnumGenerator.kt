@@ -1,4 +1,4 @@
-package com.only.codegen.generators
+package com.only.codegen.generators.entity
 
 import com.only.codegen.context.entity.EntityContext
 import com.only.codegen.misc.SqlSchemaUtils
@@ -9,7 +9,7 @@ import com.only.codegen.template.TemplateNode
 /**
  * 枚举文件生成器
  */
-class EnumGenerator : TemplateGenerator {
+class EnumGenerator : EntityTemplateGenerator {
     override val tag = "enum"
     override val order = 10
 

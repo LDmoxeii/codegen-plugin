@@ -1,4 +1,4 @@
-package com.only.codegen.generators
+package com.only.codegen.generators.entity
 
 import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.entity.EntityContext
@@ -8,17 +8,17 @@ import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
 
 /**
- * Factory 文件生成器
- * 为聚合根生成工厂类
+ * Specification 文件生成器
+ * 为每个实体生成规约（Specification）基类
  */
-class FactoryGenerator : TemplateGenerator {
-    override val tag = "factory"
+class SpecificationGenerator : EntityTemplateGenerator {
+    override val tag = "specification"
     override val order = 30
 
     private val generated = mutableSetOf<String>()
 
     companion object {
-        private const val DEFAULT_FAC_PACKAGE = "factory"
+        private const val DEFAULT_SPEC_PACKAGE = "specs"
     }
 
     override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
@@ -27,7 +27,7 @@ class FactoryGenerator : TemplateGenerator {
 
         if (!SqlSchemaUtils.isAggregateRoot(table)) return false
 
-        if (!(SqlSchemaUtils.hasFactory(table)) && context.getBoolean("generateAggregate")) return false
+        if (!(SqlSchemaUtils.hasSpecification(table)) && context.getBoolean("generateAggregate")) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
         val columns = context.columnsMap[tableName] ?: return false
@@ -39,7 +39,6 @@ class FactoryGenerator : TemplateGenerator {
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
         val aggregate = context.resolveAggregateWithModule(tableName)
-
         val entityType = context.entityTypeMap[tableName]!!
         val fullEntityType = context.typeMapping[entityType]!!
 
@@ -47,15 +46,14 @@ class FactoryGenerator : TemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
+            resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
-            resultContext.putContext(tag, "DEFAULT_FAC_PACKAGE", DEFAULT_FAC_PACKAGE)
-            resultContext.putContext(tag, "Factory", "${entityType}Factory")
-            resultContext.putContext(tag, "Payload", "${entityType}Payload")
+            resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
+            resultContext.putContext(tag, "Specification", "${entityType}Specification")
 
-            resultContext.putContext(tag, "fullEntityType", fullEntityType)
             resultContext.putContext(tag, "Entity", entityType)
+            resultContext.putContext(tag, "fullEntityType", fullEntityType)
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
         }
 
@@ -79,11 +77,11 @@ class FactoryGenerator : TemplateGenerator {
     override fun getDefaultTemplateNode(): TemplateNode {
         return TemplateNode().apply {
             type = "file"
-            tag = this@FactoryGenerator.tag
-            name = "{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
+            tag = this@SpecificationGenerator.tag
+            name = "{{ DEFAULT_SPEC_PACKAGE }}{{ SEPARATOR }}{{ Specification }}.kt"
             format = "resource"
-            data = "templates/factory.peb"
-            conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件
+            data = "templates/specification.peb"
+            conflict = "skip" // Specification 通常包含业务逻辑，不覆盖已有文件
         }
     }
 
@@ -97,13 +95,13 @@ class FactoryGenerator : TemplateGenerator {
             val templatePackage = refPackage(aggregatesPackage)
             val `package` = refPackage(aggregate)
 
-            val factoryType = "${entityType}Factory"
-            val fullFactoryType =
-                "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_FAC_PACKAGE)}${refPackage(factoryType)}"
-            typeMapping[factoryType] = fullFactoryType
+            val specificationType = "${entityType}Specification"
+            val fullSpecificationType = "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_SPEC_PACKAGE)}${
+                refPackage(specificationType)
+            }"
+            typeMapping[specificationType] = fullSpecificationType
 
             generated.add(tableName)
         }
     }
-
 }

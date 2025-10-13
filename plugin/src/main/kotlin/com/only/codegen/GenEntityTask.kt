@@ -1,7 +1,7 @@
 package com.only.codegen
 
 import com.only.codegen.context.entity.*
-import com.only.codegen.generators.*
+import com.only.codegen.generators.entity.*
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.resolvePackageDirectory
@@ -185,7 +185,7 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
     }
 
     private fun generateForTables(
-        generator: TemplateGenerator,
+        generator: EntityTemplateGenerator,
         context: EntityContext,
     ) {
         val tables = context.tableMap.values.toMutableList()

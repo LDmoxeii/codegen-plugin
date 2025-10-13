@@ -1,4 +1,4 @@
-package com.only.codegen.generators.manager
+package com.only.codegen.manager
 
 /**
  * Import 管理器接口，用于管理不同类型类文件的 import 语句

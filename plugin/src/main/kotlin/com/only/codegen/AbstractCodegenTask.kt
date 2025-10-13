@@ -32,7 +32,6 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
         const val PATTERN_SPLITTER = "[,;]"
         const val PATTERN_DESIGN_PARAMS_SPLITTER = "[\\:]"
         const val PATTERN_LINE_BREAK = "\\r\\n|[\\r\\n]"
-        const val AGGREGATE_REPOSITORY_PACKAGE = "adapter.domain.repositories"
         const val AGGREGATE_PACKAGE = "domain.aggregates"
         const val DOMAIN_EVENT_SUBSCRIBER_PACKAGE = "application.subscribers.domain"
         const val INTEGRATION_EVENT_SUBSCRIBER_PACKAGE = "application.subscribers.integration"
