@@ -1,4 +1,4 @@
-package com.only.codegen.context.annotation
+package com.only.codegen.context.aggregate
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -7,7 +7,7 @@ import java.io.File
 
 class KspMetadataContextBuilder(
     private val metadataPath: String,
-) : AnnotationContextBuilder {
+) : AggregateContextBuilder {
 
     override val order: Int = 10
 

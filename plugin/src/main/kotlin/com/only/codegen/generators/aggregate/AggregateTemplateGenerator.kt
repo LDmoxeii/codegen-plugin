@@ -1,10 +1,10 @@
-package com.only.codegen.generators.annotation
+package com.only.codegen.generators.aggregate
 
-import com.only.codegen.context.annotation.AggregateInfo
-import com.only.codegen.context.annotation.AnnotationContext
+import com.only.codegen.context.aggregate.AggregateInfo
+import com.only.codegen.context.aggregate.AnnotationContext
 import com.only.codegen.template.TemplateNode
 
-interface AnnotationTemplateGenerator {
+interface AggregateTemplateGenerator {
 
     val tag: String
 

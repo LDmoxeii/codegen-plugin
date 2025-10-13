@@ -1,4 +1,4 @@
-package com.only.codegen.context.annotation
+package com.only.codegen.context.aggregate
 
 import com.only.codegen.context.BaseContext
 

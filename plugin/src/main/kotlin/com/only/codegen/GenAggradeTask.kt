@@ -1,15 +1,15 @@
 package com.only.codegen
 
-import com.only.codegen.context.annotation.*
-import com.only.codegen.generators.annotation.AnnotationTemplateGenerator
-import com.only.codegen.generators.annotation.RepositoryGenerator
+import com.only.codegen.context.aggregate.*
+import com.only.codegen.generators.aggregate.AggregateTemplateGenerator
+import com.only.codegen.generators.aggregate.RepositoryGenerator
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.resolvePackageDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
-open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
+open class GenAggradeTask : GenArchTask(), MutableAnnotationContext {
 
     @Internal
     override val classMap: MutableMap<String, ClassInfo> = mutableMapOf()
@@ -117,7 +117,7 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
     }
 
     private fun generateForAggregates(
-        generator: AnnotationTemplateGenerator,
+        generator: AggregateTemplateGenerator,
         context: AnnotationContext,
     ) {
         val aggregates = context.aggregateMap.values.toList()

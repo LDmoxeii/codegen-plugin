@@ -1,6 +1,6 @@
-package com.only.codegen.context.annotation
+package com.only.codegen.context.aggregate
 
-class IdentityTypeBuilder : AnnotationContextBuilder {
+class IdentityTypeBuilder : AggregateContextBuilder {
 
     override val order: Int = 30
 

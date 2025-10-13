@@ -1,6 +1,6 @@
-package com.only.codegen.context.annotation
+package com.only.codegen.context.aggregate
 
-class AggregateInfoBuilder : AnnotationContextBuilder {
+class AggregateInfoBuilder : AggregateContextBuilder {
 
     override val order: Int = 20
 

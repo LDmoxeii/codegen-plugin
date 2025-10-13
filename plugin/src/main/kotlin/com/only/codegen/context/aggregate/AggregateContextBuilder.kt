@@ -1,4 +1,4 @@
-package com.only.codegen.context.annotation
+package com.only.codegen.context.aggregate
 
 /**
  * 注解上下文构建器接口（独立于 EntityContextBuilder）
@@ -9,7 +9,7 @@ package com.only.codegen.context.annotation
  * @see AnnotationContext
  * @see MutableAnnotationContext
  */
-interface AnnotationContextBuilder {
+interface AggregateContextBuilder {
 
     /**
      * 执行顺序

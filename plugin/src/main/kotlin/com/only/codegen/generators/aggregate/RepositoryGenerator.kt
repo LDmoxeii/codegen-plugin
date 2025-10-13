@@ -1,13 +1,13 @@
-package com.only.codegen.generators.annotation
+package com.only.codegen.generators.aggregate
 
-import com.only.codegen.context.annotation.AggregateInfo
-import com.only.codegen.context.annotation.AnnotationContext
+import com.only.codegen.context.aggregate.AggregateInfo
+import com.only.codegen.context.aggregate.AnnotationContext
 import com.only.codegen.manager.RepositoryImportManager
 import com.only.codegen.misc.refPackage
 import com.only.codegen.pebble.PebbleTemplateRenderer.renderString
 import com.only.codegen.template.TemplateNode
 
-class RepositoryGenerator : AnnotationTemplateGenerator {
+class RepositoryGenerator : AggregateTemplateGenerator {
 
     override val tag = "repository"
     override val order = 10

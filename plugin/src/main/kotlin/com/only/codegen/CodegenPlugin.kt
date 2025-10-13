@@ -29,20 +29,15 @@ class CodegenPlugin : Plugin<Project> {
             task.projectDir.set(project.projectDir.absolutePath)
         }
 
-        project.tasks.register("genAnnotation", GenAnnotationTask::class.java) { task ->
-            task.description = "Generate code from annotations (Repository, Service, etc.)"
+        project.tasks.register("genAggregate", GenAggradeTask::class.java) { task ->
+            task.description = "Generate code from aggregate"
             task.extension.set(extension)
             task.projectName.set(project.name)
             task.projectGroup.set(project.group.toString())
             task.projectVersion.set(project.version.toString())
             task.projectDir.set(project.projectDir.absolutePath)
         }
-//
-//        project.tasks.register("genRepository", GenRepositoryTask::class.java) { task ->
-//            task.group = "cap4k codegen"
-//            task.description = "Generate repository classes"
-//            task.extension.set(extension)
-//        }
+
 //
 //        project.tasks.register("genDesign", GenDesignTask::class.java) { task ->
 //            task.description = "Generate design elements (commands, queries, events)"
