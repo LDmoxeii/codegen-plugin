@@ -86,7 +86,7 @@ class RepositoryGenerator : AnnotationTemplateGenerator {
             tag = this@RepositoryGenerator.tag
             name = "{{ Repository }}.kt"
             format = "resource"
-            data = "repository"
+            data = "templates/repository.peb"
             conflict = "skip"  // Repository 通常不需要覆盖，用户可能会添加自定义方法
         }
     }
