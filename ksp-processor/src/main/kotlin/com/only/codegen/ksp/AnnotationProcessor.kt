@@ -5,7 +5,6 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.gson.GsonBuilder
 import com.only.codegen.ksp.models.AggregateMetadata
-import com.only.codegen.ksp.models.EntityMetadata
 import com.only.codegen.ksp.models.FieldMetadata
 
 /**
@@ -19,30 +18,23 @@ class AnnotationProcessor(
 ) : SymbolProcessor {
 
     private val aggregates = mutableListOf<AggregateMetadata>()
-    private val entities = mutableListOf<EntityMetadata>()
+
+    @Volatile
     private var metadataGenerated = false
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        // 1. 处理 @Aggregate 注解
         processAggregateAnnotations(resolver)
-
-        // 2. 处理 @Entity 注解
-        processEntityAnnotations(resolver)
 
         return emptyList()
     }
 
     override fun finish() {
-        // 3. 在 finish() 中生成元数据 JSON (只调用一次)
         if (!metadataGenerated) {
             generateMetadata()
             metadataGenerated = true
         }
     }
 
-    /**
-     * 处理 @Aggregate 注解
-     */
     private fun processAggregateAnnotations(resolver: Resolver) {
         val aggregateSymbols = resolver.getSymbolsWithAnnotation(
             "com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate"
@@ -83,34 +75,9 @@ class AnnotationProcessor(
             )
 
             aggregates.add(metadata)
-
-            logger.info("Processed aggregate: $aggregateName (root=$isRoot)")
         }
     }
 
-    /**
-     * 处理 @Entity 注解
-     */
-    private fun processEntityAnnotations(resolver: Resolver) {
-        val entitySymbols = resolver.getSymbolsWithAnnotation(
-            "jakarta.persistence.Entity"
-        )
-
-        entitySymbols.filterIsInstance<KSClassDeclaration>().forEach { classDecl ->
-            val metadata = EntityMetadata(
-                className = classDecl.simpleName.asString(),
-                qualifiedName = classDecl.qualifiedName?.asString() ?: "",
-                packageName = classDecl.packageName.asString(),
-                fields = extractFields(classDecl)
-            )
-
-            entities.add(metadata)
-        }
-    }
-
-    /**
-     * 解析标识类型（ID 字段的类型）
-     */
     private fun resolveIdentityType(classDecl: KSClassDeclaration): String {
         val idFields = classDecl.getAllProperties()
             .filter { property ->
@@ -126,13 +93,11 @@ class AnnotationProcessor(
                 val type = idFields.first().type.resolve()
                 type.declaration.qualifiedName?.asString() ?: "Long"
             }
+
             else -> "${classDecl.simpleName.asString()}.PK"
         }
     }
 
-    /**
-     * 提取字段信息
-     */
     private fun extractFields(classDecl: KSClassDeclaration): List<FieldMetadata> {
         return classDecl.getAllProperties().map { property ->
             val isId = property.annotations.any {
@@ -155,13 +120,9 @@ class AnnotationProcessor(
         }.toList()
     }
 
-    /**
-     * 生成元数据 JSON 文件
-     */
     private fun generateMetadata() {
         val gson = GsonBuilder().setPrettyPrinting().create()
 
-        // 生成 aggregates.json
         if (aggregates.isNotEmpty()) {
             val aggregatesFile = codeGenerator.createNewFile(
                 Dependencies(false),
@@ -172,19 +133,5 @@ class AnnotationProcessor(
             aggregatesFile.write(gson.toJson(aggregates).toByteArray())
             aggregatesFile.close()
         }
-
-        // 生成 entities.json
-        if (entities.isNotEmpty()) {
-            val entitiesFile = codeGenerator.createNewFile(
-                Dependencies(false),
-                "metadata",
-                "entities",
-                "json"
-            )
-            entitiesFile.write(gson.toJson(entities).toByteArray())
-            entitiesFile.close()
-        }
-
-        logger.info("Generated metadata: ${aggregates.size} aggregates, ${entities.size} entities")
     }
 }

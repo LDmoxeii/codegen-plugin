@@ -1,9 +1,5 @@
 package com.only.codegen.ksp.models
 
-/**
- * 字段元数据
- * 从 KSP 提取的字段信息
- */
 data class FieldMetadata(
     /**
      * 字段名称

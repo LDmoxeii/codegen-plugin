@@ -1,9 +1,5 @@
 package com.only.codegen.ksp.models
 
-/**
- * 聚合元数据
- * 从 @Aggregate 注解提取的聚合信息
- */
 data class AggregateMetadata(
     /**
      * 聚合名称（来自 @Aggregate(aggregate = "...") 属性）
