@@ -18,8 +18,6 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
     @Volatile
     private lateinit var currentDomainEventHandler: String
 
-    private val generated = mutableSetOf<String>()
-
     private fun generateDomainEventName(eventName: String): String =
         (toUpperCamelCase(eventName) ?: eventName).let { base ->
             if (base.endsWith("Event") || base.endsWith("Evt")) base else "${base}DomainEvent"
@@ -35,7 +33,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
 
         return domainEvents.any { domainEventInfo ->
             val infos = domainEventInfo.split(":")
-            "${generateDomainEventName(infos[0])}Subscriber" !in generated
+            !context.typeMapping.containsKey("${generateDomainEventName(infos[0])}Subscriber")
         }
     }
 
@@ -49,7 +47,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
             val infos = domainEventInfo.split(":")
             val eventName = generateDomainEventName(infos[0])
             val handlerName = "${eventName}Subscriber"
-            if (!generated.contains(handlerName)) {
+            if (!context.typeMapping.containsKey(handlerName)) {
                 currentDomainEventHandler = "${eventName}Subscriber"
                 domainEvent = eventName
                 true
@@ -108,7 +106,6 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
             val fullDomainEventType =
                 "${getString("basePackage")}${templatePackage}${`package`}${refPackage(currentDomainEventHandler)}"
             typeMapping[currentDomainEventHandler] = fullDomainEventType
-            generated.add(currentDomainEventHandler)
         }
     }
 }

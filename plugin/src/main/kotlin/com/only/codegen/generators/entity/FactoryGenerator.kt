@@ -15,8 +15,6 @@ class FactoryGenerator : EntityTemplateGenerator {
     override val tag = "factory"
     override val order = 30
 
-    private val generated = mutableSetOf<String>()
-
     companion object {
         private const val DEFAULT_FAC_PACKAGE = "factory"
     }
@@ -30,10 +28,12 @@ class FactoryGenerator : EntityTemplateGenerator {
         if (!(SqlSchemaUtils.hasFactory(table)) && context.getBoolean("generateAggregate")) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
+        val entityType = context.entityTypeMap[tableName] ?: return false
         val columns = context.columnsMap[tableName] ?: return false
         val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
 
-        return ids.isNotEmpty() && !generated.contains(tableName)
+        val factoryType = "${entityType}Factory"
+        return ids.isNotEmpty() && !context.typeMapping.containsKey(factoryType)
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
@@ -101,8 +101,6 @@ class FactoryGenerator : EntityTemplateGenerator {
             val fullFactoryType =
                 "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_FAC_PACKAGE)}${refPackage(factoryType)}"
             typeMapping[factoryType] = fullFactoryType
-
-            generated.add(tableName)
         }
     }
 

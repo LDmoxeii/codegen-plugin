@@ -16,17 +16,16 @@ class EntityGenerator : EntityTemplateGenerator {
     override val tag = "entity"
     override val order = 20
 
-    private val generated = mutableSetOf<String>()
-
     override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
+        val entityType = context.entityTypeMap[tableName] ?: return false
         val columns = context.columnsMap[tableName] ?: return false
         val ids = resolveIdColumns(columns)
 
-        return ids.isNotEmpty() && !(generated.contains(tableName))
+        return ids.isNotEmpty() && !context.typeMapping.containsKey(entityType)
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
@@ -198,7 +197,6 @@ class EntityGenerator : EntityTemplateGenerator {
 
             typeMapping[entityType] = fullEntityType
             typeMapping["Q$entityType"] = fullQEntityType
-            generated.add(tableName)
         }
     }
 

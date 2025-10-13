@@ -12,13 +12,8 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
     override val tag = "schema_base"
     override val order = 10
 
-    @Volatile
-    private var generated = false
-
-    override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
-        // Schema 基类只生成一次
-        return !generated && context.getBoolean("generateSchema", false)
-    }
+    override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean
+        = !context.typeMapping.containsKey("Schema")
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
         val resultContext = context.baseMap.toMutableMap()
@@ -52,6 +47,5 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
 
             typeMapping["Schema"] = "$basePackage$templatePackage${refPackage("Schema")}"
         }
-        generated = true
     }
 }

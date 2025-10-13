@@ -15,8 +15,6 @@ class SpecificationGenerator : EntityTemplateGenerator {
     override val tag = "specification"
     override val order = 30
 
-    private val generated = mutableSetOf<String>()
-
     companion object {
         private const val DEFAULT_SPEC_PACKAGE = "specs"
     }
@@ -30,10 +28,12 @@ class SpecificationGenerator : EntityTemplateGenerator {
         if (!(SqlSchemaUtils.hasSpecification(table)) && context.getBoolean("generateAggregate")) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
+        val entityType = context.entityTypeMap[tableName] ?: return false
         val columns = context.columnsMap[tableName] ?: return false
         val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
 
-        return ids.isNotEmpty() && !generated.contains(tableName)
+        val specificationType = "${entityType}Specification"
+        return ids.isNotEmpty() && !context.typeMapping.containsKey(specificationType)
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
@@ -100,8 +100,6 @@ class SpecificationGenerator : EntityTemplateGenerator {
                 refPackage(specificationType)
             }"
             typeMapping[specificationType] = fullSpecificationType
-
-            generated.add(tableName)
         }
     }
 }

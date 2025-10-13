@@ -15,18 +15,18 @@ class SchemaGenerator : EntityTemplateGenerator {
     override val tag = "schema"
     override val order = 50
 
-    private val generated = mutableSetOf<String>()
-
     override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
         if (!context.getBoolean("generateSchema", false)) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
+        val entityType = context.entityTypeMap[tableName] ?: return false
         val columns = context.columnsMap[tableName] ?: return false
         val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
 
-        return ids.isNotEmpty() && !generated.contains(tableName)
+        val schemaType = "S$entityType"
+        return ids.isNotEmpty() && !context.typeMapping.containsKey(schemaType)
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
@@ -168,8 +168,6 @@ class SchemaGenerator : EntityTemplateGenerator {
             val schemaType = "S$entityType"
             val fullSchemaType = "$basePackage${templatePackage}${`package`}${refPackage(schemaType)}"
             typeMapping[schemaType] = fullSchemaType
-
-            generated.add(tableName)
         }
     }
 }

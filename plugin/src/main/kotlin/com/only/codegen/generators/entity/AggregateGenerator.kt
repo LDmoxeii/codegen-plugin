@@ -15,8 +15,6 @@ class AggregateGenerator : EntityTemplateGenerator {
     override val tag = "aggregate"
     override val order = 40
 
-    private val generated = mutableSetOf<String>()
-
     override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
@@ -25,10 +23,14 @@ class AggregateGenerator : EntityTemplateGenerator {
         if (!SqlSchemaUtils.isAggregateRoot(table)) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
+        val entityType = context.entityTypeMap[tableName] ?: return false
         val columns = context.columnsMap[tableName] ?: return false
         val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
 
-        return ids.isNotEmpty() && !generated.contains(tableName)
+        val aggregateTypeTemplate = context.getString("aggregateTypeTemplate")
+        val aggregateType = renderString(aggregateTypeTemplate, mapOf("Entity" to entityType))
+
+        return ids.isNotEmpty() && !context.typeMapping.containsKey(aggregateType)
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
@@ -104,8 +106,6 @@ class AggregateGenerator : EntityTemplateGenerator {
 
             val fullAggregateType = "$basePackage${templatePackage}${`package`}${refPackage(aggregateType)}"
             typeMapping[aggregateType] = fullAggregateType
-
-            generated.add(tableName)
         }
     }
 }

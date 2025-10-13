@@ -16,8 +16,6 @@ class EnumGenerator : EntityTemplateGenerator {
     @Volatile
     private lateinit var currentEnumType: String
 
-    private val generated = mutableSetOf<String>()
-
     override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
         with(context) {
             if (SqlSchemaUtils.isIgnore(table)) return false
@@ -32,7 +30,7 @@ class EnumGenerator : EntityTemplateGenerator {
                     false
                 } else {
                     val enumType = SqlSchemaUtils.getType(column)
-                    !(generated.contains(enumType))
+                    !typeMapping.containsKey(enumType)
                 }
             }
         }
@@ -47,7 +45,7 @@ class EnumGenerator : EntityTemplateGenerator {
             columns.first { column ->
                 if (SqlSchemaUtils.hasEnum(column) && !SqlSchemaUtils.isIgnore(column)) {
                     val enumType = SqlSchemaUtils.getType(column)
-                    if (!(generated.contains(enumType))) {
+                    if (!typeMapping.containsKey(enumType)) {
                         currentEnumType = enumType
                         true
                     } else false
@@ -125,7 +123,6 @@ class EnumGenerator : EntityTemplateGenerator {
                 "$basePackage${templatePackage}${`package`}$enumPackageSuffix${refPackage(currentEnumType)}"
 
             typeMapping[currentEnumType] = fullEnumType
-            generated.add(currentEnumType)
         }
 
     }

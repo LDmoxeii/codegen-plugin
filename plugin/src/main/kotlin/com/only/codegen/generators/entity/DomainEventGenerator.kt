@@ -18,8 +18,6 @@ class DomainEventGenerator : EntityTemplateGenerator {
     @Volatile
     private lateinit var currentDomainEvent: String
 
-    private val generated = mutableSetOf<String>()
-
     companion object {
         private const val DEFAULT_DOMAIN_EVENT_PACKAGE = "events"
     }
@@ -39,7 +37,7 @@ class DomainEventGenerator : EntityTemplateGenerator {
 
         return domainEvents.any { domainEventInfo ->
             val infos = domainEventInfo.split(":")
-            generateDomainEventName(infos[0]) !in generated
+            !(context.typeMapping.containsKey(generateDomainEventName(infos[0])))
         }
     }
 
@@ -53,7 +51,7 @@ class DomainEventGenerator : EntityTemplateGenerator {
         SqlSchemaUtils.getDomainEvents(table).first { domainEventInfo ->
             val infos = domainEventInfo.split(":")
             val eventName = generateDomainEventName(infos[0])
-            if (!generated.contains(eventName)) {
+            if (!context.typeMapping.containsKey(eventName)) {
                 currentDomainEvent = eventName
                 true
             } else false
@@ -117,7 +115,6 @@ class DomainEventGenerator : EntityTemplateGenerator {
                     refPackage(currentDomainEvent)
                 }"
             typeMapping[currentDomainEvent] = fullDomainEventType
-            generated.add(currentDomainEvent)
         }
     }
 }

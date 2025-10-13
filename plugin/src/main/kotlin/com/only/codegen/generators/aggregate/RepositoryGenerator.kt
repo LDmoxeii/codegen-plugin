@@ -12,8 +12,6 @@ class RepositoryGenerator : AggregateTemplateGenerator {
     override val tag = "repository"
     override val order = 10
 
-    private val generated = mutableSetOf<String>()
-
     companion object {
         const val AGGREGATE_REPOSITORY_PACKAGE = "adapter.domain.repositories"
     }
@@ -21,7 +19,11 @@ class RepositoryGenerator : AggregateTemplateGenerator {
     override fun shouldGenerate(aggregateInfo: AggregateInfo, context: AnnotationContext): Boolean {
         if (!aggregateInfo.aggregateRoot.isAggregateRoot) return false
 
-        if (generated.contains(aggregateInfo.name)) return false
+        val aggregateName = aggregateInfo.name
+        val repositoryNameTemplate = context.getString("repositoryNameTemplate")
+        val repositoryName = renderString(repositoryNameTemplate, mapOf("Aggregate" to aggregateName))
+
+        if (context.typeMapping.containsKey(repositoryName)) return false
 
         val generateRepository = context.getBoolean("generateRepository", true)
         return generateRepository
@@ -88,7 +90,5 @@ class RepositoryGenerator : AggregateTemplateGenerator {
         val basePackage = context.getString("basePackage")
         val fullRepositoryType = "$basePackage.$AGGREGATE_REPOSITORY_PACKAGE.$repositoryName"
         context.typeMapping[repositoryName] = fullRepositoryType
-
-        generated.add(aggregateName)
     }
 }
