@@ -254,7 +254,7 @@ open class GenerationConfig @Inject constructor(objects: ObjectFactory) {
      * 仓储名称模板
      */
     val repositoryNameTemplate: Property<String> =
-        objects.property(String::class.java).convention("{{ Entity }}Repository")
+        objects.property(String::class.java).convention("{{ Aggregate }}Repository")
 
     /**
      * 仓储是否支持Querydsl

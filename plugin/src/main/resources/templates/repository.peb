@@ -1,35 +1,39 @@
 package {{ basePackage }}.{{ package }}
-
 {%- for import in imports %}
-import {{ import }}
+{{ import }}
 {%- endfor %}
 
 /**
  * {{ Comment }}
- *
+ * 222
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
  * @author cap4k-ddd-codegen
  * @date {{ date }}
  */
 @Repository
-interface {{ Repository }} : {{ parentInterface }} {
+{%- if supportQuerydsl %}
+interface {{ Repository }} : JpaRepository<{{ Aggregate }}, {{ IdentityType }}>, JpaSpecificationExecutor<{{ Aggregate }}>,
+    QuerydslPredicateExecutor<{{ Aggregate }}> {
+{%- else %}
+interface {{ Repository }} : JpaRepository<{{ Aggregate }}, {{ IdentityType }}>, JpaSpecificationExecutor<{{ Aggregate }}> {
+{%- endif %}
 
     @Component
-    @Aggregate(aggregate = "{{ Aggregate }}", name = "{{ Entity }}Repo", type = Aggregate.TYPE_REPOSITORY, description = "")
-    class {{ Entity }}JpaRepositoryAdapter(
-        jpaSpecificationExecutor: JpaSpecificationExecutor<{{ Entity }}>,
-        jpaRepository: JpaRepository<{{ Entity }}, {{ IdentityType }}>
-    ) : AbstractJpaRepository<{{ Entity }}, {{ IdentityType }}>(
+    @Aggregate(aggregate = "{{ Aggregate }}", name = "{{ Aggregate }}Repo", type = Aggregate.TYPE_REPOSITORY, description = "")
+    class {{ Aggregate }}JpaRepositoryAdapter(
+        jpaSpecificationExecutor: JpaSpecificationExecutor<{{ Aggregate }}>,
+        jpaRepository: JpaRepository<{{ Aggregate }}, {{ IdentityType }}>
+    ) : AbstractJpaRepository<{{ Aggregate }}, {{ IdentityType }}>(
         jpaSpecificationExecutor,
         jpaRepository
     )
 
 {%- if supportQuerydsl %}
     @Component
-    @Aggregate(aggregate = "{{ Aggregate }}", name = "{{ Entity }}QuerydslRepo", type = Aggregate.TYPE_REPOSITORY, description = "")
-    class {{ Entity }}QuerydslRepositoryAdapter(
-        querydslPredicateExecutor: QuerydslPredicateExecutor<{{ Entity }}>
-    ) : AbstractQuerydslRepository<{{ Entity }}>(
+    @Aggregate(aggregate = "{{ Aggregate }}", name = "{{ Aggregate }}QuerydslRepo", type = Aggregate.TYPE_REPOSITORY, description = "")
+    class {{ Aggregate }}QuerydslRepositoryAdapter(
+        querydslPredicateExecutor: QuerydslPredicateExecutor<{{ Aggregate }}>
+    ) : AbstractQuerydslRepository<{{ Aggregate }}>(
         querydslPredicateExecutor
     )
 {%- endif %}

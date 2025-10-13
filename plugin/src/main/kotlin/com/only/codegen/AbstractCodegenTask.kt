@@ -121,6 +121,7 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
                 put("entitySchemaOutputMode", entitySchemaOutputMode.get())
                 put("entitySchemaNameTemplate", entitySchemaNameTemplate.get())
                 put("aggregateTypeTemplate", aggregateTypeTemplate.get())
+                put("repositoryNameTemplate", repositoryNameTemplate.get())
                 put("idGenerator", idGenerator.get())
                 put("idGenerator4ValueObject", idGenerator4ValueObject.get())
                 put("hashMethod4ValueObject", hashMethod4ValueObject.get())
@@ -133,7 +134,6 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
                 put("generateSchema", generateSchema.get())
                 put("generateAggregate", generateAggregate.get())
                 put("generateParent", generateParent.get())
-                put("repositoryNameTemplate", repositoryNameTemplate.get())
                 put("repositorySupportQuerydsl", repositorySupportQuerydsl.get())
             }
 

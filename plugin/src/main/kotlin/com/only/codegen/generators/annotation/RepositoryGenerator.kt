@@ -31,26 +31,21 @@ class RepositoryGenerator : AnnotationTemplateGenerator {
         val aggregateRoot = aggregateInfo.aggregateRoot
         val aggregateName = aggregateInfo.name
 
-        val rootEntityType = aggregateRoot.simpleName  // 如 "User"
         val fullRootEntityType = aggregateRoot.fullName  // 如 "com.example.domain.aggregates.user.User"
         val identityType = aggregateInfo.identityType  // 如 "Long" 或 "UserId"
 
-        val repositoryName = buildRepositoryName(aggregateName, context)  // 如 "UserRepository"
+        val repositoryNameTemplate = context.getString("repositoryNameTemplate")  // 如 "UserRepository"
 
         val imports = RepositoryImportManager()
+        imports.addBaseImports()
         imports.add(fullRootEntityType)
         val fullIdType = context.typeMapping[identityType]
-        imports.addIfNeeded(fullIdType == null) { identityType }
         imports.addIfNeeded(fullIdType != null) { fullIdType!!}
-        imports.addIfNeeded(context.getBoolean("repositorySupportQuerydsl"), "org.springframework.data.querydsl.QuerydslPredicateExecutor")
-
-        val supportQuerydsl = context.getBoolean("repositorySupportQuerydsl", false)
-        val parentInterface = if (supportQuerydsl) {
-            """JpaRepository<$rootEntityType, $identityType>, JpaSpecificationExecutor<$rootEntityType>, 
-                |   QuerydslPredicateExecutor<$rootEntityType>""".trimMargin()
-        } else {
-            "JpaRepository<$rootEntityType, $identityType>, JpaSpecificationExecutor<$rootEntityType>"
-        }
+        val supportQuerydsl = context.getBoolean("repositorySupportQuerydsl")
+        imports.addIfNeeded(supportQuerydsl,
+            "org.springframework.data.querydsl.QuerydslPredicateExecutor",
+            "com.only4.cap4k.ddd.domain.repo.querydsl.AbstractQuerydslRepository"
+        )
 
         val resultContext = context.baseMap.toMutableMap()
 
@@ -59,19 +54,12 @@ class RepositoryGenerator : AnnotationTemplateGenerator {
             resultContext.putContext(tag, "package", AGGREGATE_REPOSITORY_PACKAGE)
             resultContext.putContext(tag, "templatePackage", refPackage(AGGREGATE_REPOSITORY_PACKAGE))
 
+            resultContext.putContext(tag, "supportQuerydsl", supportQuerydsl)
+            resultContext.putContext(tag, "imports", imports.toImportLines())
             resultContext.putContext(tag, "Aggregate", aggregateName)
-            resultContext.putContext(tag, "AggregateRoot", rootEntityType)
-
-            resultContext.putContext(tag, "Entity", rootEntityType)
             resultContext.putContext(tag, "IdentityType", identityType)
 
-            resultContext.putContext(tag, "Repository", renderString(repositoryName, mapOf("Entity" to rootEntityType)))
-            resultContext.putContext(tag, "parentInterface", parentInterface)
-
-            resultContext.putContext(tag, "IdType", identityType)
-            resultContext.putContext(tag, "imports", imports.toImportLines())
-
-            resultContext.putContext(tag, "supportQuerydsl", supportQuerydsl)
+            resultContext.putContext(tag, "Repository", renderString(repositoryNameTemplate, resultContext))
 
             val comment = "Repository for $aggregateName aggregate"
             resultContext.putContext(tag, "Comment", comment)
@@ -93,17 +81,14 @@ class RepositoryGenerator : AnnotationTemplateGenerator {
 
     override fun onGenerated(aggregateInfo: AggregateInfo, context: AnnotationContext) {
         val aggregateName = aggregateInfo.name
-        val repositoryName = buildRepositoryName(aggregateName, context)
+        val repositoryNameTemplate = context.getString("repositoryNameTemplate")  // 如 "UserRepository"
+
+        val repositoryName = renderString(repositoryNameTemplate, mapOf("Aggregate" to aggregateName))
 
         val basePackage = context.getString("basePackage")
         val fullRepositoryType = "$basePackage.$AGGREGATE_REPOSITORY_PACKAGE.$repositoryName"
         context.typeMapping[repositoryName] = fullRepositoryType
 
         generated.add(aggregateName)
-    }
-
-    private fun buildRepositoryName(aggregateName: String, context: AnnotationContext): String {
-        val template = context.getString("repositoryNameTemplate", "{{ Aggregate }}Repository")
-        return renderString(template, mapOf("Aggregate" to aggregateName))
     }
 }
