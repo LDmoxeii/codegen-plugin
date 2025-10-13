@@ -7,44 +7,18 @@ import com.only.codegen.misc.refPackage
 import com.only.codegen.pebble.PebbleTemplateRenderer.renderString
 import com.only.codegen.template.TemplateNode
 
-/**
- * Repository 文件生成器
- *
- * 为每个聚合根生成对应的 JPA Repository 接口
- *
- * **生成规则**：
- * - 只为聚合根生成 Repository
- * - 位于 adapter 模块的 domain.repositories 包下
- * - 继承 JpaRepository<Entity, ID>
- * - 可选支持 QueryDSL（如果配置了 repositorySupportQuerydsl）
- *
- * **示例输出**：
- * ```kotlin
- * package com.example.adapter.domain.repositories
- *
- * import com.example.domain.aggregates.user.User
- * import org.springframework.data.jpa.repository.JpaRepository
- * import org.springframework.stereotype.Repository
- *
- * @Repository
- * interface UserRepository : JpaRepository<User, Long>
- * ```
- */
 class RepositoryGenerator : AnnotationTemplateGenerator {
 
     override val tag = "repository"
-    override val order = 10  // Repository 最先生成，依赖最少
+    override val order = 10
 
     private val generated = mutableSetOf<String>()
 
     override fun shouldGenerate(aggregateInfo: AggregateInfo, context: AnnotationContext): Boolean {
-        // 只为聚合根生成 Repository
         if (!aggregateInfo.aggregateRoot.isAggregateRoot) return false
 
-        // 检查是否已生成（避免重复）
         if (generated.contains(aggregateInfo.name)) return false
 
-        // 检查配置是否启用 Repository 生成（默认启用）
         val generateRepository = context.getBoolean("generateRepository", true)
         return generateRepository
     }

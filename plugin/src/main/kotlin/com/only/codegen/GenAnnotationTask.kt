@@ -9,25 +9,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
-/**
- * 基于注解生成代码的任务
- *
- * 继承 GenArchTask 以复用模板解析基础设施（Pebble 引擎初始化等）
- *
- * **执行流程**:
- * 1. 初始化 Pebble 模板引擎（继承自 GenArchTask）
- * 2. 读取 KSP 生成的 JSON 元数据
- * 3. 构建 AnnotationContext（通过 AnnotationContextBuilder）
- * 4. 为每个聚合生成代码（通过 AnnotationTemplateGenerator）
- *
- * **生成内容**:
- * - Repository 接口（adapter 层）
- * - Service 类（application 层，可选）
- * - Controller 类（adapter 层，可选）
- */
 open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
-
-    // === MutableAnnotationContext 实现 ===
 
     @Internal
     override val classMap: MutableMap<String, ClassInfo> = mutableMapOf()
@@ -45,8 +27,6 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
     @get:Internal
     override val scanPackages: List<String>
         get() = extension.get().annotation.scanPackages.get()
-
-    // === Task 执行 ===
 
     @TaskAction
     override fun generate() {
@@ -81,11 +61,6 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
         logger.lifecycle("Annotation-based code generation completed")
     }
 
-    /**
-     * 解析 KSP 元数据路径
-     *
-     * 默认路径: build/generated/ksp/{variant}/resources/metadata/
-     */
     private fun resolveMetadataPath(): File {
         val configuredPath = extension.get().annotation.metadataPath.orNull
         if (!configuredPath.isNullOrBlank()) {
@@ -129,14 +104,6 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
         return File(projectDir.get(), "build/generated/ksp/main/resources/metadata")
     }
 
-    /**
-     * 构建生成上下文
-     *
-     * 执行顺序：
-     * 1. KspMetadataContextBuilder (order=10): 读取 JSON 元数据
-     * 2. AggregateInfoBuilder (order=20): 识别聚合根，组织聚合结构
-     * 3. IdentityTypeBuilder (order=30): 解析 ID 类型，填充 typeMapping
-     */
     private fun buildGenerationContext(metadataPath: String): AnnotationContext {
         val contextBuilders = listOf(
             KspMetadataContextBuilder(metadataPath),  // order=10 - 读取元数据
@@ -157,11 +124,6 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
         return this
     }
 
-    /**
-     * 生成文件
-     *
-     * 为每个聚合执行所有生成器
-     */
     private fun generateFiles(context: AnnotationContext) {
         val generators = listOf(
             RepositoryGenerator(),  // order=10 - Repository 接口
@@ -176,9 +138,6 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
             }
     }
 
-    /**
-     * 为所有聚合执行单个生成器
-     */
     private fun generateForAggregates(
         generator: AnnotationTemplateGenerator,
         context: AnnotationContext,
