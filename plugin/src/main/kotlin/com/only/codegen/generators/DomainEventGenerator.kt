@@ -37,7 +37,7 @@ class DomainEventGenerator : TemplateGenerator {
 
         val domainEvents = SqlSchemaUtils.getDomainEvents(table)
 
-        return domainEvents.any {domainEventInfo ->
+        return domainEvents.any { domainEventInfo ->
             val infos = domainEventInfo.split(":")
             generateDomainEventName(infos[0]) !in generated
         }
@@ -64,7 +64,7 @@ class DomainEventGenerator : TemplateGenerator {
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
-            resultContext.putContext(tag, "package",refPackage(aggregate))
+            resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_DOMAIN_EVENT_PACKAGE", DEFAULT_DOMAIN_EVENT_PACKAGE)
             resultContext.putContext(tag, "DomainEvent", currentDomainEvent)
@@ -99,7 +99,7 @@ class DomainEventGenerator : TemplateGenerator {
             tag = this@DomainEventGenerator.tag
             name = "{{ DEFAULT_DOMAIN_EVENT_PACKAGE }}{{ SEPARATOR }}{{ DomainEvent }}.kt"
             format = "resource"
-            data = "domain_event"
+            data = "templates/domain_event.peb"
             conflict = "skip" // 领域事件基类通常包含业务逻辑，不覆盖已有文件
         }
     }
@@ -112,7 +112,10 @@ class DomainEventGenerator : TemplateGenerator {
             val templatePackage = refPackage(context.aggregatesPackage)
             val `package` = refPackage(aggregate)
 
-            val fullDomainEventType = "${getString("basePackage")}${templatePackage}${`package`}.${DEFAULT_DOMAIN_EVENT_PACKAGE}${refPackage(currentDomainEvent)}"
+            val fullDomainEventType =
+                "${getString("basePackage")}${templatePackage}${`package`}.${DEFAULT_DOMAIN_EVENT_PACKAGE}${
+                    refPackage(currentDomainEvent)
+                }"
             typeMapping[currentDomainEvent] = fullDomainEventType
             generated.add(currentDomainEvent)
         }

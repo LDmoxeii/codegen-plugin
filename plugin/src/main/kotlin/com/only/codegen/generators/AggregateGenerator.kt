@@ -84,7 +84,7 @@ class AggregateGenerator : TemplateGenerator {
             tag = this@AggregateGenerator.tag
             name = "{{ AggregateName }}.kt"
             format = "resource"
-            data = "aggregate"
+            data = "templates/aggregate.peb"
             conflict = "skip"
         }
     }

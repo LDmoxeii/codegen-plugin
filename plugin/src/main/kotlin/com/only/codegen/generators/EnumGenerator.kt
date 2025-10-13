@@ -89,7 +89,7 @@ class EnumGenerator : TemplateGenerator {
             tag = this@EnumGenerator.tag
             name = "{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
             format = "resource"
-            data = "enum"
+            data = "templates/enum.peb"
             conflict = "overwrite"
         }
     }
@@ -121,7 +121,8 @@ class EnumGenerator : TemplateGenerator {
             val templatePackage = refPackage(aggregatesPackage)
             val `package` = refPackage(aggregate)
 
-            val fullEnumType = "$basePackage${templatePackage}${`package`}$enumPackageSuffix${refPackage(currentEnumType)}"
+            val fullEnumType =
+                "$basePackage${templatePackage}${`package`}$enumPackageSuffix${refPackage(currentEnumType)}"
 
             typeMapping[currentEnumType] = fullEnumType
             generated.add(currentEnumType)

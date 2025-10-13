@@ -40,7 +40,7 @@ class SchemaBaseGenerator : TemplateGenerator {
             tag = this@SchemaBaseGenerator.tag
             name = "{{ SchemaBase }}.kt"
             format = "resource"
-            data = "schema_base"
+            data = "templates/schema_base.peb"
             conflict = "overwrite"
         }
     }

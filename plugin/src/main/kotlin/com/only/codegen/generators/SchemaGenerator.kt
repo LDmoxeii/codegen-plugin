@@ -50,7 +50,8 @@ class SchemaGenerator : TemplateGenerator {
             context.typeMapping[entityType]!!,
             context.typeMapping["Schema"]!!,
         )
-        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl,
+        importManager.addIfNeeded(
+            isAggregateRoot && repositorySupportQuerydsl,
             "com.only4.cap4k.ddd.domain.repo.JpaPredicate",
             "com.querydsl.core.types.OrderSpecifier",
             "com.only4.cap4k.ddd.core.domain.aggregate.AggregatePredicate",
@@ -149,7 +150,7 @@ class SchemaGenerator : TemplateGenerator {
             tag = this@SchemaGenerator.tag
             name = "{{ Schema }}.kt"
             format = "resource"
-            data = "schema"
+            data = "templates/schema.peb"
             conflict = "overwrite"
         }
     }

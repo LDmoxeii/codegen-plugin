@@ -47,7 +47,7 @@ class SpecificationGenerator : TemplateGenerator {
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
-            resultContext.putContext(tag, "package",refPackage(aggregate))
+            resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
             resultContext.putContext(tag, "Specification", "${entityType}Specification")
@@ -80,7 +80,7 @@ class SpecificationGenerator : TemplateGenerator {
             tag = this@SpecificationGenerator.tag
             name = "{{ DEFAULT_SPEC_PACKAGE }}{{ SEPARATOR }}{{ Specification }}.kt"
             format = "resource"
-            data = "specification"
+            data = "templates/specification.peb"
             conflict = "skip" // Specification 通常包含业务逻辑，不覆盖已有文件
         }
     }
@@ -96,7 +96,9 @@ class SpecificationGenerator : TemplateGenerator {
             val `package` = refPackage(aggregate)
 
             val specificationType = "${entityType}Specification"
-            val fullSpecificationType = "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_SPEC_PACKAGE)}${refPackage(specificationType)}"
+            val fullSpecificationType = "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_SPEC_PACKAGE)}${
+                refPackage(specificationType)
+            }"
             typeMapping[specificationType] = fullSpecificationType
 
             generated.add(tableName)

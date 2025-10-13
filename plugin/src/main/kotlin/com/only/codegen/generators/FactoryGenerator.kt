@@ -82,7 +82,7 @@ class FactoryGenerator : TemplateGenerator {
             tag = this@FactoryGenerator.tag
             name = "{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
             format = "resource"
-            data = "factory"
+            data = "templates/factory.peb"
             conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件
         }
     }
@@ -98,7 +98,8 @@ class FactoryGenerator : TemplateGenerator {
             val `package` = refPackage(aggregate)
 
             val factoryType = "${entityType}Factory"
-            val fullFactoryType = "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_FAC_PACKAGE)}${refPackage(factoryType)}"
+            val fullFactoryType =
+                "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_FAC_PACKAGE)}${refPackage(factoryType)}"
             typeMapping[factoryType] = fullFactoryType
 
             generated.add(tableName)

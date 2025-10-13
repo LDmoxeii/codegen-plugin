@@ -175,7 +175,7 @@ class EntityGenerator : TemplateGenerator {
             tag = this@EntityGenerator.tag
             name = "{{ Entity }}.kt"
             format = "resource"
-            data = "entity"
+            data = "templates/entity.peb"
             conflict = "overwrite"
         }
     }
