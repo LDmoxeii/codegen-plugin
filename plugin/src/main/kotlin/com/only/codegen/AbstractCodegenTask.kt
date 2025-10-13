@@ -108,6 +108,11 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
                 put("dbIgnoreTables", ignoreTables.get())
             }
 
+            // 设计配置
+            put("designFiles", ext.designFiles.files.joinToString(";") { it.absolutePath })
+            put("kspMetadataDir", ext.kspMetadataDir.get())
+            put("designEncoding", ext.designEncoding.get())
+
             // 生成配置
             with(ext.generation) {
                 put("versionField", versionField.get())

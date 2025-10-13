@@ -9,7 +9,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 
-open class GenAggradeTask : GenArchTask(), MutableAnnotationContext {
+open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
 
     @Internal
     override val classMap: MutableMap<String, ClassInfo> = mutableMapOf()

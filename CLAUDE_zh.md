@@ -333,50 +333,6 @@ open class MyCustomTask : AbstractCodegenTask(), MutableMyCustomContext {
 2. 类似结构，但处理注解元数据
 3. 在 `GenAnnotationTask` 中注册（实现后）
 
-## 框架扩展性原则
-
-### 架构模式
-
-- **通用上下文系统**：所有上下文扩展 `BaseContext`，在 `ContextBuilder<T>` 中使用类型参数 `T`
-- **两阶段模式**：每个生成任务都遵循 上下文构建 → 文件生成
-- **基于顺序的执行**：构建器和生成器都使用 `order: Int` 进行排序
-- **类型安全**：泛型接口（`ContextBuilder<T>`）确保编译时类型安全
-- **关注点分离**：
-  - 上下文层 = 数据结构（只读 + 可变）
-  - 构建器层 = 数据收集/解析
-  - 生成器层 = 文件生成
-  - 任务层 = 工作流编排
-
-### 代码生成管道
-
-**当前实现**：
-1. **数据库 → 领域** (`GenEntityTask` + `EntityContext` + `EntityContextBuilder` + `TemplateGenerator`)
-2. **设计文件 → 应用/领域** (`GenDesignTask` - 案例研究)
-
-**计划中**：
-3. **注解 → 基础设施** (`GenAnnotationTask` + `AnnotationContext` + `AggregateContextBuilder` + `AnnotationTemplateGenerator`)
-
-**未来扩展性**：
-4. **KSP + 模板 + 自定义设计**（用户定义的上下文 + 构建器 + 生成器）
-5. 通过通用框架实现任意数据源组合
-
-### 添加新的生成器
-
-1. 在 `com.only.codegen.generators` 中创建实现 `TemplateGenerator` 的类
-2. 设置 `tag`（例如 "repository"）和 `order`（数值越大，执行越晚）
-3. 实现 `shouldGenerate()` - 如果此表需要此生成器则返回 true
-4. 实现 `buildContext()` - 使用 `context.putContext(tag, key, value)` 准备模板上下文 Map
-5. 实现 `getDefaultTemplateNode()` - 定义默认模板路径和冲突解决方式
-6. 实现 `onGenerated()` - 在 `typeMapping` 中缓存生成的类型全名供其他生成器引用
-7. 在 `GenEntityTask.generateFiles()` 中注册，将其添加到 generators 列表
-
-### 添加新的上下文构建器
-
-1. 在 `com.only.codegen.context.builders` 中创建实现 `ContextBuilder` 的类
-2. 根据依赖关系设置 `order`（数值越小，执行越早）
-3. 实现 `build()` 以填充 `MutableEntityContext` 的 Map
-4. 在 `GenEntityTask.buildGenerationContext()` 中注册，将其添加到 contextBuilders 列表
-
 ### 导入管理
 
 `ImportManager` 系统（在 `com.only.codegen.generators.manager` 中）处理自动导入解析：
@@ -399,7 +355,7 @@ open class MyCustomTask : AbstractCodegenTask(), MutableMyCustomContext {
 - 生成器 (`generators/`)：10 个生成器按顺序生成文件
 - 导入管理 (`generators/manager/`)：`ImportManager` 和 `EntityImportManager`
 - SQL 工具 (`misc/`)：`SqlSchemaUtils`、MySQL/PostgreSQL 实现
-- 文档：`重构进度报告.md`、`EntityGenerator实现计划.md`
+- 文档：`重构进度报告.md`、`EntityGenerator实现计划.md`（中文）
 
 ## 模块结构
 
@@ -462,6 +418,33 @@ codegen-plugin/
 ```
 
 ## 开发注意事项
+
+### 架构模式
+
+- **通用上下文系统**：所有上下文扩展 `BaseContext`，在 `ContextBuilder<T>` 中使用类型参数 `T`
+- **两阶段模式**：每个生成任务都遵循 上下文构建 → 文件生成
+- **基于顺序的执行**：构建器和生成器都使用 `order: Int` 进行排序
+- **类型安全**：泛型接口（`ContextBuilder<T>`）确保编译时类型安全
+- **关注点分离**：
+  - 上下文层 = 数据结构（只读 + 可变）
+  - 构建器层 = 数据收集/解析
+  - 生成器层 = 文件生成
+  - 任务层 = 工作流编排
+
+### 代码生成管道
+
+**当前实现**：
+1. **数据库 → 领域** (`GenEntityTask` + `EntityContext` + `EntityContextBuilder` + `TemplateGenerator`)
+2. **设计文件 → 应用/领域** (`GenDesignTask` - 案例研究)
+
+**计划中**：
+3. **注解 → 基础设施** (`GenAnnotationTask` + `AnnotationContext` + `AggregateContextBuilder` + `AnnotationTemplateGenerator`)
+
+**未来扩展性**：
+4. **KSP + 模板 + 自定义设计**（用户定义的上下文 + 构建器 + 生成器）
+5. 通过通用框架实现任意数据源组合
+
+### 技术细节
 
 - 代码库广泛使用带有惰性初始化的 Kotlin 属性
 - 大多数配置值来自 `CodegenExtension`，并缓存在 `BaseContext.baseMap` 中

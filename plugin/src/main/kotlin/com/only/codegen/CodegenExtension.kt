@@ -58,6 +58,17 @@ open class CodegenExtension @Inject constructor(objects: ObjectFactory) {
     val designFiles: ConfigurableFileCollection = objects.fileCollection()
 
     /**
+     * KSP 元数据输出目录
+     * 默认: build/generated/ksp/main/resources
+     */
+    val kspMetadataDir: Property<String> = objects.property(String::class.java).convention("")
+
+    /**
+     * 设计文件编码
+     */
+    val designEncoding: Property<String> = objects.property(String::class.java).convention("UTF-8")
+
+    /**
      * 数据库连接配置
      */
     val database: DatabaseConfig = objects.newInstance(DatabaseConfig::class.java, objects)

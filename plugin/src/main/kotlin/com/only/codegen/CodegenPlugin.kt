@@ -29,7 +29,7 @@ class CodegenPlugin : Plugin<Project> {
             task.projectDir.set(project.projectDir.absolutePath)
         }
 
-        project.tasks.register("genAggregate", GenAggradeTask::class.java) { task ->
+        project.tasks.register("genAggregate", GenAggregateTask::class.java) { task ->
             task.description = "Generate code from aggregate"
             task.extension.set(extension)
             task.projectName.set(project.name)
