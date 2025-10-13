@@ -117,6 +117,6 @@ class AggregateGenerator : EntityTemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-       context.typeMapping[generatorName(table, context)] = genneratorFullName(table, context)
+       context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }
