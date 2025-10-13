@@ -30,35 +30,26 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
 
     @TaskAction
     override fun generate() {
-        // 设置 renderFileSwitch = false，只初始化 Pebble 引擎，不生成架构文件
         renderFileSwitch = false
-        super.generate()  // 初始化 Pebble 模板引擎
+        super.generate()
 
-        // 执行注解代码生成
         genAnnotation()
     }
 
     private fun genAnnotation() {
-        logger.lifecycle("Starting annotation-based code generation...")
 
         val metadataPath = resolveMetadataPath()
         if (!metadataPath.exists()) {
-            logger.warn("KSP metadata not found at: ${metadataPath.absolutePath}")
-            logger.warn("Please run KSP processor first to generate metadata")
             return
         }
 
         val context = buildGenerationContext(metadataPath.absolutePath)
 
         if (context.aggregateMap.isEmpty()) {
-            logger.warn("No aggregates found in metadata")
             return
         }
 
-        logger.lifecycle("Found ${context.aggregateMap.size} aggregates")
         generateFiles(context)
-
-        logger.lifecycle("Annotation-based code generation completed")
     }
 
     private fun resolveMetadataPath(): File {
@@ -67,21 +58,17 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
             return File(configuredPath)
         }
 
-        // 多模块项目：优先查找 domain 模块
         val ext = extension.get()
         if (ext.multiModule.get()) {
             val domainModuleName = "${projectName.get()}${ext.moduleNameSuffix4Domain.get()}"
             val domainModulePath = File(projectDir.get(), domainModuleName)
 
-            // KSP 默认将 resources 输出到 build/generated/ksp/main/resources/
             val domainKspPath = File(domainModulePath, "build/generated/ksp/main/resources/metadata")
 
             if (domainKspPath.exists()) {
-                logger.info("Found KSP metadata in domain module: ${domainKspPath.absolutePath}")
                 return domainKspPath
             }
 
-            // 如果 domain 模块没有，尝试查找其他子模块
             val projectRoot = File(projectDir.get())
             val subModules = projectRoot.listFiles { file ->
                 file.isDirectory && file.name.startsWith(projectName.get())
@@ -90,17 +77,13 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
             for (subModule in subModules) {
                 val kspPath = File(subModule, "build/generated/ksp/main/resources/metadata")
                 if (kspPath.exists()) {
-                    logger.info("Found KSP metadata in module ${subModule.name}: ${kspPath.absolutePath}")
                     return kspPath
                 }
             }
 
-            // 没找到就返回 domain 模块的默认路径（即使不存在，让后续逻辑处理）
-            logger.warn("KSP metadata not found in any submodule, returning domain module default path")
             return domainKspPath
         }
 
-        // 单模块项目：项目根目录的 build/generated/ksp/main/resources/metadata/
         return File(projectDir.get(), "build/generated/ksp/main/resources/metadata")
     }
 
@@ -114,11 +97,7 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
         contextBuilders
             .sortedBy { it.order }
             .forEach { builder ->
-                logger.lifecycle("Building context: ${builder.javaClass.simpleName}")
                 builder.build(this)
-                // 输出调试信息
-                logger.lifecycle("  - classMap size: ${classMap.size}")
-                logger.lifecycle("  - aggregateMap size: ${aggregateMap.size}")
             }
 
         return this
@@ -133,7 +112,6 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
 
         generators.sortedBy { it.order }
             .forEach { generator ->
-                logger.lifecycle("Generating files: ${generator.tag}")
                 generateForAggregates(generator, context)
             }
     }
@@ -146,11 +124,8 @@ open class GenAnnotationTask : GenArchTask(), MutableAnnotationContext {
 
         aggregates.forEach { aggregateInfo ->
             if (!generator.shouldGenerate(aggregateInfo, context)) {
-                logger.debug("Skipping ${generator.tag} for aggregate: ${aggregateInfo.name}")
                 return@forEach
             }
-
-            logger.lifecycle("Generating ${generator.tag} for aggregate: ${aggregateInfo.name}")
 
             val aggregateContext = generator.buildContext(aggregateInfo, context)
             val templateNodes = context.templateNodeMap
