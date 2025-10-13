@@ -116,43 +116,6 @@
     },
     {
       "type": "dir",
-      "tag": "domain_event",
-      "name": "{{ path }}{{ SEPARATOR }}events",
-      "children": [
-        {
-          "type": "file",
-          "name": "{{ DomainEvent }}.kt",
-          "format": "url",
-          "data": "template/_tpl/nested/DomainEvent.kt.peb"
-        }
-      ]
-    },
-    {
-      "type": "dir",
-      "tag": "domain_event_handler",
-      "name": "",
-      "children": []
-    },
-    {
-      "type": "dir",
-      "tag": "aggregate",
-      "name": "{{ path }}",
-      "children": []
-    },
-    {
-      "type": "dir",
-      "tag": "factory",
-      "name": "{{ path }}{{ SEPARATOR }}factory",
-      "children": []
-    },
-    {
-      "type": "dir",
-      "tag": "specification",
-      "name": "{{ path }}{{ SEPARATOR }}specs",
-      "children": []
-    },
-    {
-      "type": "dir",
       "tag": "domain_service",
       "name": "{{ path }}",
       "children": []
@@ -319,7 +282,8 @@
                                 },
                                 {
                                   "type": "dir",
-                                  "name": "repositories"
+                                  "name": "repositories",
+                                  "tag": "repository"
                                 }
                               ]
                             },
@@ -581,12 +545,19 @@
                           "children": [
                             {
                               "type": "dir",
-                              "name": "_share"
+                              "name": "_share",
+                              "children": [
+                                {
+                                  "type": "dir",
+                                  "name": "meta",
+                                  "tag": "schema_base,schema"
+                                }
+                              ]
                             },
                             {
                               "type": "dir",
                               "name": "aggregates",
-                              "tag": "aggregate,domain_event,factory,specification"
+                              "tag": "enum,entity,aggregate,domain_event,factory,specification"
                             },
                             {
                               "type": "dir",

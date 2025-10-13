@@ -88,24 +88,11 @@ class EnumGenerator : EntityTemplateGenerator {
             val tableName = SqlSchemaUtils.getTableName(table)
             val aggregate = resolveAggregateWithModule(tableName)
 
-            // 计算枚举包路径
-            val enumPackageSuffix = buildString {
-                val packageName = templateNodeMap["enum"]
-                    ?.takeIf { it.isNotEmpty() }
-                    ?.get(0)?.name
-                    ?.takeIf { it.isNotBlank() }
-                    ?: defaultEnumPackage
-
-                if (packageName.isNotBlank()) {
-                    append(".$packageName")
-                }
-            }
-
             val basePackage = getString("basePackage")
             val templatePackage = refPackage(templatePackage[tag]!!)
             val `package` = refPackage(aggregate)
 
-            return "$basePackage${templatePackage}${`package`}$enumPackageSuffix${refPackage(currentEnumType)}"
+            return "$basePackage${templatePackage}${`package`}${refPackage(defaultEnumPackage)}${refPackage(currentEnumType)}"
         }
     }
 

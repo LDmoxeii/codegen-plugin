@@ -33,8 +33,8 @@ class DomainEventGenerator : EntityTemplateGenerator {
         val domainEvents = SqlSchemaUtils.getDomainEvents(table)
 
         return domainEvents.any { domainEventInfo ->
-            val infos = domainEventInfo.split(":")
-            !(context.typeMapping.containsKey(generateDomainEventName(infos[0])))
+            val currentDomainEvent = generatorName(table, context)
+            currentDomainEvent.isNotBlank() && !(context.typeMapping.containsKey(currentDomainEvent))
         }
     }
 
@@ -102,11 +102,12 @@ class DomainEventGenerator : EntityTemplateGenerator {
         table: Map<String, Any?>,
         context: EntityContext
     ): String {
-        return SqlSchemaUtils.getDomainEvents(table).first { domainEventInfo ->
+        return SqlSchemaUtils.getDomainEvents(table).map { domainEventInfo ->
             val infos = domainEventInfo.split(":")
-            val eventName = generateDomainEventName(infos[0])
-            !context.typeMapping.containsKey(eventName)
-        }
+            generateDomainEventName(infos[0])
+        }.firstOrNull { domainEvent ->
+            !context.typeMapping.containsKey(domainEvent)
+        } ?: ""
     }
 
     override fun getDefaultTemplateNode(): TemplateNode {
@@ -121,8 +122,6 @@ class DomainEventGenerator : EntityTemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
-        with(context) {
-            typeMapping[generatorName(table, context)] = generatorFullName(table, context)
-        }
+        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

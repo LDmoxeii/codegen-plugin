@@ -26,12 +26,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
 
         if (!SqlSchemaUtils.isAggregateRoot(table)) return false
 
-        val domainEvents = SqlSchemaUtils.getDomainEvents(table)
-
-        return domainEvents.any { domainEventInfo ->
-            val infos = domainEventInfo.split(":")
-            !context.typeMapping.containsKey("${generateDomainEventName(infos[0])}Subscriber")
-        }
+        return generatorName(table, context).isNotBlank() && !context.typeMapping.containsKey(generatorName(table, context))
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
@@ -72,7 +67,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
 
     override fun generatorFullName(
         table: Map<String, Any?>,
-        context: EntityContext
+        context: EntityContext,
     ): String {
         val tableName = SqlSchemaUtils.getTableName(table)
         val aggregate = context.resolveAggregateWithModule(tableName)
@@ -80,19 +75,29 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
         val templatePackage = refPackage(context.templatePackage[tag]!!)
         val `package` = refPackage(aggregate)
 
-        return "${context.getString("basePackage")}${templatePackage}${`package`}${refPackage(generatorName(table, context))}"
+        return "${context.getString("basePackage")}${templatePackage}${`package`}${
+            refPackage(
+                generatorName(
+                    table,
+                    context
+                )
+            )
+        }"
     }
 
     override fun generatorName(
         table: Map<String, Any?>,
-        context: EntityContext
+        context: EntityContext,
     ): String {
-        return SqlSchemaUtils.getDomainEvents(table).first { domainEventInfo ->
-            val infos = domainEventInfo.split(":")
-            val eventName = generateDomainEventName(infos[0])
-            val handlerName = "${eventName}Subscriber"
-            !context.typeMapping.containsKey(handlerName)
-        }
+        return SqlSchemaUtils.getDomainEvents(table)
+            .map { domainEventInfo ->
+                val infos = domainEventInfo.split(":")
+                val eventName = generateDomainEventName(infos[0])
+                "${eventName}Subscriber"
+            }
+            .firstOrNull { domainEventHandler ->
+                !context.typeMapping.containsKey(domainEventHandler)
+            } ?: ""
     }
 
     override fun getDefaultTemplateNode(): TemplateNode {

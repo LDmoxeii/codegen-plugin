@@ -20,13 +20,7 @@ class SchemaGenerator : EntityTemplateGenerator {
         if (SqlSchemaUtils.hasRelation(table)) return false
         if (!context.getBoolean("generateSchema", false)) return false
 
-        val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName] ?: return false
-        val columns = context.columnsMap[tableName] ?: return false
-        val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
-
-        val schemaType = "S$entityType"
-        return ids.isNotEmpty() && !context.typeMapping.containsKey(schemaType)
+        return !context.typeMapping.containsKey(generatorName(table, context))
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
