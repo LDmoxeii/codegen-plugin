@@ -20,6 +20,7 @@ class AnnotationProcessor(
 
     private val aggregates = mutableListOf<AggregateMetadata>()
     private val entities = mutableListOf<EntityMetadata>()
+    private var metadataGenerated = false
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         // 1. 处理 @Aggregate 注解
@@ -28,10 +29,15 @@ class AnnotationProcessor(
         // 2. 处理 @Entity 注解
         processEntityAnnotations(resolver)
 
-        // 3. 生成元数据 JSON
-        generateMetadata()
-
         return emptyList()
+    }
+
+    override fun finish() {
+        // 3. 在 finish() 中生成元数据 JSON (只调用一次)
+        if (!metadataGenerated) {
+            generateMetadata()
+            metadataGenerated = true
+        }
     }
 
     /**
