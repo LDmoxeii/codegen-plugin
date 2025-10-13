@@ -109,7 +109,7 @@ class SchemaGenerator : EntityTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(schemaPackage))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "Schema", "S$entityType")
@@ -151,7 +151,7 @@ class SchemaGenerator : EntityTemplateGenerator {
             val entityType = entityTypeMap[tableName]!!
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(aggregatesPackage)
+            val templatePackage = refPackage(templatePackage[tag]!!)
             val `package` = refPackage(aggregate)
 
             val schemaType = "S$entityType"

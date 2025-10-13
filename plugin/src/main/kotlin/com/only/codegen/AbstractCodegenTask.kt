@@ -159,46 +159,6 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     @get:Internal
     override val domainPath: String by lazy { extension.get().domainPath }
 
-    // === 包路径信息 ===
-    @get:Internal
-    override var aggregatesPath: String = ""
-        get() = field.takeIf { it.isNotBlank() } ?: resolvePackageDirectory(
-            domainPath,
-            "${getString("basePackage")}.$AGGREGATE_PACKAGE"
-        ).also { field = it }
-
-    @get:Internal
-    override var schemaPath: String = ""
-        get() = field.takeIf { it.isNotBlank() } ?: resolvePackageDirectory(
-            domainPath,
-            "${getString("basePackage")}.${getString("entitySchemaOutputPackage").takeIf { it.isNotBlank() } ?: "domain._share.meta"}"
-        ).also { field = it }
-
-    @get:Internal
-    override var subscriberPath: String = ""
-        get() = field.takeIf { it.isNotBlank() } ?: resolvePackageDirectory(
-            domainPath,
-            "${getString("basePackage")}.$DOMAIN_EVENT_SUBSCRIBER_PACKAGE"
-        ).also { field = it }
-
-    @get:Internal
-    override val aggregatesPackage: String by lazy {
-        resolvePackage("${aggregatesPath}${File.separator}X.kt")
-            .substring(getString("basePackage").length + 1)
-    }
-
-    @get:Internal
-    override val schemaPackage: String by lazy {
-        resolvePackage("${schemaPath}${File.separator}X.kt")
-            .substring(getString("basePackage").length + 1)
-    }
-
-    @get:Internal
-    override val subscriberPackage: String by lazy {
-        resolvePackage("${subscriberPath}${File.separator}X.kt")
-            .substring(getString("basePackage").length + 1)
-    }
-
     @get:Internal
     override val typeMapping: MutableMap<String, String> by lazy {
         extension.get().generation.typeMapping.get().toMutableMap()

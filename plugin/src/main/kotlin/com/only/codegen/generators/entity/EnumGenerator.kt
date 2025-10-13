@@ -65,7 +65,7 @@ class EnumGenerator : EntityTemplateGenerator {
             val resultContext = baseMap.toMutableMap()
 
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext["DEFAULT_ENUM_PACKAGE"] = "enums"
@@ -102,7 +102,7 @@ class EnumGenerator : EntityTemplateGenerator {
             }
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(aggregatesPackage)
+            val templatePackage = refPackage(templatePackage[tag]!!)
             val `package` = refPackage(aggregate)
 
             return "$basePackage${templatePackage}${`package`}$enumPackageSuffix${refPackage(currentEnumType)}"

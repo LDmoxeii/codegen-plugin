@@ -47,7 +47,7 @@ class FactoryGenerator : EntityTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(aggregatesPackage))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_FAC_PACKAGE", DEFAULT_FAC_PACKAGE)
@@ -86,7 +86,7 @@ class FactoryGenerator : EntityTemplateGenerator {
             val entityType = entityTypeMap[tableName]!!
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(aggregatesPackage)
+            val templatePackage = refPackage(templatePackage[tag]!!)
             val `package` = refPackage(aggregate)
 
             val factoryType = "${entityType}Factory"

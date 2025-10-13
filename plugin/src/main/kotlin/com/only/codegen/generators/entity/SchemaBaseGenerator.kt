@@ -20,7 +20,7 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(schemaPackage))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
             resultContext.putContext(tag, "package", "")
 
             resultContext.putContext(tag, "SchemaBase", generatorName(table, context))
@@ -35,7 +35,7 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
     ): String {
         with(context) {
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(schemaPackage)
+            val templatePackage = refPackage(templatePackage[tag]!!)
 
             return "$basePackage$templatePackage${refPackage(generatorName(table, context))}"
         }

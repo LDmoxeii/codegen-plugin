@@ -12,7 +12,7 @@ class TablePackageContextBuilder: EntityContextBuilder {
                 val tableName = SqlSchemaUtils.getTableName(table)
                 val aggregate = resolveAggregateWithModule(tableName)
                 tablePackageMap[tableName] =
-                    "${getString("basePackage")}${refPackage(aggregatesPackage)}${refPackage(aggregate)}"
+                    "${getString("basePackage")}${refPackage(templatePackage["entity"]!!)}${refPackage(aggregate)}"
             }
         }
     }

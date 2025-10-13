@@ -96,11 +96,6 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
         super.renderTemplate(templateNodes, parentPath)
         templateNodes.forEach { templateNode ->
             val alias = alias4Design(templateNode.tag!!)
-            when (alias) {
-                "aggregate" -> aggregatesPath = parentPath
-                "schema_base" -> schemaPath = parentPath
-                "domain_event_handler" -> subscriberPath = parentPath
-            }
             templateNodeMap.computeIfAbsent(alias) { mutableListOf() }.add(templateNode)
         }
     }

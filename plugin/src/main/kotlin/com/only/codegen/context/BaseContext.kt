@@ -12,16 +12,6 @@ interface BaseContext {
     val domainPath: String
     val applicationPath: String
 
-    // === 包路径信息 ===
-    val aggregatesPath: String
-    val schemaPath: String
-    val subscriberPath: String
-
-    // === 包名信息 ===
-    val aggregatesPackage: String
-    val schemaPackage: String
-    val subscriberPackage: String
-
     // === 类型映射 ===
     val typeMapping: MutableMap<String, String>
 

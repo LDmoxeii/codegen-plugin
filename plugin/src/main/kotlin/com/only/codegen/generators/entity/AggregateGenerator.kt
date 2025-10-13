@@ -40,7 +40,7 @@ class AggregateGenerator : EntityTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
             resultContext.putContext(tag, "package", refPackage(refPackage(aggregate)))
 
             resultContext.putContext(tag, "Entity", entityType)

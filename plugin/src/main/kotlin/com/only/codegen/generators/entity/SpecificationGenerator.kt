@@ -46,7 +46,7 @@ class SpecificationGenerator : EntityTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(context.aggregatesPackage))
+            resultContext.putContext(tag, "templatePackage", refPackage(context.templatePackage[tag]!!))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
@@ -81,7 +81,7 @@ class SpecificationGenerator : EntityTemplateGenerator {
             val entityType = entityTypeMap[tableName]!!
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(aggregatesPackage)
+            val templatePackage = refPackage(templatePackage[tag]!!)
             val `package` = refPackage(aggregate)
 
             val specificationType = "${entityType}Specification"
