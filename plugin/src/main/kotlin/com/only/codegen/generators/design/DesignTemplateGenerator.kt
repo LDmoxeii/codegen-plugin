@@ -34,6 +34,18 @@ interface DesignTemplateGenerator {
     fun buildContext(design: Any, context: DesignContext): Map<String, Any?>
 
     /**
+     * 获取生成器完全限定名
+     * 例如: "com.example.application.commands.category.CreateCategoryCmd"
+     */
+    fun generatorFullName(design: Any, context: DesignContext): String
+
+    /**
+     * 获取生成器简单名称
+     * 例如: "CreateCategoryCmd"
+     */
+    fun generatorName(design: Any, context: DesignContext): String
+
+    /**
      * 获取默认模板节点
      */
     fun getDefaultTemplateNode(): TemplateNode

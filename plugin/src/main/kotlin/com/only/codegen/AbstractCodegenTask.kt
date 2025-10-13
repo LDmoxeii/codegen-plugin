@@ -205,6 +205,12 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     }
 
     @Internal
+    override val templateParentPath: MutableMap<String, String> = mutableMapOf()
+
+    @Internal
+    override val templatePackage: MutableMap<String, String> = mutableMapOf()
+
+    @Internal
     override val templateNodeMap = mutableMapOf<String, MutableList<TemplateNode>>()
 
     @Internal
@@ -399,7 +405,13 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     protected open fun renderTemplate(
         templateNodes: List<TemplateNode>,
         parentPath: String,
-    ) = Unit
+    ) {
+        templateNodes.forEach { templateNode ->
+            templatePackage[templateNode.tag!!] = resolvePackage("${parentPath}${File.separator}X.kt")
+                .substring(getString("basePackage").length + 1)
+            templateParentPath[templateNode.tag!!] = parentPath
+        }
+    }
 
     private fun renderDir(pathNode: PathNode, parentPath: String): String {
         require(pathNode.type.equals("dir", ignoreCase = true)) { "pathNode must be a directory type" }

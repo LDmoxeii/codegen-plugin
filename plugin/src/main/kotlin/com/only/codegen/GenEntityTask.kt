@@ -93,6 +93,7 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
         templateNodes: List<TemplateNode>,
         parentPath: String,
     ) {
+        super.renderTemplate(templateNodes, parentPath)
         templateNodes.forEach { templateNode ->
             val alias = alias4Design(templateNode.tag!!)
             when (alias) {

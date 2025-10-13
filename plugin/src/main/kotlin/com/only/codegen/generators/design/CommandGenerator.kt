@@ -3,9 +3,9 @@ package com.only.codegen.generators.design
 import com.only.codegen.context.design.CommandDesign
 import com.only.codegen.context.design.DesignContext
 import com.only.codegen.misc.concatPackage
+import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
 import org.gradle.api.logging.Logging
-import java.io.File
 
 /**
  * 命令生成器
@@ -20,79 +20,83 @@ class CommandGenerator : DesignTemplateGenerator {
     override val tag: String = "command"
     override val order: Int = 10
 
+    companion object {
+        const val COMMAND_PACKAGE = "application.commands"
+    }
+
     override fun shouldGenerate(design: Any, context: DesignContext): Boolean {
-        return design is CommandDesign
+        if (design !is CommandDesign) return false
+
+        // 避免重复生成
+        if (context.typeMapping.containsKey(generatorName(design, context))) {
+            return false
+        }
+
+        return true
     }
 
     override fun buildContext(design: Any, context: DesignContext): Map<String, Any?> {
         require(design is CommandDesign) { "Design must be CommandDesign" }
 
-        val contextMap = mutableMapOf<String, Any?>()
+        val resultContext = context.baseMap.toMutableMap()
 
-        // 基本信息
-        contextMap.putContext(tag, "Name", design.name, context)
-        contextMap.putContext(tag, "Command", design.name, context)
-        contextMap.putContext(tag, "Request", design.requestName, context)
-        contextMap.putContext(tag, "Response", design.responseName, context)
-        contextMap.putContext(tag, "Comment", design.desc, context)
-        contextMap.putContext(tag, "CommentEscaped", design.desc.replace(Regex("\\r\\n|[\\r\\n]"), " "), context)
+        with(context) {
+            // 模块和包路径
+            resultContext.putContext(tag, "modulePath", applicationPath)
+            resultContext.putContext(tag, "package", COMMAND_PACKAGE)
+            resultContext.putContext(tag, "templatePackage", refPackage(COMMAND_PACKAGE))
 
-        // 包路径信息
-        contextMap.putContext(tag, "path", design.packagePath.replace(".", File.separator), context)
-        contextMap.putContext(tag, "package", if (design.packagePath.isNotBlank()) ".${design.packagePath}" else "", context)
+            // 基本信息
+            resultContext.putContext(tag, "Name", design.name)
+            resultContext.putContext(tag, "Command", design.name)
+            resultContext.putContext(tag, "Request", design.requestName)
+            resultContext.putContext(tag, "Response", design.responseName)
+            resultContext.putContext(tag, "Comment", design.desc)
+            resultContext.putContext(tag, "CommentEscaped", design.desc.replace(Regex("\\r\\n|[\\r\\n]"), " "))
 
-        // 聚合信息
-        if (design.aggregate != null) {
-            contextMap.putContext(tag, "Aggregate", design.aggregate, context)
+            // 聚合信息
+            if (design.aggregate != null) {
+                resultContext.putContext(tag, "Aggregate", design.aggregate)
 
-            // 如果有聚合元数据,提供更多信息
-            design.aggregateMetadata?.let { aggMeta ->
-                contextMap.putContext(tag, "AggregateRoot", aggMeta.aggregateRoot.name, context)
-                contextMap.putContext(tag, "IdType", aggMeta.idType ?: "String", context)
+                // 如果有聚合元数据,提供更多信息
+                design.aggregateMetadata?.let { aggMeta ->
+                    resultContext.putContext(tag, "AggregateRoot", aggMeta.aggregateRoot.name)
+                    resultContext.putContext(tag, "IdType", aggMeta.idType ?: "String")
+                }
             }
         }
 
-        // 模块路径 (application 层)
-        contextMap["modulePath"] = context.applicationPath
-        contextMap["templatePackage"] = "application.commands"
+        return resultContext
+    }
 
-        return contextMap
+    override fun generatorFullName(design: Any, context: DesignContext): String {
+        require(design is CommandDesign)
+        val basePackage = context.getString("basePackage")
+        val fullPackage = concatPackage(basePackage, COMMAND_PACKAGE, design.packagePath)
+        return concatPackage(fullPackage, design.name)
+    }
+
+    override fun generatorName(design: Any, context: DesignContext): String {
+        require(design is CommandDesign)
+        return design.name
     }
 
     override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode(
-            type = "file",
-            name = "{{ Name }}.kt",
-            conflict = "skip",
-            tag = tag,
-            encoding = null,
-            pattern = null,
-            templatePath = "templates/application/command/Command.peb"
-        )
+        return TemplateNode().apply {
+            type = "file"
+            tag = this@CommandGenerator.tag
+            name = "{{ Name }}.kt"
+            format = "resource"
+            data = "templates/application/command/Command.peb"
+            conflict = "skip"
+        }
     }
 
     override fun onGenerated(design: Any, context: DesignContext) {
         if (design is CommandDesign) {
-            val basePackage = context.getString("basePackage")
-            val fullPackage = concatPackage(basePackage, "application.commands", design.packagePath)
-            val fullName = concatPackage(fullPackage, design.name)
-            context.typeMapping[design.name] = fullName
-
+            val fullName = generatorFullName(design, context)
+            context.typeMapping[generatorName(design, context)] = fullName
             logger.lifecycle("Generated command: $fullName")
-        }
-    }
-
-    private fun MutableMap<String, Any?>.putContext(
-        tag: String,
-        variable: String,
-        value: Any,
-        context: DesignContext
-    ) {
-        // 使用 BaseContext 的别名映射系统
-        val key = "$tag.$variable"
-        val aliases = context.templateAliasMap[key] ?: listOf(variable)
-        aliases.forEach { alias ->
-            this[alias] = value
         }
     }
 }

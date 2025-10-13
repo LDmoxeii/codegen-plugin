@@ -25,6 +25,12 @@ interface BaseContext {
     // === 类型映射 ===
     val typeMapping: MutableMap<String, String>
 
+    // === 模板路径信息 ===
+    val templateParentPath: MutableMap<String, String>
+
+    // === 模板包名信息 ===
+    val templatePackage: MutableMap<String, String>
+
     // === 模板信息 ===
     val templateNodeMap: MutableMap<String, MutableList<TemplateNode>>
 
