@@ -597,6 +597,19 @@ private fun buildGenerationContext(): EntityContext {
    ↓ 填充 tablePackageMap
 ```
 
+**Context Builder 基础接口**:
+
+```kotlin
+interface ContextBuilder<T : BaseContext> {
+    val order: Int  // 执行顺序
+
+    // 填充上下文数据
+    fun build(context: T)
+}
+
+interface EntityContextBuilder : ContextBuilder<EntityContext>
+```
+
 #### EntityContext 数据结构
 
 ```kotlin
@@ -720,6 +733,27 @@ interface TemplateGenerator {
 
     // 生成后回调（缓存类型映射）
     fun onGenerated(table: Map<String, Any?>, context: EntityContext)
+}
+```
+
+**AnnotationTemplateGenerator 接口**:
+
+```kotlin
+interface AnnotationTemplateGenerator {
+    val tag: String              // 生成器标签
+    val order: Int               // 执行顺序
+
+    // 判断是否需要为该聚合生成
+    fun shouldGenerate(aggregate: AggregateInfo, context: AnnotationContext): Boolean
+
+    // 构建聚合级上下文
+    fun buildContext(aggregate: AggregateInfo, context: AnnotationContext): MutableMap<String, Any?>
+
+    // 获取默认模板节点
+    fun getDefaultTemplateNode(): TemplateNode
+
+    // 生成后回调
+    fun onGenerated(aggregate: AggregateInfo, context: AnnotationContext)
 }
 ```
 
@@ -909,6 +943,19 @@ private fun buildGenerationContext(metadataPath: String): AnnotationContext {
 
     return this
 }
+```
+
+**AnnotationContextBuilder 基础接口**:
+
+```kotlin
+interface ContextBuilder<T : BaseContext> {
+    val order: Int  // 执行顺序
+
+    // 填充上下文数据
+    fun build(context: T)
+}
+
+interface AnnotationContextBuilder : ContextBuilder<AnnotationContext>
 ```
 
 #### AnnotationContext 数据结构
@@ -1177,8 +1224,11 @@ aggregateContext = baseMap + mapOf(
 | **templateNodeMap** | 模板节点缓存，key 为 tag，value 为模板节点列表 |
 | **renderFileSwitch** | 文件写入开关，GenEntity 缓存阶段设为 false |
 | **forceRender()** | 强制渲染，无视 renderFileSwitch |
-| **ContextBuilder** | 上下文构建器，按 order 顺序填充上下文 |
-| **Generator** | 代码生成器，按 order 顺序生成文件 |
+| **ContextBuilder** | 上下文构建器基础接口 `ContextBuilder<T : BaseContext>`，按 order 顺序填充上下文 |
+| **EntityContextBuilder** | 实体上下文构建器接口 `EntityContextBuilder : ContextBuilder<EntityContext>` |
+| **AnnotationContextBuilder** | 注解上下文构建器接口 `AnnotationContextBuilder : ContextBuilder<AnnotationContext>` |
+| **TemplateGenerator** | 实体代码生成器接口，按 order 顺序生成文件 |
+| **AnnotationTemplateGenerator** | 注解代码生成器接口，用于基于注解的代码生成 |
 | **typeMapping** | 类型映射缓存，存储全限定类名，供后续引用 |
 | **AnnotationContext** | 基于注解的上下文，从 KSP 元数据构建 |
 
@@ -1194,8 +1244,26 @@ aggregateContext = baseMap + mapOf(
 - `PathNode.kt` - 脚手架节点
 - `TemplateNode.kt` - 模板节点
 - `PebbleTemplateRenderer.kt` - Pebble 模板引擎
-- `context/builders/` - 上下文构建器
-- `generators/` - 代码生成器
+- `context/builders/` - 上下文构建器（ContextBuilder、EntityContextBuilder、AnnotationContextBuilder）
+- `generators/` - 代码生成器（TemplateGenerator、AnnotationTemplateGenerator）
+
+### 核心接口层次结构
+
+```
+codegen.core.context
+├── BaseContext                    // 基础上下文接口
+├── EntityContext : BaseContext    // 实体生成上下文
+└── AnnotationContext : BaseContext // 注解生成上下文
+
+codegen.core.context.builders
+├── ContextBuilder<T : BaseContext>           // 上下文构建器基础接口
+├── EntityContextBuilder : ContextBuilder<EntityContext>     // 实体上下文构建器
+└── AnnotationContextBuilder : ContextBuilder<AnnotationContext> // 注解上下文构建器
+
+codegen.core.generators
+├── TemplateGenerator              // 实体代码生成器接口
+└── AnnotationTemplateGenerator    // 注解代码生成器接口
+```
 
 ### 相关文档
 
@@ -1206,4 +1274,4 @@ aggregateContext = baseMap + mapOf(
 
 ---
 
-**最后更新**: 2025-01-15
+**最后更新**: 2025-10-13

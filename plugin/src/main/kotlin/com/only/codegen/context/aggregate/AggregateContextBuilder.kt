@@ -1,5 +1,7 @@
 package com.only.codegen.context.aggregate
 
+import com.only.codegen.context.ContextBuilder
+
 /**
  * 注解上下文构建器接口（独立于 EntityContextBuilder）
  *
@@ -9,23 +11,4 @@ package com.only.codegen.context.aggregate
  * @see AnnotationContext
  * @see MutableAnnotationContext
  */
-interface AggregateContextBuilder {
-
-    /**
-     * 执行顺序
-     * 数值越小越先执行
-     *
-     * 推荐值：
-     * - 10: 基础数据收集（KspMetadataContextBuilder）
-     * - 20: 聚合信息构建（AggregateInfoBuilder）
-     * - 30: 类型映射构建（IdentityTypeBuilder）
-     */
-    val order: Int
-
-    /**
-     * 构建上下文
-     *
-     * @param context 可变的注解上下文，可以直接修改其中的 Map
-     */
-    fun build(context: MutableAnnotationContext)
-}
+interface AggregateContextBuilder : ContextBuilder<MutableAnnotationContext>
