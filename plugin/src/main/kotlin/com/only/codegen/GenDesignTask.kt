@@ -6,6 +6,7 @@ import com.only.codegen.generators.design.*
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.resolvePackageDirectory
 import com.only.codegen.template.TemplateNode
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 
 /**
@@ -21,16 +22,34 @@ import org.gradle.api.tasks.TaskAction
  */
 open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
-    // === 实现 MutableDesignContext 接口 ===
+    @Internal
     override val designElementMap = mutableMapOf<String, MutableList<DesignElement>>()
+
+    @Internal
     override val aggregateMetadataMap = mutableMapOf<String, AggregateMetadata>()
+
+    @Internal
     override val entityMetadataMap = mutableMapOf<String, EntityMetadata>()
+
+    @Internal
     override val commandDesignMap = mutableMapOf<String, CommandDesign>()
+
+    @Internal
     override val queryDesignMap = mutableMapOf<String, QueryDesign>()
+
+    @Internal
     override val sagaDesignMap = mutableMapOf<String, SagaDesign>()
+
+    @Internal
     override val clientDesignMap = mutableMapOf<String, ClientDesign>()
+
+    @Internal
     override val integrationEventDesignMap = mutableMapOf<String, IntegrationEventDesign>()
+
+    @Internal
     override val domainEventDesignMap = mutableMapOf<String, DomainEventDesign>()
+
+    @Internal
     override val domainServiceDesignMap = mutableMapOf<String, DomainServiceDesign>()
 
     @TaskAction
