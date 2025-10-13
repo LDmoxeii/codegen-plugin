@@ -28,7 +28,7 @@ open class PathNode {
     var name: String? = null
 
     /**
-     * 模板源类型：raw|url
+     * 模板源类型：raw|url|resource
      */
     var format: String = "raw"
 
@@ -60,22 +60,46 @@ open class PathNode {
     }
 
     open fun resolve(context: Map<String, Any?>): PathNode {
+        // 渲染节点名称（纯字符串模板）
         name = name
             ?.replace("{{ basePackage }}", "{{ basePackage__as_path }}")
             ?.let { renderString(it, context) }
 
+        // 根据 format 处理模板数据
         val rawData = when (format.lowercase()) {
-            "url" -> data?.let { src ->
-                val abs = if (isAbsolutePathOrHttpUri(src)) src else concatPathOrHttpUri(directory.get(), src)
-                loadFileContent(abs, context["archTemplateEncoding"]?.toString() ?: "UTF-8")
-            } ?: ""
+            "url" -> {
+                // data 存储的是模板路径/URL，需要加载文件内容
+                data?.let { src ->
+                    val absolutePath = if (isAbsolutePathOrHttpUri(src)) {
+                        src
+                    } else {
+                        concatPathOrHttpUri(directory.get(), src)
+                    }
+                    // 使用 loadFileContent 加载文件内容（支持文件系统和 HTTP）
+                    loadFileContent(absolutePath, context["archTemplateEncoding"]?.toString() ?: "UTF-8")
+                } ?: ""
+            }
 
-            else -> data ?: ""
+            "resource" -> {
+                // data 存储的是类路径资源路径，需要加载文件内容
+                data?.let { resPath ->
+                    val cleanPath = resPath.removePrefix("/").replace('\\', '/')
+                    PathNode::class.java.classLoader.getResourceAsStream(cleanPath)?.bufferedReader()
+                        ?.use { it.readText() } ?: ""
+                } ?: ""
+            }
+
+            else -> {
+                // data 存储的是模板内容，直接使用
+                data ?: ""
+            }
         }
 
+        // 渲染模板内容
         data = renderString(rawData, context)
         format = "raw"
 
+        // 递归处理子节点
         children?.forEach { it.resolve(context) }
         return this
     }

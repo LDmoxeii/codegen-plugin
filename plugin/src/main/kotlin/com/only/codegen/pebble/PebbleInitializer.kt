@@ -18,17 +18,11 @@ object PebbleInitializer {
 
         this.config = config
 
+        // 只使用 StringLoader，用于渲染纯字符串模板
         val stringLoader = StringLoader()
 
-        val classpathLoader = ClasspathLoader().apply {
-            prefix = config.classpathPrefix
-            suffix = ".peb"
-        }
-
-        val loader = CompositeLoader(classpathLoader, stringLoader)
-
         engine = PebbleEngine.Builder()
-            .loader(loader)
+            .loader(stringLoader)
             .strictVariables(config.strictMode)
             .cacheActive(config.cacheEnabled)
             .autoEscaping(config.autoEscaping)
