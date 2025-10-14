@@ -1,6 +1,6 @@
-package com.only.codegen.generators.entity
+package com.only.codegen.generators.aggregate
 
-import com.only.codegen.context.entity.EntityContext
+import com.only.codegen.context.aggregate.AggregateContext
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
 
@@ -8,14 +8,14 @@ import com.only.codegen.template.TemplateNode
  * Schema 基类生成器
  * 生成包含 JPA Criteria API 辅助类的 Schema 基类
  */
-class SchemaBaseGenerator : EntityTemplateGenerator {
+class SchemaBaseGenerator : AggregateTemplateGenerator {
     override val tag = "schema_base"
     override val order = 10
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean
+    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean
         = !context.typeMapping.containsKey(generatorName(table, context))
 
-    override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
+    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
@@ -31,7 +31,7 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
 
     override fun generatorFullName(
         table: Map<String, Any?>,
-        context: EntityContext
+        context: AggregateContext
     ): String {
         with(context) {
             val basePackage = getString("basePackage")
@@ -44,7 +44,7 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
 
     override fun generatorName(
         table: Map<String, Any?>,
-        context: EntityContext
+        context: AggregateContext
     ): String = "Schema"
 
     override fun getDefaultTemplateNode(): TemplateNode {
@@ -58,7 +58,7 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
         }
     }
 
-    override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
+    override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
         context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

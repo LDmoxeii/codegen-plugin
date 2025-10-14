@@ -1,6 +1,6 @@
 package com.only.codegen.misc
 
-import com.only.codegen.context.entity.EntityContext
+import com.only.codegen.context.aggregate.AggregateContext
 import java.sql.DriverManager
 import java.util.regex.Pattern
 
@@ -23,7 +23,7 @@ object SqlSchemaUtils {
 
     val ANNOTATION_PATTERN: Pattern = Pattern.compile("@([A-Za-z]+)(=[^;]+)?;?")
 
-    lateinit var context: EntityContext
+    lateinit var context: AggregateContext
 
     // 新增: 驱动映射（可按需扩展）
     private val DRIVER_BY_DB = mapOf(

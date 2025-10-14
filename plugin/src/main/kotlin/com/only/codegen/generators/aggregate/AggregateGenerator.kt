@@ -1,7 +1,7 @@
-package com.only.codegen.generators.entity
+package com.only.codegen.generators.aggregate
 
 import com.only.codegen.AbstractCodegenTask
-import com.only.codegen.context.entity.EntityContext
+import com.only.codegen.context.aggregate.AggregateContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.pebble.PebbleTemplateRenderer.renderString
@@ -11,11 +11,11 @@ import com.only.codegen.template.TemplateNode
  * 聚合封装类生成器
  * 为聚合根生成聚合封装类，用于管理聚合根及其相关操作
  */
-class AggregateGenerator : EntityTemplateGenerator {
+class AggregateGenerator : AggregateTemplateGenerator {
     override val tag = "aggregate"
     override val order = 40
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
+    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
         if (!context.getBoolean("generateAggregate", false)) return false
@@ -25,7 +25,7 @@ class AggregateGenerator : EntityTemplateGenerator {
         return !context.typeMapping.containsKey(generatorName(table, context))
     }
 
-    override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
+    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
         val columns = context.columnsMap[tableName]
         val aggregate = context.resolveAggregateWithModule(tableName)
@@ -71,7 +71,7 @@ class AggregateGenerator : EntityTemplateGenerator {
 
     override fun generatorFullName(
         table: Map<String, Any?>,
-        context: EntityContext
+        context: AggregateContext
     ): String {
         return with(context) {
             val tableName = SqlSchemaUtils.getTableName(table)
@@ -93,7 +93,7 @@ class AggregateGenerator : EntityTemplateGenerator {
 
     override fun generatorName(
         table: Map<String, Any?>,
-        context: EntityContext
+        context: AggregateContext
     ): String {
         with(context) {
             val tableName = SqlSchemaUtils.getTableName(table)
@@ -117,7 +117,7 @@ class AggregateGenerator : EntityTemplateGenerator {
         }
     }
 
-    override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
+    override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

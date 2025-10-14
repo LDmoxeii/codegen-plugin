@@ -1,6 +1,6 @@
-package com.only.codegen.generators.entity
+package com.only.codegen.generators.aggregate
 
-import com.only.codegen.context.entity.EntityContext
+import com.only.codegen.context.aggregate.AggregateContext
 import com.only.codegen.manager.RepositoryImportManager
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
@@ -11,7 +11,7 @@ import com.only.codegen.template.TemplateNode
  * Repository 生成器
  * 为聚合根生成 JPA Repository 接口及其适配器实现
  */
-class RepositoryGenerator : EntityTemplateGenerator {
+class RepositoryGenerator : AggregateTemplateGenerator {
 
     override val tag = "repository"
     override val order = 30
@@ -20,7 +20,7 @@ class RepositoryGenerator : EntityTemplateGenerator {
         const val ENTITY_REPOSITORY_PACKAGE = "adapter.domain.repositories"
     }
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
+    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
 
@@ -31,7 +31,7 @@ class RepositoryGenerator : EntityTemplateGenerator {
         return true
     }
 
-    override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
+    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = context.entityTypeMap[tableName]!!
 
@@ -79,7 +79,7 @@ class RepositoryGenerator : EntityTemplateGenerator {
 
     override fun generatorFullName(
         table: Map<String, Any?>,
-        context: EntityContext
+        context: AggregateContext
     ): String {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = context.entityTypeMap[tableName]!!
@@ -92,7 +92,7 @@ class RepositoryGenerator : EntityTemplateGenerator {
 
     override fun generatorName(
         table: Map<String, Any?>,
-        context: EntityContext
+        context: AggregateContext
     ): String {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = context.entityTypeMap[tableName]!!
@@ -112,7 +112,7 @@ class RepositoryGenerator : EntityTemplateGenerator {
         }
     }
 
-    override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
+    override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
         context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

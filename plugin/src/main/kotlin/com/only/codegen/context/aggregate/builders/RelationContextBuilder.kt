@@ -1,16 +1,16 @@
-package com.only.codegen.context.entity.builders
+package com.only.codegen.context.aggregate.builders
 
 import com.only.codegen.context.ContextBuilder
-import com.only.codegen.context.entity.MutableEntityContext
+import com.only.codegen.context.aggregate.MutableAggregateContext
 import com.only.codegen.misc.SqlSchemaUtils
 
 /**
  * 表关系构建器
  */
-class RelationContextBuilder : ContextBuilder<MutableEntityContext> {
+class RelationContextBuilder : ContextBuilder<MutableAggregateContext> {
     override val order = 20
 
-    override fun build(context: MutableEntityContext) {
+    override fun build(context: MutableAggregateContext) {
         context.tableMap.values.forEach { table ->
             val tableName = SqlSchemaUtils.getTableName(table)
             val columns = context.columnsMap[tableName]!!
@@ -30,7 +30,7 @@ class RelationContextBuilder : ContextBuilder<MutableEntityContext> {
     private fun resolveRelationTable(
         table: Map<String, Any?>,
         columns: List<Map<String, Any?>>,
-        context: MutableEntityContext
+        context: MutableAggregateContext
     ): Map<String, Map<String, String>> {
         val result = mutableMapOf<String, MutableMap<String, String>>()
         val tableName = SqlSchemaUtils.getTableName(table)
@@ -58,7 +58,7 @@ class RelationContextBuilder : ContextBuilder<MutableEntityContext> {
         columns: List<Map<String, Any?>>,
         result: MutableMap<String, MutableMap<String, String>>,
         tableName: String,
-        context: MutableEntityContext
+        context: MutableAggregateContext
     ) {
         val parent = SqlSchemaUtils.getParent(table)
         result.putIfAbsent(parent, mutableMapOf())
@@ -122,7 +122,7 @@ class RelationContextBuilder : ContextBuilder<MutableEntityContext> {
         columns: List<Map<String, Any?>>,
         result: MutableMap<String, MutableMap<String, String>>,
         tableName: String,
-        context: MutableEntityContext
+        context: MutableAggregateContext
     ) {
         var owner = ""
         var beowned = ""
@@ -165,7 +165,7 @@ class RelationContextBuilder : ContextBuilder<MutableEntityContext> {
         columns: List<Map<String, Any?>>,
         result: MutableMap<String, MutableMap<String, String>>,
         tableName: String,
-        context: MutableEntityContext
+        context: MutableAggregateContext
     ) {
         columns.forEach { column ->
             val colRel = SqlSchemaUtils.getRelation(column)

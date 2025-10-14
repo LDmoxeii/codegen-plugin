@@ -1,16 +1,16 @@
-package com.only.codegen.context.entity.builders
+package com.only.codegen.context.aggregate.builders
 
 import com.only.codegen.context.ContextBuilder
-import com.only.codegen.context.entity.MutableEntityContext
+import com.only.codegen.context.aggregate.MutableAggregateContext
 import com.only.codegen.misc.SqlSchemaUtils
 
 /**
  * 表和列信息构建器
  */
-class TableContextBuilder : ContextBuilder<MutableEntityContext> {
+class TableContextBuilder : ContextBuilder<MutableAggregateContext> {
     override val order = 10
 
-    override fun build(context: MutableEntityContext) {
+    override fun build(context: MutableAggregateContext) {
         val tables = SqlSchemaUtils.resolveTables(
             context.getString("dbUrl"),
             context.getString("dbUsername"),

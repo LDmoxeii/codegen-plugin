@@ -20,8 +20,8 @@ class CodegenPlugin : Plugin<Project> {
             task.projectDir.set(project.projectDir.absolutePath)
         }
 
-        project.tasks.register("genEntity", GenEntityTask::class.java) { task ->
-            task.description = "Generate entity classes from database schema"
+        project.tasks.register("genAggregate", GenAggregateTask::class.java) { task ->
+            task.description = "Generate Aggregate from database schema"
             task.extension.set(extension)
             task.projectName.set(project.name)
             task.projectGroup.set(project.group.toString())
@@ -33,6 +33,10 @@ class CodegenPlugin : Plugin<Project> {
         project.tasks.register("genDesign", GenDesignTask::class.java) { task ->
             task.description = "Generate design elements (commands, queries, events)"
             task.extension.set(extension)
+            task.projectName.set(project.name)
+            task.projectGroup.set(project.group.toString())
+            task.projectVersion.set(project.version.toString())
+            task.projectDir.set(project.projectDir.absolutePath)
         }
     }
 }

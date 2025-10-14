@@ -1,15 +1,15 @@
-package com.only.codegen.context.entity.builders
+package com.only.codegen.context.aggregate.builders
 
 import com.only.codegen.context.ContextBuilder
-import com.only.codegen.context.entity.MutableEntityContext
+import com.only.codegen.context.aggregate.MutableAggregateContext
 import com.only.codegen.misc.SqlSchemaUtils.getAnnotations
 import com.only.codegen.misc.SqlSchemaUtils.getComment
 import com.only.codegen.misc.SqlSchemaUtils.getTableName
 
-class AnnotationContextBuilder: ContextBuilder<MutableEntityContext> {
+class AnnotationContextBuilder: ContextBuilder<MutableAggregateContext> {
     override val order: Int = 20
 
-    override fun build(context: MutableEntityContext) {
+    override fun build(context: MutableAggregateContext) {
         with(context) {
             tableMap.values.forEach { table ->
                 val tableName = getTableName(table)

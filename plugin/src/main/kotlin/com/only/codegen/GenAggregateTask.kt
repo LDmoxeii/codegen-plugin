@@ -1,15 +1,26 @@
 package com.only.codegen
 
-import com.only.codegen.context.entity.*
-import com.only.codegen.context.entity.builders.AggregateContextBuilder
-import com.only.codegen.context.entity.builders.AnnotationContextBuilder
-import com.only.codegen.context.entity.builders.EntityTypeContextBuilder
-import com.only.codegen.context.entity.builders.EnumContextBuilder
-import com.only.codegen.context.entity.builders.ModuleContextBuilder
-import com.only.codegen.context.entity.builders.RelationContextBuilder
-import com.only.codegen.context.entity.builders.TableContextBuilder
-import com.only.codegen.context.entity.builders.TablePackageContextBuilder
-import com.only.codegen.generators.entity.*
+import com.only.codegen.context.aggregate.AggregateContext
+import com.only.codegen.context.aggregate.MutableAggregateContext
+import com.only.codegen.context.aggregate.builders.AggregateContextBuilder
+import com.only.codegen.context.aggregate.builders.AnnotationContextBuilder
+import com.only.codegen.context.aggregate.builders.EntityTypeContextBuilder
+import com.only.codegen.context.aggregate.builders.EnumContextBuilder
+import com.only.codegen.context.aggregate.builders.ModuleContextBuilder
+import com.only.codegen.context.aggregate.builders.RelationContextBuilder
+import com.only.codegen.context.aggregate.builders.TableContextBuilder
+import com.only.codegen.context.aggregate.builders.TablePackageContextBuilder
+import com.only.codegen.generators.aggregate.AggregateGenerator
+import com.only.codegen.generators.aggregate.DomainEventGenerator
+import com.only.codegen.generators.aggregate.DomainEventHandlerGenerator
+import com.only.codegen.generators.aggregate.EntityGenerator
+import com.only.codegen.generators.aggregate.AggregateTemplateGenerator
+import com.only.codegen.generators.aggregate.EnumGenerator
+import com.only.codegen.generators.aggregate.FactoryGenerator
+import com.only.codegen.generators.aggregate.RepositoryGenerator
+import com.only.codegen.generators.aggregate.SchemaBaseGenerator
+import com.only.codegen.generators.aggregate.SchemaGenerator
+import com.only.codegen.generators.aggregate.SpecificationGenerator
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.resolvePackageDirectory
@@ -21,7 +32,7 @@ import java.util.regex.Pattern
 /**
  * 生成实体类任务
  */
-open class GenEntityTask : GenArchTask(), MutableEntityContext {
+open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
     companion object {
         private val DEFAULT_ENTITY_IMPORTS = listOf(
@@ -146,7 +157,7 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
         generateFiles(context)
     }
 
-    private fun buildGenerationContext(): EntityContext {
+    private fun buildGenerationContext(): AggregateContext {
 
         val contextBuilders = listOf(
             TableContextBuilder(),          // order=10  - 表和列信息
@@ -169,7 +180,7 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
         return this
     }
 
-    private fun generateFiles(context: EntityContext) {
+    private fun generateFiles(context: AggregateContext) {
         val generators = listOf(
             SchemaBaseGenerator(),           // order=10 - Schema 基类
             EnumGenerator(),                 // order=10 - 枚举类
@@ -191,8 +202,8 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
     }
 
     private fun generateForTables(
-        generator: EntityTemplateGenerator,
-        context: EntityContext,
+        generator: AggregateTemplateGenerator,
+        context: AggregateContext,
     ) {
         val tables = context.tableMap.values.toMutableList()
 

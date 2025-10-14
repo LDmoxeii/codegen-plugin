@@ -1,6 +1,6 @@
-package com.only.codegen.generators.entity
+package com.only.codegen.generators.aggregate
 
-import com.only.codegen.context.entity.EntityContext
+import com.only.codegen.context.aggregate.AggregateContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
@@ -9,14 +9,14 @@ import com.only.codegen.template.TemplateNode
 /**
  * 枚举文件生成器
  */
-class EnumGenerator : EntityTemplateGenerator {
+class EnumGenerator : AggregateTemplateGenerator {
     override val tag = "enum"
     override val order = 10
 
     @Volatile
     private lateinit var currentEnumType: String
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
+    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
         with(context) {
             if (SqlSchemaUtils.isIgnore(table)) return false
             if (SqlSchemaUtils.hasRelation(table)) return false
@@ -36,7 +36,7 @@ class EnumGenerator : EntityTemplateGenerator {
         }
     }
 
-    override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
+    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
         with(context) {
             val tableName = SqlSchemaUtils.getTableName(table)
             val columns = columnsMap[tableName]!!
@@ -81,7 +81,7 @@ class EnumGenerator : EntityTemplateGenerator {
         }
     }
 
-    override fun generatorFullName(table: Map<String, Any?>, context: EntityContext): String {
+    override fun generatorFullName(table: Map<String, Any?>, context: AggregateContext): String {
         with(context) {
             val defaultEnumPackage = "enums"
 
@@ -96,7 +96,7 @@ class EnumGenerator : EntityTemplateGenerator {
         }
     }
 
-    override fun generatorName(table: Map<String, Any?>, context: EntityContext): String {
+    override fun generatorName(table: Map<String, Any?>, context: AggregateContext): String {
         return currentEnumType
     }
 
@@ -113,7 +113,7 @@ class EnumGenerator : EntityTemplateGenerator {
 
     override fun onGenerated(
         table: Map<String, Any?>,
-        context: EntityContext,
+        context: AggregateContext,
     ) {
         context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }

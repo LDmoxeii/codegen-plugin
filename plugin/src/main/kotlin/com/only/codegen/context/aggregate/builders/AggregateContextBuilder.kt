@@ -1,14 +1,14 @@
-package com.only.codegen.context.entity.builders
+package com.only.codegen.context.aggregate.builders
 
 import com.only.codegen.context.ContextBuilder
-import com.only.codegen.context.entity.MutableEntityContext
+import com.only.codegen.context.aggregate.MutableAggregateContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.toSnakeCase
 
-class AggregateContextBuilder: ContextBuilder<MutableEntityContext> {
+class AggregateContextBuilder: ContextBuilder<MutableAggregateContext> {
     override val order: Int = 30
 
-    override fun build(context: MutableEntityContext) {
+    override fun build(context: MutableAggregateContext) {
         context.tableMap.values.forEach { table ->
             val tableName = SqlSchemaUtils.getTableName(table)
             var aggregateRootTableName = tableName

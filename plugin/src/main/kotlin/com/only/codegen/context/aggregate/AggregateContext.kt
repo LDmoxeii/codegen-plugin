@@ -1,8 +1,8 @@
-package com.only.codegen.context.entity
+package com.only.codegen.context.aggregate
 
 import com.only.codegen.context.BaseContext
 
-interface EntityContext : BaseContext {
+interface AggregateContext : BaseContext {
 
     // === 数据库信息 ===
     val dbType: String

@@ -1,7 +1,7 @@
-package com.only.codegen.generators.entity
+package com.only.codegen.generators.aggregate
 
 import com.only.codegen.AbstractCodegenTask
-import com.only.codegen.context.entity.EntityContext
+import com.only.codegen.context.aggregate.AggregateContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
@@ -11,7 +11,7 @@ import com.only.codegen.template.TemplateNode
  * 领域事件处理器文件生成器
  * 为聚合根生成领域事件订阅者（处理器）基类
  */
-class DomainEventHandlerGenerator : EntityTemplateGenerator {
+class DomainEventHandlerGenerator : AggregateTemplateGenerator {
     override val tag = "domain_event_handler"
     override val order = 40
 
@@ -20,7 +20,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
             if (base.endsWith("Event") || base.endsWith("Evt")) base else "${base}DomainEvent"
         }
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: EntityContext): Boolean {
+    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
 
@@ -34,7 +34,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
         )
     }
 
-    override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
+    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
         val aggregate = context.resolveAggregateWithModule(tableName)
 
@@ -72,7 +72,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
 
     override fun generatorFullName(
         table: Map<String, Any?>,
-        context: EntityContext,
+        context: AggregateContext,
     ): String {
         val tableName = SqlSchemaUtils.getTableName(table)
         val aggregate = context.resolveAggregateWithModule(tableName)
@@ -86,7 +86,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
 
     override fun generatorName(
         table: Map<String, Any?>,
-        context: EntityContext,
+        context: AggregateContext,
     ): String {
         return SqlSchemaUtils.getDomainEvents(table)
             .map { domainEventInfo ->
@@ -110,7 +110,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
         }
     }
 
-    override fun onGenerated(table: Map<String, Any?>, context: EntityContext) {
+    override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
         context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

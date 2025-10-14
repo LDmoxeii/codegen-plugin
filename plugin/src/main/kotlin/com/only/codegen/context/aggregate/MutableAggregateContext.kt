@@ -1,8 +1,8 @@
-package com.only.codegen.context.entity
+package com.only.codegen.context.aggregate
 
 import com.only.codegen.template.TemplateNode
 
-interface MutableEntityContext : EntityContext {
+interface MutableAggregateContext : AggregateContext {
     override val tableMap: MutableMap<String, Map<String, Any?>>
     override val columnsMap: MutableMap<String, List<Map<String, Any?>>>
     override val tablePackageMap: MutableMap<String, String>
