@@ -3,7 +3,7 @@ package com.only.codegen.context.design.builders
 import com.only.codegen.context.design.MutableDesignContext
 import com.only.codegen.ksp.models.ElementMetadata
 
-class TypeMappingBuilder : DesignContextBuilder {
+class TypeMappingBuilder : ContextBuilder<MutableDesignContext> {
 
     override val order: Int = 18
 

@@ -1,6 +1,14 @@
 package com.only.codegen
 
 import com.only.codegen.context.entity.*
+import com.only.codegen.context.entity.builders.AggregateContextBuilder
+import com.only.codegen.context.entity.builders.AnnotationContextBuilder
+import com.only.codegen.context.entity.builders.EntityTypeContextBuilder
+import com.only.codegen.context.entity.builders.EnumContextBuilder
+import com.only.codegen.context.entity.builders.ModuleContextBuilder
+import com.only.codegen.context.entity.builders.RelationContextBuilder
+import com.only.codegen.context.entity.builders.TableContextBuilder
+import com.only.codegen.context.entity.builders.TablePackageContextBuilder
 import com.only.codegen.generators.entity.*
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.concatPackage

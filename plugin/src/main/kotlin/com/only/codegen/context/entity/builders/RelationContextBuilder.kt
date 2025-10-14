@@ -1,11 +1,13 @@
-package com.only.codegen.context.entity
+package com.only.codegen.context.entity.builders
 
+import com.only.codegen.context.ContextBuilder
+import com.only.codegen.context.entity.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils
 
 /**
  * 表关系构建器
  */
-class RelationContextBuilder : EntityContextBuilder {
+class RelationContextBuilder : ContextBuilder<MutableEntityContext> {
     override val order = 20
 
     override fun build(context: MutableEntityContext) {

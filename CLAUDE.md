@@ -78,7 +78,7 @@ The plugin uses **generic, composable interfaces** that enable different code ge
   - Defines `order: Int` property for execution sequencing
   - Defines `build(context: T)` method for filling context data
   - **Enables type-safe builder composition for different context types**
-- `EntityContextBuilder : ContextBuilder<MutableEntityContext>` - Specialized for entity generation
+- `ContextBuilder<MutableEntityContext> : ContextBuilder<MutableEntityContext>` - Specialized for entity generation
 - `AggregateContextBuilder : ContextBuilder<MutableAnnotationContext>` - Specialized for annotation-based generation
 
 **Entity Context Builders** (for database-driven generation):
@@ -322,7 +322,7 @@ open class MyCustomTask : AbstractCodegenTask(), MutableMyCustomContext {
 
 **For Entity Context**:
 
-1. Create class implementing `EntityContextBuilder : ContextBuilder<MutableEntityContext>`
+1. Create class implementing `ContextBuilder<MutableEntityContext> : ContextBuilder<MutableEntityContext>`
 2. Set `order` based on dependencies (lower = earlier execution)
 3. Implement `build(context: MutableEntityContext)` to populate context maps
 4. Register in `GenEntityTask.buildGenerationContext()` by adding to contextBuilders list
@@ -434,7 +434,7 @@ codegen-plugin/
 ### Code Generation Pipelines
 
 **Current Implementations**:
-1. **Database → Domain** (`GenEntityTask` + `EntityContext` + `EntityContextBuilder` + `TemplateGenerator`)
+1. **Database → Domain** (`GenEntityTask` + `EntityContext` + `ContextBuilder<MutableEntityContext>` + `TemplateGenerator`)
 2. **Design Files → Application/Domain** (`GenDesignTask` - Case study)
 
 **Planned**:

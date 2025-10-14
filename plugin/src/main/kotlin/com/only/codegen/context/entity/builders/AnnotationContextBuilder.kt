@@ -1,10 +1,12 @@
-package com.only.codegen.context.entity
+package com.only.codegen.context.entity.builders
 
+import com.only.codegen.context.ContextBuilder
+import com.only.codegen.context.entity.MutableEntityContext
 import com.only.codegen.misc.SqlSchemaUtils.getAnnotations
 import com.only.codegen.misc.SqlSchemaUtils.getComment
 import com.only.codegen.misc.SqlSchemaUtils.getTableName
 
-class AnnotationContextBuilder: EntityContextBuilder {
+class AnnotationContextBuilder: ContextBuilder<MutableEntityContext> {
     override val order: Int = 20
 
     override fun build(context: MutableEntityContext) {

@@ -78,7 +78,7 @@
   - 定义 `order: Int` 属性用于执行排序
   - 定义 `build(context: T)` 方法用于填充上下文数据
   - **支持为不同上下文类型进行类型安全的构建器组合**
-- `EntityContextBuilder : ContextBuilder<MutableEntityContext>` - 专门用于实体生成
+- `ContextBuilder<MutableEntityContext> : ContextBuilder<MutableEntityContext>` - 专门用于实体生成
 - `AggregateContextBuilder : ContextBuilder<MutableAnnotationContext>` - 专门用于基于注解的生成
 
 **实体上下文构建器**（用于数据库驱动生成）：
@@ -322,7 +322,7 @@ open class MyCustomTask : AbstractCodegenTask(), MutableMyCustomContext {
 
 **针对实体上下文**：
 
-1. 创建实现 `EntityContextBuilder : ContextBuilder<MutableEntityContext>` 的类
+1. 创建实现 `ContextBuilder<MutableEntityContext> : ContextBuilder<MutableEntityContext>` 的类
 2. 根据依赖关系设置 `order`（数值越小，执行越早）
 3. 实现 `build(context: MutableEntityContext)` 以填充上下文 Map
 4. 在 `GenEntityTask.buildGenerationContext()` 中注册，将其添加到 contextBuilders 列表
@@ -434,7 +434,7 @@ codegen-plugin/
 ### 代码生成管道
 
 **当前实现**：
-1. **数据库 → 领域** (`GenEntityTask` + `EntityContext` + `EntityContextBuilder` + `TemplateGenerator`)
+1. **数据库 → 领域** (`GenEntityTask` + `EntityContext` + `ContextBuilder<MutableEntityContext>` + `TemplateGenerator`)
 2. **设计文件 → 应用/领域** (`GenDesignTask` - 案例研究)
 
 **计划中**：

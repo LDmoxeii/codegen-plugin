@@ -2,7 +2,7 @@ package com.only.codegen
 
 import com.only.codegen.context.design.DesignContext
 import com.only.codegen.context.design.MutableDesignContext
-import com.only.codegen.context.design.builders.DesignBuilder
+import com.only.codegen.context.design.builders.DesignContextBuilder
 import com.only.codegen.context.design.builders.KspMetadataContextBuilder
 import com.only.codegen.context.design.builders.TypeMappingBuilder
 import com.only.codegen.context.design.builders.UnifiedDesignBuilder
@@ -64,7 +64,7 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
     private fun buildDesignContext(metadataPath: String): DesignContext {
         val builders = listOf(
-            DesignBuilder(),                            // order=10  - 加载 JSON 设计文件
+            DesignContextBuilder(),                            // order=10  - 加载 JSON 设计文件
             KspMetadataContextBuilder(metadataPath),           // order=15  - 加载 KSP 聚合元数据
             TypeMappingBuilder(),                       // order=18  - 构建类型映射 typeMapping
             UnifiedDesignBuilder()                      // order=20  - 统一解析所有设计类型

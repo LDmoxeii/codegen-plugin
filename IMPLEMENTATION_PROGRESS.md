@@ -45,7 +45,7 @@ ksp-processor/
 - ✅ 扩展 BaseContext 接口，添加 6 个包路径和包名属性
 - ✅ 更新 EntityContext 接口，移除重复声明
 - ✅ 实现包路径逻辑（用户优化版）
-- ✅ Builder 接口重命名：ContextBuilder → EntityContextBuilder
+- ✅ Builder 接口重命名：ContextBuilder → ContextBuilder<MutableEntityContext>
 - ✅ 回归测试全部通过
 
 ### 用户优化 ⭐
@@ -54,7 +54,7 @@ ksp-processor/
     - GenAnnotationTask 可直接复用
     - 消除代码重复
 
-2. **Builder 接口重命名**：ContextBuilder → EntityContextBuilder
+2. **Builder 接口重命名**：ContextBuilder → ContextBuilder<MutableEntityContext>
     - 避免与 AnnotationContextBuilder 命名冲突
     - 所有 8 个 Builder 实现类已更新
 
@@ -112,7 +112,7 @@ context/
 └── entity/                           # 实体相关（重组）
     ├── EntityContext.kt
     ├── MutableEntityContext.kt
-    ├── EntityContextBuilder.kt
+    ├── ContextBuilder<MutableEntityContext>.kt
     ├── TableContextBuilder.kt
     ├── EntityTypeContextBuilder.kt
     ├── AnnotationContextBuilder.kt    # 注：这是处理数据库表注解的 Builder
@@ -266,7 +266,7 @@ plugin/src/main/kotlin/com/only/codegen/
 2. **BaseContext 重构**
     - 接口提升：包路径属性从 EntityContext 提升到 BaseContext
     - 实现上移：包路径实现从 GenEntityTask 上移到 AbstractCodegenTask
-    - 接口解耦：EntityContextBuilder 与 AnnotationContextBuilder 完全独立
+    - 接口解耦：ContextBuilder<MutableEntityContext> 与 AnnotationContextBuilder 完全独立
 
 3. **代码复用**
     - GenAnnotationTask 将直接继承 AbstractCodegenTask 的包路径实现
@@ -281,7 +281,7 @@ plugin/src/main/kotlin/com/only/codegen/
     - 各自维护独立的数据结构
 
 2. **独立的 Builder 体系**
-    - AnnotationContextBuilder 独立于 EntityContextBuilder
+    - AnnotationContextBuilder 独立于 ContextBuilder<MutableEntityContext>
     - 参数类型不同（MutableAnnotationContext vs MutableEntityContext）
     - 构建流程独立
 

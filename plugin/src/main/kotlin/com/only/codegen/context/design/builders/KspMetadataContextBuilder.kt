@@ -9,7 +9,7 @@ import java.io.File
 
 class KspMetadataContextBuilder(
     private val metadataPath: String,
-) : DesignContextBuilder {
+) : ContextBuilder<MutableDesignContext> {
 
     override val order: Int = 15
 

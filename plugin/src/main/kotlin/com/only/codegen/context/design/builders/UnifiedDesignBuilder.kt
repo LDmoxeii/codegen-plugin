@@ -4,7 +4,7 @@ import com.only.codegen.context.design.MutableDesignContext
 import com.only.codegen.context.design.models.*
 import com.only.codegen.misc.toUpperCamelCase
 
-class UnifiedDesignBuilder : DesignContextBuilder {
+class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
 
     override val order: Int = 20
 

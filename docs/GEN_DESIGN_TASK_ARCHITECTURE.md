@@ -64,7 +64,7 @@
 - ✅ `context/design/DesignElementModels.kt` - 数据模型定义
 - ✅ `context/design/DesignContext.kt` - 只读上下文接口
 - ✅ `context/design/MutableDesignContext.kt` - 可变上下文接口
-- ✅ `context/design/DesignContextBuilder.kt` - Builder 基础接口
+- ✅ `context/design/ContextBuilder<MutableDesignContext>.kt` - Builder 基础接口
 
 ### Builder 层 (8个文件)
 - ✅ `context/design/builders/JsonDesignLoader.kt` - JSON 文件解析
@@ -180,7 +180,7 @@ data class SpecificationDesign(
 
 2. 创建 Builder:
 ```kotlin
-class SpecificationDesignBuilder : DesignContextBuilder {
+class SpecificationDesignBuilder : ContextBuilder<MutableDesignContext> {
     override val order = 20
     override fun build(context: MutableDesignContext) {
         // 解析逻辑

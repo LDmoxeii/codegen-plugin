@@ -134,7 +134,7 @@
 | **renderFileSwitch** | 文件写入开关，GenEntity 缓存阶段设为 false |
 | **forceRender()** | 强制渲染，无视 renderFileSwitch |
 | **ContextBuilder** | 上下文构建器基础接口 `ContextBuilder<T : BaseContext>`，按 order 顺序填充上下文 |
-| **EntityContextBuilder** | 实体上下文构建器接口 `EntityContextBuilder : ContextBuilder<EntityContext>` |
+| **ContextBuilder<MutableEntityContext>** | 实体上下文构建器接口 `ContextBuilder<MutableEntityContext> : ContextBuilder<EntityContext>` |
 | **AggregateContextBuilder** | 注解上下文构建器接口 `AggregateContextBuilder : ContextBuilder<AggregateContext>` |
 | **TemplateGenerator** | 实体代码生成器接口，按 order 顺序生成文件 |
 | **AggregateTemplateGenerator** | 注解代码生成器接口，用于基于注解的代码生成 |
@@ -153,7 +153,7 @@
 - `PathNode.kt` - 脚手架节点
 - `TemplateNode.kt` - 模板节点
 - `PebbleTemplateRenderer.kt` - Pebble 模板引擎
-- `context/builders/` - 上下文构建器（ContextBuilder、EntityContextBuilder、AggregateContextBuilder）
+- `context/builders/` - 上下文构建器（ContextBuilder、ContextBuilder<MutableEntityContext>、AggregateContextBuilder）
 - `generators/` - 代码生成器（TemplateGenerator、AggregateTemplateGenerator）
 
 ### 核心接口层次结构
@@ -166,7 +166,7 @@ codegen.core.context
 
 codegen.core.context.builders
 ├── ContextBuilder<T : BaseContext>           // 上下文构建器基础接口
-├── EntityContextBuilder : ContextBuilder<EntityContext>     // 实体上下文构建器
+├── ContextBuilder<MutableEntityContext> : ContextBuilder<EntityContext>     // 实体上下文构建器
 └── AggregateContextBuilder : ContextBuilder<AggregateContext> // 注解上下文构建器
 
 codegen.core.generators
