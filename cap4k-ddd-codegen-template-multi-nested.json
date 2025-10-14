@@ -5,48 +5,97 @@
       "type": "dir",
       "tag": "command",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Command }}.kt",
+          "format": "resource",
+          "data": "templates/Command.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "saga",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Saga }}.kt",
+          "format": "resource",
+          "data": "templates/Saga.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "query",
       "name": "{{ path }}",
       "pattern": "^(?!.*(List|list|Page|page)).*$",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Query }}.kt",
+          "format": "resource",
+          "data": "templates/Query.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "query",
       "name": "{{ path }}",
       "pattern": "^.*(List|list).*$",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Query }}.kt",
+          "format": "resource",
+          "data": "templates/QueryList.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "query",
       "name": "{{ path }}",
       "pattern": "^.*(Page|page).*$",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Query }}.kt",
+          "format": "resource",
+          "data": "templates/QueryPage.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "query_handler",
       "name": "",
       "pattern": "^(?!.*(List|list|Page|page)).*$",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Query }}Handler.kt",
+          "format": "resource",
+          "data": "templates/QueryHandler.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "query_handler",
       "name": "",
       "pattern": "^.*(List|list).*$",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Query }}Handler.kt",
+          "format": "resource",
+          "data": "templates/QueryListHandler.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
@@ -57,8 +106,8 @@
         {
           "type": "file",
           "name": "{{ Query }}Handler.kt",
-          "format": "url",
-          "data": "template/_tpl/nested/QueryPageHandler.kt.peb"
+          "format": "resource",
+          "data": "templates/QueryPageHandler.kt.peb"
         }
       ]
     },
@@ -70,8 +119,8 @@
         {
           "type": "file",
           "name": "{{ Client }}.kt",
-          "format": "url",
-          "data": "template/_tpl/nested/Client.kt.peb"
+          "format": "resource",
+          "data": "templates/Client.kt.peb"
         }
       ]
     },
@@ -83,8 +132,8 @@
         {
           "type": "file",
           "name": "{{ Client }}Handler.kt",
-          "format": "url",
-          "data": "template/_tpl/nested/ClientHandler.kt.peb"
+          "format": "resource",
+          "data": "templates/ClientHandler.kt.peb"
         }
       ]
     },
@@ -96,8 +145,8 @@
         {
           "type": "file",
           "name": "{{ IntegrationEvent }}.kt",
-          "format": "url",
-          "data": "template/_tpl/nested/IntegrationEvent.kt.peb"
+          "format": "resource",
+          "data": "templates/IntegrationEvent.kt.peb"
         }
       ]
     },
@@ -109,8 +158,8 @@
         {
           "type": "file",
           "name": "{{ IntegrationEvent }}Subscriber.kt",
-          "format": "url",
-          "data": "template/_tpl/nested/IntegrationEventHandler.kt.peb"
+          "format": "resource",
+          "data": "templates/IntegrationEventHandler.kt.peb"
         }
       ]
     },
@@ -118,67 +167,144 @@
       "type": "dir",
       "tag": "domain_service",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ DomainService }}.kt",
+          "format": "resource",
+          "data": "templates/DomainService.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "repository",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Repository }}.kt",
+          "format": "resource",
+          "data": "templates/Repository.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "schema",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Schema }}.kt",
+          "format": "resource",
+          "data": "templates/Schema.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "aggregate",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Aggregate }}.kt",
+          "format": "resource",
+          "data": "templates/Aggregate.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "domain_event_handler",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ DomainEvent }}Handler.kt",
+          "format": "resource",
+          "data": "templates/DomainEventHandler.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "domain_event",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ DomainEvent }}.kt",
+          "format": "resource",
+          "data": "templates/DomainEvent.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "factory",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Factory }}.kt",
+          "format": "resource",
+          "data": "templates/Factory.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "specification",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Specification }}.kt",
+          "format": "resource",
+          "data": "templates/Specification.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "entity",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Entity }}.kt",
+          "format": "resource",
+          "data": "templates/Entity.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "enum",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ Enum }}.kt",
+          "format": "resource",
+          "data": "templates/Enum.kt.peb"
+        }
+      ]
     },
     {
       "type": "dir",
       "tag": "schema_base",
       "name": "{{ path }}",
-      "children": []
+      "children": [
+        {
+          "type": "file",
+          "name": "{{ SchemaBase }}.kt",
+          "format": "resource",
+          "data": "templates/SchemaBase.kt.peb"
+        }
+      ]
     }
   ],
   "children": [
