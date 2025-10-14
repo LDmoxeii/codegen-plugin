@@ -16,10 +16,6 @@ class RepositoryGenerator : AggregateTemplateGenerator {
     override val tag = "repository"
     override val order = 30
 
-    companion object {
-        const val ENTITY_REPOSITORY_PACKAGE = "adapter.domain.repositories"
-    }
-
     override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
@@ -60,8 +56,8 @@ class RepositoryGenerator : AggregateTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", adapterPath)
-            resultContext.putContext(tag, "package", ENTITY_REPOSITORY_PACKAGE)
-            resultContext.putContext(tag, "templatePackage", refPackage(ENTITY_REPOSITORY_PACKAGE))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
+            resultContext.putContext(tag, "package", "")
 
             resultContext.putContext(tag, "supportQuerydsl", supportQuerydsl)
             resultContext.putContext(tag, "imports", imports.toImportLines())
@@ -81,13 +77,18 @@ class RepositoryGenerator : AggregateTemplateGenerator {
         table: Map<String, Any?>,
         context: AggregateContext
     ): String {
-        val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName]!!
-        val repositoryNameTemplate = context.getString("repositoryNameTemplate")
-        val repositoryName = renderString(repositoryNameTemplate, mapOf("Aggregate" to entityType))
+        with(context) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val entityType = context.entityTypeMap[tableName]!!
+            val repositoryNameTemplate = context.getString("repositoryNameTemplate")
+            val repositoryName = renderString(repositoryNameTemplate, mapOf("Aggregate" to entityType))
 
-        val basePackage = context.getString("basePackage")
-        return "$basePackage.$ENTITY_REPOSITORY_PACKAGE.$repositoryName"
+            val basePackage = getString("basePackage")
+            val templatePackage = refPackage(templatePackage[tag]!!)
+            val `package` = ""
+
+            return "$basePackage${templatePackage}${`package`}${refPackage(repositoryName)}"
+        }
     }
 
     override fun generatorName(

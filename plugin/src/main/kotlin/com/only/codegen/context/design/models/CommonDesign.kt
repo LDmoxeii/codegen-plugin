@@ -8,9 +8,8 @@ package com.only.codegen.context.design.models
  */
 data class CommonDesign(
     override val type: String,
+    override val `package`: String,       // 相对包路径 (如 category)
     override val name: String,              // 设计类名 (如 CreateCategoryCmd)
-    override val fullName: String,          // 完整相对路径 (如 category.CreateCategoryCmd)
-    override val packagePath: String,       // 相对包路径 (如 category)
     override val aggregate: String?,        // 主聚合名
     override val aggregates: List<String>,  // 所有关联聚合
     override val desc: String,              // 描述

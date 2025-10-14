@@ -88,9 +88,10 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
             put("archTemplate", ext.archTemplate.get())
             put("archTemplateEncoding", ext.archTemplateEncoding.get())
             put("outputEncoding", ext.outputEncoding.get())
+            put("designFiles", ext.designFiles.files)
             put("basePackage", ext.basePackage.get())
             put("basePackage__as_path", ext.basePackage.get().replace(".", File.separator))
-            put("multiModule", ext.multiModule.get().toString())
+            put("multiModule", ext.multiModule.get())
 
             // 模块路径
             put("adapterModulePath", ext.adapterPath)
@@ -106,11 +107,6 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
                 put("dbTables", tables.get())
                 put("dbIgnoreTables", ignoreTables.get())
             }
-
-            // 设计配置
-            put("designFiles", ext.designFiles.files.joinToString(";") { it.absolutePath })
-            put("kspMetadataDir", ext.kspMetadataDir.get())
-            put("designEncoding", ext.designEncoding.get())
 
             // 生成配置
             with(ext.generation) {

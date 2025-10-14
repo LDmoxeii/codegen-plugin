@@ -61,7 +61,7 @@ class QueryGenerator : DesignTemplateGenerator {
     override fun generatorFullName(design: Any, context: DesignContext): String {
         require(design is CommonDesign)
         val basePackage = context.getString("basePackage")
-        val fullPackage = concatPackage(basePackage, QUERY_PACKAGE, design.packagePath)
+        val fullPackage = concatPackage(basePackage, QUERY_PACKAGE, design.`package`)
         return concatPackage(fullPackage, design.name)
     }
 

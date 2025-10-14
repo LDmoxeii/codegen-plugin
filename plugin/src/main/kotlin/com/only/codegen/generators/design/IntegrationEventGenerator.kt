@@ -40,8 +40,9 @@ class IntegrationEventGenerator : DesignTemplateGenerator {
     override fun generatorFullName(design: Any, context: DesignContext): String {
         require(design is IntegrationEventDesign)
         val basePackage = context.getString("basePackage")
-        val fullPackage = concatPackage(basePackage, INTEGRATION_EVENT_PACKAGE, design.packagePath)
-        return concatPackage(fullPackage, design.name)
+        val templatePackage = refPackage(context.templatePackage[tag]!!)
+        val `package` = refPackage(design.`package`)
+        return "$basePackage${templatePackage}${`package`}${refPackage(generatorName(design, context))}"
     }
 
     override fun generatorName(design: Any, context: DesignContext): String {

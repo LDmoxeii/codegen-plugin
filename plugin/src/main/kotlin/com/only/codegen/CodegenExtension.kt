@@ -53,20 +53,9 @@ open class CodegenExtension @Inject constructor(objects: ObjectFactory) {
     val moduleNameSuffix4Application: Property<String> = objects.property(String::class.java).convention("-application")
 
     /**
-     * 设计配置文件集合（支持多个文件）
+     * 设计配置文件集合
      */
     val designFiles: ConfigurableFileCollection = objects.fileCollection()
-
-    /**
-     * KSP 元数据输出目录
-     * 默认: build/generated/ksp/main/resources
-     */
-    val kspMetadataDir: Property<String> = objects.property(String::class.java).convention("")
-
-    /**
-     * 设计文件编码
-     */
-    val designEncoding: Property<String> = objects.property(String::class.java).convention("UTF-8")
 
     /**
      * 数据库连接配置

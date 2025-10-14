@@ -42,7 +42,6 @@ class DomainEventGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "Aggregate", design.aggregate)
             resultContext.putContext(tag, "persist", design.persist.toString())
             resultContext.putContext(tag, "Comment", design.desc)
-            resultContext.putContext(tag, "CommentEscaped", design.desc.replace(Regex("\\r\\n|[\\r\\n]"), " "))
         }
 
         return resultContext
@@ -51,8 +50,10 @@ class DomainEventGenerator : DesignTemplateGenerator {
     override fun generatorFullName(design: Any, context: DesignContext): String {
         require(design is DomainEventDesign)
         val basePackage = context.getString("basePackage")
-        val fullPackage = concatPackage(basePackage, DOMAIN_EVENT_PACKAGE, design.aggregate, "events", design.packagePath)
-        return concatPackage(fullPackage, design.name)
+        val templatePackage = refPackage(context.templatePackage[tag]!!)
+        val `package` = refPackage(design.`package`)
+
+        return "$basePackage${templatePackage}${`package`}${refPackage(generatorName(design, context))}"
     }
 
     override fun generatorName(design: Any, context: DesignContext): String {

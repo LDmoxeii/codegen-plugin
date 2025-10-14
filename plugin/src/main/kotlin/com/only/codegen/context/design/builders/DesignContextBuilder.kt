@@ -13,31 +13,16 @@ class DesignContextBuilder : ContextBuilder<MutableDesignContext> {
     override val order: Int = 10
 
     override fun build(context: MutableDesignContext) {
-        val designFiles = getDesignFiles(context)
+        val designFiles = context.baseMap["designFiles"] as? Set<File> ?: emptySet()
+
 
         if (designFiles.isEmpty()) {
             return
         }
 
         designFiles.forEach { file ->
-            if (!file.exists()) {
-                return@forEach
-            }
             loadDesignFile(file, context)
         }
-    }
-
-    private fun getDesignFiles(context: MutableDesignContext): List<File> {
-        val designFilesConfig = context.getString("designFiles", "")
-
-        if (designFilesConfig.isBlank()) {
-            return emptyList()
-        }
-
-        return designFilesConfig.split(";", ",")
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-            .map { File(it) }
     }
 
     private fun loadDesignFile(file: File, context: MutableDesignContext) {

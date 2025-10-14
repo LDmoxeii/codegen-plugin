@@ -12,4 +12,11 @@ interface DesignContext : BaseContext {
     val aggregateMap: Map<String, AggregateInfo>
 
     val designMap: Map<String, List<BaseDesign>>
+
+    /**
+     * 设计标签别名映射表
+     * key: 别名（小写）
+     * value: 规范化的标签名称
+     */
+    val designTagAliasMap: Map<String, String>
 }

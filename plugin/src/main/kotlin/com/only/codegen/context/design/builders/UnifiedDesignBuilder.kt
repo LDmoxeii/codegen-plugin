@@ -13,9 +13,11 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         val designMap = mutableMapOf<String, MutableList<BaseDesign>>()
 
         context.designElementMap.forEach { (type, elements) ->
+            val normalizedType = context.designTagAliasMap[type.lowercase()] ?: type.lowercase()
+
             elements.forEach {
-                val design = buildDesign(type, it, context)
-                designMap.computeIfAbsent(type) { mutableListOf() }.add(design)
+                val design = buildDesign(normalizedType, it, context)
+                designMap.computeIfAbsent(normalizedType) { mutableListOf() }.add(design)
             }
         }
 
@@ -37,16 +39,32 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         val primaryAggregateMetadata = aggregateMetadataList.firstOrNull()
 
         return when (type) {
-            "cmd", "qry", "saga", "cli", "svc" -> buildCommonDesign(
-                type, element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "command" -> buildCommonDesign(
+                "command", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
-            "ie" -> buildIntegrationEventDesign(
-                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "query" -> buildCommonDesign(
+                "query", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
-            "de" -> buildDomainEventDesign(
-                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "saga" -> buildCommonDesign(
+                "saga", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            )
+
+            "client" -> buildCommonDesign(
+                "client", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            )
+
+            "domain_service" -> buildCommonDesign(
+                "domain_service", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            )
+
+            "integration_event", "integration_event_handler" -> buildIntegrationEventDesign(
+                "integration_event", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            )
+
+            "domain_event", "domain_event_handler" -> buildDomainEventDesign(
+                "domain_event", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
             else -> throw IllegalArgumentException("Unknown design type: $type")
@@ -70,51 +88,44 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         primaryAggregateMetadata: AggregateInfo?,
         aggregateMetadataList: List<AggregateInfo>,
     ): CommonDesign {
-        val (packagePath, name) = parseNameAndPackage(element.name, primaryAggregate)
-        val suffix = getTypeSuffix(type)
-        val designName = normalizeName(name, suffix)
-        val fullName = if (packagePath.isNotBlank()) "$packagePath.$designName" else designName
-
         return CommonDesign(
             type = type,
-            name = designName,
-            fullName = fullName,
-            packagePath = packagePath,
+            `package` = element.`package`,
+            name = element.name,
+            desc = element.desc,
             aggregate = primaryAggregate,
             aggregates = aggregates,
-            desc = element.desc,
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList
         )
     }
 
     private fun buildIntegrationEventDesign(
+        type: String,
         element: DesignElement,
         primaryAggregate: String?,
         aggregates: List<String>,
         primaryAggregateMetadata: AggregateInfo?,
         aggregateMetadataList: List<AggregateInfo>,
     ): IntegrationEventDesign {
-        val (packagePath, name) = parseNameAndPackage(element.name, primaryAggregate)
-        val eventName = normalizeName(name, "Event")
-        val fullName = if (packagePath.isNotBlank()) "$packagePath.$eventName" else eventName
+        val eventName = normalizeName(element.name, "Event")
 
         return IntegrationEventDesign(
+            type = type,
+            `package` = element.`package`,
             name = eventName,
-            fullName = fullName,
-            packagePath = packagePath,
+            desc = element.desc,
             aggregate = primaryAggregate,
             aggregates = aggregates,
-            desc = element.desc,
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
             mqTopic = element.metadata["mqTopic"] as? String,
             mqConsumer = element.metadata["mqConsumer"] as? String,
-            internal = element.metadata["internal"] as? Boolean ?: true
         )
     }
 
     private fun buildDomainEventDesign(
+        type: String,
         element: DesignElement,
         primaryAggregate: String?,
         aggregates: List<String>,
@@ -122,43 +133,20 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         aggregateMetadataList: List<AggregateInfo>,
     ): DomainEventDesign {
         require(primaryAggregate != null) { "Domain event must have an aggregate: ${element.name}" }
-
-        val (packagePath, name) = parseNameAndPackage(element.name, primaryAggregate)
-        val eventName = normalizeName(name, "Event")
-        val fullName = if (packagePath.isNotBlank()) "$packagePath.$eventName" else eventName
+        val eventName = normalizeName(element.name, "Event")
 
         return DomainEventDesign(
+            type = type,
+            `package` = element.`package`,
             name = eventName,
-            fullName = fullName,
-            packagePath = packagePath,
+            desc = element.desc,
             aggregate = primaryAggregate,
             aggregates = aggregates,
-            desc = element.desc,
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
             entity = element.metadata["entity"] as? String ?: "",
-            persist = element.metadata["persist"] as? Boolean ?: false
+            persist = element.metadata["persist"] as? Boolean ?: false,
         )
-    }
-
-    private fun getTypeSuffix(type: String): String = when (type) {
-        "cmd" -> "Cmd"
-        "qry" -> "Qry"
-        "saga" -> "Saga"
-        "cli" -> "Client"
-        "svc" -> "Service"
-        else -> ""
-    }
-
-    private fun parseNameAndPackage(name: String, fallbackPackage: String?): Pair<String, String> {
-        val parts = name.split(".")
-        return if (parts.size > 1) {
-            val packagePath = parts.dropLast(1).joinToString(".")
-            val simpleName = parts.last()
-            packagePath to simpleName
-        } else {
-            (fallbackPackage ?: "") to name
-        }
     }
 
     private fun normalizeName(name: String, vararg suffixes: String): String {

@@ -61,7 +61,7 @@ class ClientGenerator : DesignTemplateGenerator {
     override fun generatorFullName(design: Any, context: DesignContext): String {
         require(design is CommonDesign)
         val basePackage = context.getString("basePackage")
-        val fullPackage = concatPackage(basePackage, CLIENT_PACKAGE, design.packagePath)
+        val fullPackage = concatPackage(basePackage, CLIENT_PACKAGE, design.`package`)
         return concatPackage(fullPackage, design.name)
     }
 

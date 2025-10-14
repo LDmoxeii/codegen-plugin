@@ -1,4 +1,4 @@
-package {{ basePackage }}.{{ package }}
+package {{ basePackage }}{{ templatePackage }}{{ package }}
 {%- for import in imports %}
 {{ import }}
 {%- endfor %}

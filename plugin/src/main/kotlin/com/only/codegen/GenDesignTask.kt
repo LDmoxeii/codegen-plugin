@@ -30,6 +30,95 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     @Internal
     override val designMap = mutableMapOf<String, MutableList<BaseDesign>>()
 
+
+    @Internal
+    override val designTagAliasMap: Map<String, String> = mapOf(
+            // Command 别名
+            "commands" to "command",
+            "command" to "command",
+            "cmd" to "command",
+
+            // Saga 别名
+            "saga" to "saga",
+            "sagas" to "saga",
+
+            // Query 别名
+            "queries" to "query",
+            "query" to "query",
+            "qry" to "query",
+
+            // Client 别名（防腐层）
+            "clients" to "client",
+            "client" to "client",
+            "cli" to "client",
+
+            // Integration Event 别名
+            "integration_events" to "integration_event",
+            "integration_event" to "integration_event",
+            "events" to "integration_event",
+            "event" to "integration_event",
+            "evt" to "integration_event",
+            "i_e" to "integration_event",
+            "ie" to "integration_event",
+
+            // Integration Event Handler 别名
+            "integration_event_handlers" to "integration_event_handler",
+            "integration_event_handler" to "integration_event_handler",
+            "event_handlers" to "integration_event_handler",
+            "event_handler" to "integration_event_handler",
+            "evt_hdl" to "integration_event_handler",
+            "i_e_h" to "integration_event_handler",
+            "ieh" to "integration_event_handler",
+            "integration_event_subscribers" to "integration_event_handler",
+            "integration_event_subscriber" to "integration_event_handler",
+            "event_subscribers" to "integration_event_handler",
+            "event_subscriber" to "integration_event_handler",
+            "evt_sub" to "integration_event_handler",
+            "i_e_s" to "integration_event_handler",
+            "ies" to "integration_event_handler",
+
+            // Repository 别名
+            "repositories" to "repository",
+            "repository" to "repository",
+            "repos" to "repository",
+            "repo" to "repository",
+
+            // Factory 别名
+            "factories" to "factory",
+            "factory" to "factory",
+            "fac" to "factory",
+
+            // Specification 别名
+            "specifications" to "specification",
+            "specification" to "specification",
+            "specs" to "specification",
+            "spec" to "specification",
+            "spe" to "specification",
+
+            // Domain Event 别名
+            "domain_events" to "domain_event",
+            "domain_event" to "domain_event",
+            "d_e" to "domain_event",
+            "de" to "domain_event",
+
+            // Domain Event Handler 别名
+            "domain_event_handlers" to "domain_event_handler",
+            "domain_event_handler" to "domain_event_handler",
+            "d_e_h" to "domain_event_handler",
+            "deh" to "domain_event_handler",
+            "domain_event_subscribers" to "domain_event_handler",
+            "domain_event_subscriber" to "domain_event_handler",
+            "d_e_s" to "domain_event_handler",
+            "des" to "domain_event_handler",
+
+            // Domain Service 别名
+            "domain_service" to "domain_service",
+            "domain_services" to "domain_service",
+            "service" to "domain_service",
+            "svc" to "domain_service"
+        )
+
+
     @TaskAction
     override fun generate() {
         renderFileSwitch = false
@@ -138,7 +227,7 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     override fun renderTemplate(templateNodes: List<TemplateNode>, parentPath: String) {
         super.renderTemplate(templateNodes, parentPath)
         templateNodes.forEach { templateNode ->
-            val tag = templateNode.tag?.lowercase() ?: return@forEach
+            val tag = templateNode.tag?.lowercase()?.let { designTagAliasMap[it] ?: it } ?: return@forEach
             templateNodeMap.computeIfAbsent(tag) { mutableListOf() }.add(templateNode)
         }
     }
