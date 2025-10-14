@@ -1,28 +1,31 @@
 package com.only.codegen.generators.design
 
+import com.only.codegen.context.design.CommonDesign
 import com.only.codegen.context.design.DesignContext
-import com.only.codegen.context.design.SagaDesign
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
+import org.gradle.api.logging.Logging
 
 class SagaGenerator : DesignTemplateGenerator {
 
-    override val tag = "saga"
-    override val order = 10
+    private val logger = Logging.getLogger(SagaGenerator::class.java)
+
+    override val tag: String = "saga"
+    override val order: Int = 10
 
     companion object {
         const val SAGA_PACKAGE = "application.sagas"
     }
 
     override fun shouldGenerate(design: Any, context: DesignContext): Boolean {
-        if (design !is SagaDesign) return false
+        if (design !is CommonDesign || design.type != "saga") return false
         if (context.typeMapping.containsKey(generatorName(design, context))) return false
         return true
     }
 
     override fun buildContext(design: Any, context: DesignContext): Map<String, Any?> {
-        require(design is SagaDesign)
+        require(design is CommonDesign && design.type == "saga")
 
         val resultContext = context.baseMap.toMutableMap()
 
@@ -30,22 +33,40 @@ class SagaGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "modulePath", applicationPath)
             resultContext.putContext(tag, "package", SAGA_PACKAGE)
             resultContext.putContext(tag, "templatePackage", refPackage(SAGA_PACKAGE))
+
             resultContext.putContext(tag, "Name", design.name)
             resultContext.putContext(tag, "Saga", design.name)
+            resultContext.putContext(tag, "Comment", design.desc)
+            resultContext.putContext(tag, "CommentEscaped", design.desc.replace(Regex("\r\n|[\r\n]"), " "))
+
+            if (design.aggregate != null) {
+                resultContext.putContext(tag, "Aggregate", design.aggregate)
+                design.primaryAggregateMetadata?.let { aggMeta ->
+                    resultContext.putContext(tag, "AggregateRoot", aggMeta.aggregateRoot.name)
+                    resultContext.putContext(tag, "IdType", aggMeta.idType ?: "String")
+                    resultContext["aggregateRootFullName"] = aggMeta.aggregateRoot.fullName
+                    resultContext["aggregatePackage"] = aggMeta.packageName
+                    resultContext["entities"] = aggMeta.entities
+                }
+            }
+
+            resultContext["aggregates"] = design.aggregates
+            resultContext["aggregateMetadataList"] = design.aggregateMetadataList
+            resultContext["crossAggregate"] = design.aggregates.size > 1
         }
 
         return resultContext
     }
 
     override fun generatorFullName(design: Any, context: DesignContext): String {
-        require(design is SagaDesign)
+        require(design is CommonDesign)
         val basePackage = context.getString("basePackage")
         val fullPackage = concatPackage(basePackage, SAGA_PACKAGE, design.packagePath)
         return concatPackage(fullPackage, design.name)
     }
 
     override fun generatorName(design: Any, context: DesignContext): String {
-        require(design is SagaDesign)
+        require(design is CommonDesign)
         return design.name
     }
 
@@ -61,8 +82,10 @@ class SagaGenerator : DesignTemplateGenerator {
     }
 
     override fun onGenerated(design: Any, context: DesignContext) {
-        if (design is SagaDesign) {
-            context.typeMapping[generatorName(design, context)] = generatorFullName(design, context)
+        if (design is CommonDesign) {
+            val fullName = generatorFullName(design, context)
+            context.typeMapping[generatorName(design, context)] = fullName
+            logger.lifecycle("Generated saga: $fullName")
         }
     }
 }

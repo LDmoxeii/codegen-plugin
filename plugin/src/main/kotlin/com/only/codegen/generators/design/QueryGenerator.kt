@@ -1,7 +1,7 @@
 package com.only.codegen.generators.design
 
+import com.only.codegen.context.design.CommonDesign
 import com.only.codegen.context.design.DesignContext
-import com.only.codegen.context.design.QueryDesign
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
@@ -19,13 +19,13 @@ class QueryGenerator : DesignTemplateGenerator {
     }
 
     override fun shouldGenerate(design: Any, context: DesignContext): Boolean {
-        if (design !is QueryDesign) return false
+        if (design !is CommonDesign || design.type != "qry") return false
         if (context.typeMapping.containsKey(generatorName(design, context))) return false
         return true
     }
 
     override fun buildContext(design: Any, context: DesignContext): Map<String, Any?> {
-        require(design is QueryDesign)
+        require(design is CommonDesign && design.type == "qry")
 
         val resultContext = context.baseMap.toMutableMap()
 
@@ -36,28 +36,37 @@ class QueryGenerator : DesignTemplateGenerator {
 
             resultContext.putContext(tag, "Name", design.name)
             resultContext.putContext(tag, "Query", design.name)
-            resultContext.putContext(tag, "Request", design.requestName)
-            resultContext.putContext(tag, "Response", design.responseName)
             resultContext.putContext(tag, "Comment", design.desc)
             resultContext.putContext(tag, "CommentEscaped", design.desc.replace(Regex("\\r\\n|[\\r\\n]"), " "))
 
             if (design.aggregate != null) {
                 resultContext.putContext(tag, "Aggregate", design.aggregate)
+                design.primaryAggregateMetadata?.let { aggMeta ->
+                    resultContext.putContext(tag, "AggregateRoot", aggMeta.aggregateRoot.name)
+                    resultContext.putContext(tag, "IdType", aggMeta.idType ?: "String")
+                    resultContext["aggregateRootFullName"] = aggMeta.aggregateRoot.fullName
+                    resultContext["aggregatePackage"] = aggMeta.packageName
+                    resultContext["entities"] = aggMeta.entities
+                }
             }
+
+            resultContext["aggregates"] = design.aggregates
+            resultContext["aggregateMetadataList"] = design.aggregateMetadataList
+            resultContext["crossAggregate"] = design.aggregates.size > 1
         }
 
         return resultContext
     }
 
     override fun generatorFullName(design: Any, context: DesignContext): String {
-        require(design is QueryDesign)
+        require(design is CommonDesign)
         val basePackage = context.getString("basePackage")
         val fullPackage = concatPackage(basePackage, QUERY_PACKAGE, design.packagePath)
         return concatPackage(fullPackage, design.name)
     }
 
     override fun generatorName(design: Any, context: DesignContext): String {
-        require(design is QueryDesign)
+        require(design is CommonDesign)
         return design.name
     }
 
@@ -73,7 +82,7 @@ class QueryGenerator : DesignTemplateGenerator {
     }
 
     override fun onGenerated(design: Any, context: DesignContext) {
-        if (design is QueryDesign) {
+        if (design is CommonDesign) {
             val fullName = generatorFullName(design, context)
             context.typeMapping[generatorName(design, context)] = fullName
             logger.lifecycle("Generated query: $fullName")

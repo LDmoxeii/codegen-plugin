@@ -59,13 +59,15 @@ class UnifiedDesignBuilder : DesignContextBuilder {
 
         // 4. 根据 type 构建对应设计对象
         return when (type) {
-            "cmd" -> buildCommandDesign(element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList)
-            "qry" -> buildQueryDesign(element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList)
-            "saga" -> buildSagaDesign(element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList)
-            "cli" -> buildClientDesign(element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList)
-            "ie" -> buildIntegrationEventDesign(element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList)
-            "de" -> buildDomainEventDesign(element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList)
-            "svc" -> buildDomainServiceDesign(element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList)
+            "cmd", "qry", "saga", "cli", "svc" -> buildCommonDesign(
+                type, element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            )
+            "ie" -> buildIntegrationEventDesign(
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            )
+            "de" -> buildDomainEventDesign(
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            )
             else -> throw IllegalArgumentException("Unknown design type: $type")
         }
     }
@@ -98,106 +100,38 @@ class UnifiedDesignBuilder : DesignContextBuilder {
 
     // === 各设计类型的构建方法 ===
 
-    private fun buildCommandDesign(
+    /**
+     * 构建通用设计 (适用于 cmd/qry/saga/cli/svc)
+     */
+    private fun buildCommonDesign(
+        type: String,
         element: DesignElement,
         primaryAggregate: String?,
         aggregates: List<String>,
         primaryAggregateMetadata: AggregateMetadata?,
         aggregateMetadataList: List<AggregateMetadata>
-    ): CommandDesign {
+    ): CommonDesign {
         val (packagePath, name) = parseNameAndPackage(element.name, primaryAggregate)
-        val commandName = normalizeName(name, "Cmd", "Command")
-        val fullName = if (packagePath.isNotBlank()) "$packagePath.$commandName" else commandName
+        val suffix = getTypeSuffix(type)
+        val designName = normalizeName(name, suffix)
+        val fullName = if (packagePath.isNotBlank()) "$packagePath.$designName" else designName
 
-        return CommandDesign(
-            name = commandName,
+        return CommonDesign(
+            type = type,
+            name = designName,
             fullName = fullName,
             packagePath = packagePath,
             aggregate = primaryAggregate,
             aggregates = aggregates,
             desc = element.desc,
             primaryAggregateMetadata = primaryAggregateMetadata,
-            aggregateMetadataList = aggregateMetadataList,
-            requestName = "${commandName}Request",
-            responseName = "${commandName}Response"
+            aggregateMetadataList = aggregateMetadataList
         )
     }
 
-    private fun buildQueryDesign(
-        element: DesignElement,
-        primaryAggregate: String?,
-        aggregates: List<String>,
-        primaryAggregateMetadata: AggregateMetadata?,
-        aggregateMetadataList: List<AggregateMetadata>
-    ): QueryDesign {
-        val (packagePath, name) = parseNameAndPackage(element.name, primaryAggregate)
-        val queryName = normalizeName(name, "Qry", "Query")
-        val fullName = if (packagePath.isNotBlank()) "$packagePath.$queryName" else queryName
-
-        return QueryDesign(
-            name = queryName,
-            fullName = fullName,
-            packagePath = packagePath,
-            aggregate = primaryAggregate,
-            aggregates = aggregates,
-            desc = element.desc,
-            primaryAggregateMetadata = primaryAggregateMetadata,
-            aggregateMetadataList = aggregateMetadataList,
-            requestName = "${queryName}Request",
-            responseName = "${queryName}Response"
-        )
-    }
-
-    private fun buildSagaDesign(
-        element: DesignElement,
-        primaryAggregate: String?,
-        aggregates: List<String>,
-        primaryAggregateMetadata: AggregateMetadata?,
-        aggregateMetadataList: List<AggregateMetadata>
-    ): SagaDesign {
-        val (packagePath, name) = parseNameAndPackage(element.name, primaryAggregate)
-        val sagaName = normalizeName(name, "Saga")
-        val fullName = if (packagePath.isNotBlank()) "$packagePath.$sagaName" else sagaName
-
-        return SagaDesign(
-            name = sagaName,
-            fullName = fullName,
-            packagePath = packagePath,
-            aggregate = primaryAggregate,
-            aggregates = aggregates,
-            desc = element.desc,
-            primaryAggregateMetadata = primaryAggregateMetadata,
-            aggregateMetadataList = aggregateMetadataList,
-            requestName = "${sagaName}Request",
-            responseName = "${sagaName}Response"
-        )
-    }
-
-    private fun buildClientDesign(
-        element: DesignElement,
-        primaryAggregate: String?,
-        aggregates: List<String>,
-        primaryAggregateMetadata: AggregateMetadata?,
-        aggregateMetadataList: List<AggregateMetadata>
-    ): ClientDesign {
-        val (packagePath, name) = parseNameAndPackage(element.name, primaryAggregate)
-        val clientName = normalizeName(name, "Client")
-        val fullName = if (packagePath.isNotBlank()) "$packagePath.$clientName" else clientName
-
-        return ClientDesign(
-            name = clientName,
-            fullName = fullName,
-            packagePath = packagePath,
-            aggregate = primaryAggregate,
-            aggregates = aggregates,
-            desc = element.desc,
-            primaryAggregateMetadata = primaryAggregateMetadata,
-            aggregateMetadataList = aggregateMetadataList,
-            requestName = "${clientName}Request",
-            responseName = "${clientName}Response"
-        )
-    }
-
+    /**
+     * 构建集成事件设计
+     */
     private fun buildIntegrationEventDesign(
         element: DesignElement,
         primaryAggregate: String?,
@@ -224,6 +158,9 @@ class UnifiedDesignBuilder : DesignContextBuilder {
         )
     }
 
+    /**
+     * 构建领域事件设计
+     */
     private fun buildDomainEventDesign(
         element: DesignElement,
         primaryAggregate: String?,
@@ -251,30 +188,19 @@ class UnifiedDesignBuilder : DesignContextBuilder {
         )
     }
 
-    private fun buildDomainServiceDesign(
-        element: DesignElement,
-        primaryAggregate: String?,
-        aggregates: List<String>,
-        primaryAggregateMetadata: AggregateMetadata?,
-        aggregateMetadataList: List<AggregateMetadata>
-    ): DomainServiceDesign {
-        val (packagePath, name) = parseNameAndPackage(element.name, primaryAggregate)
-        val serviceName = normalizeName(name, "Service")
-        val fullName = if (packagePath.isNotBlank()) "$packagePath.$serviceName" else serviceName
-
-        return DomainServiceDesign(
-            name = serviceName,
-            fullName = fullName,
-            packagePath = packagePath,
-            aggregate = primaryAggregate,
-            aggregates = aggregates,
-            desc = element.desc,
-            primaryAggregateMetadata = primaryAggregateMetadata,
-            aggregateMetadataList = aggregateMetadataList
-        )
-    }
-
     // === 辅助方法 ===
+
+    /**
+     * 获取类型后缀
+     */
+    private fun getTypeSuffix(type: String): String = when (type) {
+        "cmd" -> "Cmd"
+        "qry" -> "Qry"
+        "saga" -> "Saga"
+        "cli" -> "Client"
+        "svc" -> "Service"
+        else -> ""
+    }
 
     /**
      * 解析名称和包路径

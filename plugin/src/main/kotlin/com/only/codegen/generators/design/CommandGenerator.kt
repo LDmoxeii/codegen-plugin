@@ -1,6 +1,6 @@
 package com.only.codegen.generators.design
 
-import com.only.codegen.context.design.CommandDesign
+import com.only.codegen.context.design.CommonDesign
 import com.only.codegen.context.design.DesignContext
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
@@ -25,7 +25,7 @@ class CommandGenerator : DesignTemplateGenerator {
     }
 
     override fun shouldGenerate(design: Any, context: DesignContext): Boolean {
-        if (design !is CommandDesign) return false
+        if (design !is CommonDesign || design.type != "cmd") return false
 
         // 避免重复生成
         if (context.typeMapping.containsKey(generatorName(design, context))) {
@@ -36,7 +36,7 @@ class CommandGenerator : DesignTemplateGenerator {
     }
 
     override fun buildContext(design: Any, context: DesignContext): Map<String, Any?> {
-        require(design is CommandDesign) { "Design must be CommandDesign" }
+        require(design is CommonDesign && design.type == "cmd") { "Design must be CommonDesign with type=cmd" }
 
         val resultContext = context.baseMap.toMutableMap()
 
@@ -49,8 +49,6 @@ class CommandGenerator : DesignTemplateGenerator {
             // 基本信息
             resultContext.putContext(tag, "Name", design.name)
             resultContext.putContext(tag, "Command", design.name)
-            resultContext.putContext(tag, "Request", design.requestName)
-            resultContext.putContext(tag, "Response", design.responseName)
             resultContext.putContext(tag, "Comment", design.desc)
             resultContext.putContext(tag, "CommentEscaped", design.desc.replace(Regex("\\r\\n|[\\r\\n]"), " "))
 
@@ -80,14 +78,14 @@ class CommandGenerator : DesignTemplateGenerator {
     }
 
     override fun generatorFullName(design: Any, context: DesignContext): String {
-        require(design is CommandDesign)
+        require(design is CommonDesign)
         val basePackage = context.getString("basePackage")
         val fullPackage = concatPackage(basePackage, COMMAND_PACKAGE, design.packagePath)
         return concatPackage(fullPackage, design.name)
     }
 
     override fun generatorName(design: Any, context: DesignContext): String {
-        require(design is CommandDesign)
+        require(design is CommonDesign)
         return design.name
     }
 
@@ -103,7 +101,7 @@ class CommandGenerator : DesignTemplateGenerator {
     }
 
     override fun onGenerated(design: Any, context: DesignContext) {
-        if (design is CommandDesign) {
+        if (design is CommonDesign) {
             val fullName = generatorFullName(design, context)
             context.typeMapping[generatorName(design, context)] = fullName
             logger.lifecycle("Generated command: $fullName")
