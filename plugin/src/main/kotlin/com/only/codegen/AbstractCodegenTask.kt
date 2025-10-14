@@ -2,7 +2,6 @@ package com.only.codegen
 
 import com.only.codegen.context.BaseContext
 import com.only.codegen.misc.resolvePackage
-import com.only.codegen.misc.resolvePackageDirectory
 import com.only.codegen.template.PathNode
 import com.only.codegen.template.Template
 import com.only.codegen.template.TemplateNode
@@ -173,161 +172,114 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     @Internal
     override val templateNodeMap = mutableMapOf<String, MutableList<TemplateNode>>()
 
-    @Internal
-    override val templateAliasMap = mapOf(
-        // Comment 相关
-        "schema.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "enum.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "domain_event.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "domain_event_handler.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "specification.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "factory.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "domain_service.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "integration_event.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "integration_event_handler.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "client.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "query.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "command.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "client_handler.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "query_handler.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "command_handler.Comment" to listOf("Comment", "comment", "COMMENT"),
-        "saga.Comment" to listOf("Comment", "comment", "COMMENT"),
 
-        // CommentEscaped 相关
-        "schema.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "enum.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "domain_event.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "domain_event_handler.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "specification.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "factory.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "domain_service.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "integration_event.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "integration_event_handler.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "client.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "query.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "command.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "client_handler.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "query_handler.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "command_handler.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-        "saga.CommentEscaped" to listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped"),
-
-        // Aggregate 相关
-        "schema.Aggregate" to listOf("Aggregate", "aggregate", "AGGREGATE"),
-        "enum.Aggregate" to listOf("Aggregate", "aggregate", "AGGREGATE"),
-        "domain_event.Aggregate" to listOf("Aggregate", "aggregate", "AGGREGATE"),
-        "domain_event_handler.Aggregate" to listOf("Aggregate", "aggregate", "AGGREGATE"),
-        "specification.Aggregate" to listOf("Aggregate", "aggregate", "AGGREGATE"),
-        "factory.Aggregate" to listOf("Aggregate", "aggregate", "AGGREGATE"),
-
-        // EntityPackage 相关
-        "schema.entityPackage" to listOf("entityPackage", "EntityPackage", "ENTITY_PACKAGE", "entity_package", "Entity_Package"),
-        "enum.entityPackage" to listOf("entityPackage", "EntityPackage", "ENTITY_PACKAGE", "entity_package", "Entity_Package"),
-        "domain_event.entityPackage" to listOf("entityPackage", "EntityPackage", "ENTITY_PACKAGE", "entity_package", "Entity_Package"),
-        "domain_event_handler.entityPackage" to listOf("entityPackage", "EntityPackage", "ENTITY_PACKAGE", "entity_package", "Entity_Package"),
-        "specification.entityPackage" to listOf("entityPackage", "EntityPackage", "ENTITY_PACKAGE", "entity_package", "Entity_Package"),
-        "factory.entityPackage" to listOf("entityPackage", "EntityPackage", "ENTITY_PACKAGE", "entity_package", "Entity_Package"),
-
-        // TemplatePackage 相关
-        "schema.templatePackage" to listOf("templatePackage", "TemplatePackage", "TEMPLATE_PACKAGE", "template_package", "Template_Package"),
-        "enum.templatePackage" to listOf("templatePackage", "TemplatePackage", "TEMPLATE_PACKAGE", "template_package", "Template_Package"),
-        "domain_event.templatePackage" to listOf("templatePackage", "TemplatePackage", "TEMPLATE_PACKAGE", "template_package", "Template_Package"),
-        "domain_event_handler.templatePackage" to listOf("templatePackage", "TemplatePackage", "TEMPLATE_PACKAGE", "template_package", "Template_Package"),
-        "specification.templatePackage" to listOf("templatePackage", "TemplatePackage", "TEMPLATE_PACKAGE", "template_package", "Template_Package"),
-        "factory.templatePackage" to listOf("templatePackage", "TemplatePackage", "TEMPLATE_PACKAGE", "template_package", "Template_Package"),
-
-        // Entity 相关
-        "schema.Entity" to listOf("Entity", "entity", "ENTITY", "entityType", "EntityType", "ENTITY_TYPE", "Entity_Type", "entity_type"),
-        "enum.Entity" to listOf("Entity", "entity", "ENTITY", "entityType", "EntityType", "ENTITY_TYPE", "Entity_Type", "entity_type"),
-        "domain_event.Entity" to listOf("Entity", "entity", "ENTITY", "entityType", "EntityType", "ENTITY_TYPE", "Entity_Type", "entity_type"),
-        "domain_event_handler.Entity" to listOf("Entity", "entity", "ENTITY", "entityType", "EntityType", "ENTITY_TYPE", "Entity_Type", "entity_type"),
-        "specification.Entity" to listOf("Entity", "entity", "ENTITY", "entityType", "EntityType", "ENTITY_TYPE", "Entity_Type", "entity_type"),
-        "factory.Entity" to listOf("Entity", "entity", "ENTITY", "entityType", "EntityType", "ENTITY_TYPE", "Entity_Type", "entity_type"),
-
-        // EntityVar 相关
-        "schema.EntityVar" to listOf("EntityVar", "entityVar", "ENTITY_VAR", "entity_var", "Entity_Var"),
-        "enum.EntityVar" to listOf("EntityVar", "entityVar", "ENTITY_VAR", "entity_var", "Entity_Var"),
-        "domain_event.EntityVar" to listOf("EntityVar", "entityVar", "ENTITY_VAR", "entity_var", "Entity_Var"),
-        "domain_event_handler.EntityVar" to listOf("EntityVar", "entityVar", "ENTITY_VAR", "entity_var", "Entity_Var"),
-        "specification.EntityVar" to listOf("EntityVar", "entityVar", "ENTITY_VAR", "entity_var", "Entity_Var"),
-        "factory.EntityVar" to listOf("EntityVar", "entityVar", "ENTITY_VAR", "entity_var", "Entity_Var"),
-
-        // Schema 相关
-        "schema_base.SchemaBase" to listOf("SchemaBase", "schema_base", "SCHEMA_BASE"),
-        "schema.SchemaBase" to listOf("SchemaBase", "schema_base", "SCHEMA_BASE"),
-        "schema.IdField" to listOf("IdField", "idField", "ID_FIELD", "id_field", "Id_Field"),
-        "schema.FIELD_ITEMS" to listOf("FIELD_ITEMS", "fieldItems", "field_items", "Field_Items"),
-        "schema.JOIN_ITEMS" to listOf("JOIN_ITEMS", "joinItems", "join_items", "Join_Items"),
-
-        // Schema Field 相关
-        "schema_field.fieldType" to listOf("fieldType", "FIELD_TYPE", "field_type", "Field_Type"),
-        "schema_field.fieldName" to listOf("fieldName", "FIELD_NAME", "field_name", "Field_Name"),
-        "schema_field.fieldComment" to listOf("fieldComment", "FIELD_COMMENT", "field_comment", "Field_Comment"),
-
-        // Enum 相关
-        "enum.Enum" to listOf("Enum", "enum", "ENUM", "EnumType", "enumType", "ENUM_TYPE", "enum_type", "Enum_Type"),
-        "enum.EnumValueField" to listOf("EnumValueField", "enumValueField", "ENUM_VALUE_FIELD", "enum_value_field", "Enum_Value_Field"),
-        "enum.EnumNameField" to listOf("EnumNameField", "enumNameField", "ENUM_NAME_FIELD", "enum_name_field", "Enum_Name_Field"),
-        "enum.EnumItems" to listOf("EnumItems", "ENUM_ITEMS", "enumItems", "enum_items", "Enum_Items"),
-
-        // Domain Event 相关
-        "domain_event.DomainEvent" to listOf("DomainEvent", "domainEvent", "DOMAIN_EVENT", "domain_event", "Domain_Event", "Event", "EVENT", "event", "DE", "D_E", "de", "d_e"),
-        "domain_event_handler.DomainEvent" to listOf("DomainEvent", "domainEvent", "DOMAIN_EVENT", "domain_event", "Domain_Event", "Event", "EVENT", "event", "DE", "D_E", "de", "d_e"),
-        "domain_event.persist" to listOf("persist", "Persist", "PERSIST"),
-        "domain_event_handler.persist" to listOf("persist", "Persist", "PERSIST"),
-
-        // Domain Service 相关
-        "domain_service.DomainService" to listOf("DomainService", "domainService", "DOMAIN_SERVICE", "domain_service", "Domain_Service", "Service", "SERVICE", "service", "Svc", "SVC", "svc", "DS", "D_S", "ds", "d_s"),
-
-        // Specification 相关
-        "specification.Specification" to listOf("Specification", "specification", "SPECIFICATION", "Spec", "SPEC", "spec"),
-
-        // Factory 相关
-        "factory.Factory" to listOf("Factory", "factory", "FACTORY", "Fac", "FAC", "fac"),
-
-        // Integration Event 相关
-        "integration_event.IntegrationEvent" to listOf("IntegrationEvent", "integrationEvent", "integration_event", "INTEGRATION_EVENT", "Integration_Event", "Event", "EVENT", "event", "IE", "I_E", "ie", "i_e"),
-        "integration_event_handler.IntegrationEvent" to listOf("IntegrationEvent", "integrationEvent", "integration_event", "INTEGRATION_EVENT", "Integration_Event", "Event", "EVENT", "event", "IE", "I_E", "ie", "i_e"),
-
-        // Aggregate Root 相关
-        "specification.AggregateRoot" to listOf("AggregateRoot", "aggregateRoot", "aggregate_root", "AGGREGATE_ROOT", "Aggregate_Root", "Root", "ROOT", "root", "AR", "A_R", "ar", "a_r"),
-        "factory.AggregateRoot" to listOf("AggregateRoot", "aggregateRoot", "aggregate_root", "AGGREGATE_ROOT", "Aggregate_Root", "Root", "ROOT", "root", "AR", "A_R", "ar", "a_r"),
-        "domain_event.AggregateRoot" to listOf("AggregateRoot", "aggregateRoot", "aggregate_root", "AGGREGATE_ROOT", "Aggregate_Root", "Root", "ROOT", "root", "AR", "A_R", "ar", "a_r"),
-        "domain_event_handler.AggregateRoot" to listOf("AggregateRoot", "aggregateRoot", "aggregate_root", "AGGREGATE_ROOT", "Aggregate_Root", "Root", "ROOT", "root", "AR", "A_R", "ar", "a_r"),
-
-        // Client 相关
-        "client.Client" to listOf("Client", "client", "CLIENT", "Cli", "CLI", "cli"),
-        "client_handler.Client" to listOf("Client", "client", "CLIENT", "Cli", "CLI", "cli"),
-
-        // Query 相关
-        "query.Query" to listOf("Query", "query", "QUERY", "Qry", "QRY", "qry"),
-        "query_handler.Query" to listOf("Query", "query", "QUERY", "Qry", "QRY", "qry"),
-
-        // Command 相关
-        "command.Command" to listOf("Command", "command", "COMMAND", "Cmd", "CMD", "cmd"),
-        "command_handler.Command" to listOf("Command", "command", "COMMAND", "Cmd", "CMD", "cmd"),
-
-        // Request 相关
-        "client.Request" to listOf("Request", "request", "REQUEST", "Req", "REQ", "req", "Param", "PARAM", "param"),
-        "client_handler.Request" to listOf("Request", "request", "REQUEST", "Req", "REQ", "req", "Param", "PARAM", "param"),
-        "query.Request" to listOf("Request", "request", "REQUEST", "Req", "REQ", "req", "Param", "PARAM", "param"),
-        "query_handler.Request" to listOf("Request", "request", "REQUEST", "Req", "REQ", "req", "Param", "PARAM", "param"),
-        "command.Request" to listOf("Request", "request", "REQUEST", "Req", "REQ", "req", "Param", "PARAM", "param"),
-        "command_handler.Request" to listOf("Request", "request", "REQUEST", "Req", "REQ", "req", "Param", "PARAM", "param"),
-
-        // Response 相关
-        "client.Response" to listOf("Response", "response", "RESPONSE", "Res", "RES", "res", "ReturnType", "returnType", "RETURN_TYPE", "return_type", "Return_Type", "Return", "RETURN", "return"),
-        "client_handler.Response" to listOf("Response", "response", "RESPONSE", "Res", "RES", "res", "ReturnType", "returnType", "RETURN_TYPE", "return_type", "Return_Type", "Return", "RETURN", "return"),
-        "query.Response" to listOf("Response", "response", "RESPONSE", "Res", "RES", "res", "ReturnType", "returnType", "RETURN_TYPE", "return_type", "Return_Type", "Return", "RETURN", "return"),
-        "query_handler.Response" to listOf("Response", "response", "RESPONSE", "Res", "RES", "res", "ReturnType", "returnType", "RETURN_TYPE", "return_type", "Return_Type", "Return", "RETURN", "return"),
-        "command.Response" to listOf("Response", "response", "RESPONSE", "Res", "RES", "res", "ReturnType", "returnType", "RETURN_TYPE", "return_type", "Return_Type", "Return", "RETURN", "return"),
-        "command_handler.Response" to listOf("Response", "response", "RESPONSE", "Res", "RES", "res", "ReturnType", "returnType", "RETURN_TYPE", "return_type", "Return_Type", "Return", "RETURN", "return"),
-        "saga.Response" to listOf("Response", "response", "RESPONSE", "Res", "RES", "res", "ReturnType", "returnType", "RETURN_TYPE", "return_type", "Return_Type", "Return", "RETURN", "return"),
-        "saga_handler.Response" to listOf("Response", "response", "RESPONSE", "Res", "RES", "res", "ReturnType", "returnType", "RETURN_TYPE", "return_type", "Return_Type", "Return", "RETURN", "return")
-    )
-
+    /**
+     * 根据 tag 和 variable 生成别名列表
+     * 使用正则匹配模式，支持多种命名约定
+     */
     private fun alias4Template(tag: String, variable: String): List<String> {
         val key = "$tag.$variable"
-        return templateAliasMap[key] ?: listOf(variable)
+
+        return when {
+            // Module 相关 - 匹配所有 tag
+            key.matches(Regex(".+\\.modulePath")) -> listOf("modulePath", "ModulePath", "MODULE_PATH", "module_path", "Module_Path", "module", "Module", "MODULE")
+
+            // TemplatePackage 相关
+            key.matches(Regex(".+\\.templatePackage")) ->
+                listOf("templatePackage", "TemplatePackage", "TEMPLATE_PACKAGE", "template_package", "Template_Package")
+
+            // Imports 相关 - 匹配所有 tag
+            key.matches(Regex(".+\\.Imports")) ->
+                listOf("Imports", "imports", "IMPORTS", "importList", "ImportList", "IMPORT_LIST", "import_list", "Import_List")
+
+            // Comment 相关 - 匹配所有 tag
+            key.matches(Regex(".+\\.Comment")) -> listOf("Comment", "comment", "COMMENT")
+
+            // CommentEscaped 相关 - 匹配所有 tag
+            key.matches(Regex(".+\\.CommentEscaped")) -> listOf("CommentEscaped", "commentEscaped", "COMMENT_ESCAPED", "Comment_Escaped")
+
+            // Aggregate 相关
+            key.matches(Regex("(schema|enum|domain_event|domain_event_handler|specification|factory)\\.Aggregate")) ->
+                listOf("Aggregate", "aggregate", "AGGREGATE")
+
+            // Entity 相关
+            key.matches(Regex("(schema|enum|domain_event|domain_event_handler|specification|factory)\\.Entity")) ->
+                listOf("Entity", "entity", "ENTITY", "entityType", "EntityType", "ENTITY_TYPE", "Entity_Type", "entity_type")
+
+            // EntityVar 相关
+            key.matches(Regex("(schema|enum|domain_event|domain_event_handler|specification|factory)\\.EntityVar")) ->
+                listOf("EntityVar", "entityVar", "ENTITY_VAR", "entity_var", "Entity_Var")
+
+            // SchemaBase 相关
+            key.matches(Regex("(schema_base|schema)\\.SchemaBase")) ->
+                listOf("SchemaBase", "schema_base", "SCHEMA_BASE")
+
+            // Schema 特定字段
+            key == "schema.IdField" -> listOf("IdField", "idField", "ID_FIELD", "id_field", "Id_Field")
+            key == "schema.FIELD_ITEMS" -> listOf("FIELD_ITEMS", "fieldItems", "field_items", "Field_Items")
+            key == "schema.JOIN_ITEMS" -> listOf("JOIN_ITEMS", "joinItems", "join_items", "Join_Items")
+
+            // Schema Field 相关
+            key == "schema_field.fieldType" -> listOf("fieldType", "FIELD_TYPE", "field_type", "Field_Type")
+            key == "schema_field.fieldName" -> listOf("fieldName", "FIELD_NAME", "field_name", "Field_Name")
+            key == "schema_field.fieldComment" -> listOf("fieldComment", "FIELD_COMMENT", "field_comment", "Field_Comment")
+
+            // Enum 相关
+            key == "enum.Enum" -> listOf("Enum", "enum", "ENUM", "EnumType", "enumType", "ENUM_TYPE", "enum_type", "Enum_Type")
+            key == "enum.EnumValueField" -> listOf("EnumValueField", "enumValueField", "ENUM_VALUE_FIELD", "enum_value_field", "Enum_Value_Field")
+            key == "enum.EnumNameField" -> listOf("EnumNameField", "enumNameField", "ENUM_NAME_FIELD", "enum_name_field", "Enum_Name_Field")
+            key == "enum.EnumItems" -> listOf("EnumItems", "ENUM_ITEMS", "enumItems", "enum_items", "Enum_Items")
+
+            // Domain Event 相关
+            key.matches(Regex("(domain_event|domain_event_handler)\\.DomainEvent")) ->
+                listOf("DomainEvent", "domainEvent", "DOMAIN_EVENT", "domain_event", "Domain_Event", "Event", "EVENT", "event", "DE", "D_E", "de", "d_e")
+
+            key.matches(Regex("(domain_event|domain_event_handler)\\.persist")) ->
+                listOf("persist", "Persist", "PERSIST")
+
+            // Domain Service 相关
+            key == "domain_service.DomainService" ->
+                listOf("DomainService", "domainService", "DOMAIN_SERVICE", "domain_service", "Domain_Service", "Service", "SERVICE", "service", "Svc", "SVC", "svc", "DS", "D_S", "ds", "d_s")
+
+            // Specification 相关
+            key == "specification.Specification" ->
+                listOf("Specification", "specification", "SPECIFICATION", "Spec", "SPEC", "spec")
+
+            // Factory 相关
+            key == "factory.Factory" ->
+                listOf("Factory", "factory", "FACTORY", "Fac", "FAC", "fac")
+
+            // Integration Event 相关
+            key.matches(Regex("(integration_event|integration_event_handler)\\.IntegrationEvent")) ->
+                listOf("IntegrationEvent", "integrationEvent", "integration_event", "INTEGRATION_EVENT", "Integration_Event", "Event", "EVENT", "event", "IE", "I_E", "ie", "i_e")
+
+            // Aggregate Root 相关
+            key.matches(Regex("(specification|factory|domain_event|domain_event_handler)\\.AggregateRoot")) ->
+                listOf("AggregateRoot", "aggregateRoot", "aggregate_root", "AGGREGATE_ROOT", "Aggregate_Root", "Root", "ROOT", "root", "AR", "A_R", "ar", "a_r")
+
+            // Client 相关
+            key.matches(Regex("(client|client_handler)\\.Client")) ->
+                listOf("Client", "client", "CLIENT", "Cli", "CLI", "cli")
+
+            // Query 相关
+            key.matches(Regex("(query|query_handler)\\.Query")) ->
+                listOf("Query", "query", "QUERY", "Qry", "QRY", "qry")
+
+            // Command 相关
+            key.matches(Regex("(command|command_handler)\\.Command")) ->
+                listOf("Command", "command", "COMMAND", "Cmd", "CMD", "cmd")
+
+            // Request 相关
+            key.matches(Regex("(client|client_handler|query|query_handler|command|command_handler)\\.Request")) ->
+                listOf("Request", "request", "REQUEST", "Req", "REQ", "req", "Param", "PARAM", "param")
+
+            // Response 相关
+            key.matches(Regex("(client|client_handler|query|query_handler|command|command_handler|saga|saga_handler)\\.Response")) ->
+                listOf("Response", "response", "RESPONSE", "Res", "RES", "res", "ReturnType", "returnType", "RETURN_TYPE", "return_type", "Return_Type", "Return", "RETURN", "return")
+
+            // 默认返回原变量名
+            else -> listOf(variable)
+        }
     }
 
     override fun MutableMap<String, Any?>.putContext(tag: String, variable: String, value: Any) =
