@@ -170,6 +170,7 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
             FactoryGenerator(),              // order=30 - 工厂类
             DomainEventGenerator(),          // order=30 - 领域事件类
             DomainEventHandlerGenerator(),   // order=30 - 领域事件处理器
+            RepositoryGenerator(),           // order=35 - Repository 接口及适配器
             AggregateGenerator(),            // order=40 - 聚合封装类
             SchemaGenerator(),               // order=50 - Schema 类
         )

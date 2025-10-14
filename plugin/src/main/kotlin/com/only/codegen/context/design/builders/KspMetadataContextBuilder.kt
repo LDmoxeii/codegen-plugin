@@ -7,7 +7,7 @@ import com.only.codegen.context.design.models.AggregateInfo
 import com.only.codegen.ksp.models.AggregateMetadata
 import java.io.File
 
-class KspMetadataBuilder(
+class KspMetadataContextBuilder(
     private val metadataPath: String,
 ) : DesignContextBuilder {
 
