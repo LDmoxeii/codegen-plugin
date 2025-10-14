@@ -1,7 +1,7 @@
 package com.only.codegen.generators.design
 
-import com.only.codegen.context.design.CommonDesign
 import com.only.codegen.context.design.DesignContext
+import com.only.codegen.context.design.models.CommonDesign
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
@@ -42,10 +42,10 @@ class ClientGenerator : DesignTemplateGenerator {
             if (design.aggregate != null) {
                 resultContext.putContext(tag, "Aggregate", design.aggregate)
                 design.primaryAggregateMetadata?.let { aggMeta ->
-                    resultContext.putContext(tag, "AggregateRoot", aggMeta.aggregateRoot.name)
-                    resultContext.putContext(tag, "IdType", aggMeta.idType ?: "String")
-                    resultContext["aggregateRootFullName"] = aggMeta.aggregateRoot.fullName
-                    resultContext["aggregatePackage"] = aggMeta.packageName
+                    resultContext.putContext(tag, "AggregateRoot", aggMeta.aggregateRoot.className)
+                    resultContext.putContext(tag, "IdType", aggMeta.identityType)
+                    resultContext["aggregateRootFullName"] = aggMeta.aggregateRoot.qualifiedName
+                    resultContext["aggregatePackage"] = aggMeta.modulePath
                     resultContext["entities"] = aggMeta.entities
                 }
             }

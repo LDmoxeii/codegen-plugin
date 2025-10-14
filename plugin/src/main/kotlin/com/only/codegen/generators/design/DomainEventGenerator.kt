@@ -1,7 +1,7 @@
 package com.only.codegen.generators.design
 
 import com.only.codegen.context.design.DesignContext
-import com.only.codegen.context.design.DomainEventDesign
+import com.only.codegen.context.design.models.DomainEventDesign
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
