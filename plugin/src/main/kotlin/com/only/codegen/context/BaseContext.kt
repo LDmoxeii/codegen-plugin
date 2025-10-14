@@ -24,9 +24,6 @@ interface BaseContext {
     // === 模板信息 ===
     val templateNodeMap: MutableMap<String, MutableList<TemplateNode>>
 
-    // === 模板别名映射 ===
-    val templateAliasMap: Map<String, List<String>>
-
     // === baseMap 辅助访问方法 ===
     fun getString(key: String, default: String = ""): String = baseMap[key]?.toString() ?: default
     fun getBoolean(key: String, default: Boolean = false): Boolean =
@@ -40,12 +37,6 @@ interface BaseContext {
      * 例如: putContext("entity", "Entity", "User")
      * 会根据 templateAliasMap 中的映射，将 "User" 同时放入多个别名 key 中
      */
-    fun MutableMap<String, Any?>.putContext(tag: String, variable: String, value: Any) {
-        val key = "$tag.$variable"
-        val aliases = templateAliasMap[key] ?: listOf(variable)
-        aliases.forEach { alias ->
-            this[alias] = value
-        }
-    }
+    fun MutableMap<String, Any?>.putContext(tag: String, variable: String, value: Any)
 }
 
