@@ -26,7 +26,12 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
 
         if (!SqlSchemaUtils.isAggregateRoot(table)) return false
 
-        return generatorName(table, context).isNotBlank() && !context.typeMapping.containsKey(generatorName(table, context))
+        return generatorName(table, context).isNotBlank() && !context.typeMapping.containsKey(
+            generatorName(
+                table,
+                context
+            )
+        )
     }
 
     override fun buildContext(table: Map<String, Any?>, context: EntityContext): Map<String, Any?> {
@@ -72,17 +77,11 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
         val tableName = SqlSchemaUtils.getTableName(table)
         val aggregate = context.resolveAggregateWithModule(tableName)
 
+        val basePackage = context.getString("basePackage")
         val templatePackage = refPackage(context.templatePackage[tag]!!)
         val `package` = refPackage(aggregate)
 
-        return "${context.getString("basePackage")}${templatePackage}${`package`}${
-            refPackage(
-                generatorName(
-                    table,
-                    context
-                )
-            )
-        }"
+        return "$basePackage${templatePackage}${`package`}${refPackage(generatorName(table, context))}"
     }
 
     override fun generatorName(

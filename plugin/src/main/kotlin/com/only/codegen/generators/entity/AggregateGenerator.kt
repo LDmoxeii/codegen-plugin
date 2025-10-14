@@ -79,7 +79,7 @@ class AggregateGenerator : EntityTemplateGenerator {
             val entityType = entityTypeMap[tableName]!!
 
             val basePackage = getString("basePackage")
-            val templatePackage = templatePackage[tag]!!
+            val templatePackage = refPackage(templatePackage[tag]!!)
             val `package` = refPackage(aggregate)
 
             val aggregateTypeTemplate = getString("aggregateTypeTemplate")

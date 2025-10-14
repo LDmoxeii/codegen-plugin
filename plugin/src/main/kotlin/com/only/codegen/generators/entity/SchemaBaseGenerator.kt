@@ -36,8 +36,9 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
         with(context) {
             val basePackage = getString("basePackage")
             val templatePackage = refPackage(templatePackage[tag]!!)
+            val `package` = ""
 
-            return "$basePackage$templatePackage${refPackage(generatorName(table, context))}"
+            return "$basePackage$templatePackage$`package`${refPackage(generatorName(table, context))}"
         }
     }
 

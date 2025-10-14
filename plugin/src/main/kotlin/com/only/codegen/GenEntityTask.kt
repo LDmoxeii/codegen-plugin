@@ -196,8 +196,7 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
 
             val tableContext = generator.buildContext(table, context)
 
-            val templateNodes = context.templateNodeMap
-                .getOrDefault(generator.tag, listOf(generator.getDefaultTemplateNode()))
+            val templateNodes = listOf(generator.getDefaultTemplateNode()) + context.templateNodeMap.getOrDefault(generator.tag, emptyList())
 
             templateNodes.forEach { templateNode ->
                 val pathNode = templateNode.deepCopy().resolve(tableContext)

@@ -84,8 +84,11 @@ open class PathNode {
                 // data 存储的是类路径资源路径，需要加载文件内容
                 data?.let { resPath ->
                     val cleanPath = resPath.removePrefix("/").replace('\\', '/')
-                    PathNode::class.java.classLoader.getResourceAsStream(cleanPath)?.bufferedReader()
-                        ?.use { it.readText() } ?: ""
+                        // 尝试多个类加载器
+                        val content = Thread.currentThread().contextClassLoader.getResourceAsStream(cleanPath)
+                            ?: PathNode::class.java.classLoader.getResourceAsStream(cleanPath)
+                            ?: javaClass.classLoader.getResourceAsStream(cleanPath)
+                        content?.bufferedReader()?.use { it.readText() } ?: ""
                 } ?: ""
             }
 

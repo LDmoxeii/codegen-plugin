@@ -86,15 +86,18 @@ class DomainEventGenerator : EntityTemplateGenerator {
         val tableName = SqlSchemaUtils.getTableName(table)
         val aggregate = context.resolveAggregateWithModule(tableName)
 
+        val basePackage = context.getString("basePackage")
         val templatePackage = refPackage(context.templatePackage[tag]!!)
         val `package` = refPackage(aggregate)
 
-        val fullDomainEventType =
-            "${context.getString("basePackage")}${templatePackage}${`package`}.${DEFAULT_DOMAIN_EVENT_PACKAGE}${
-                refPackage(
-                    generatorName(table, context)
+        val fullDomainEventType = "$basePackage${templatePackage}${`package`}.${DEFAULT_DOMAIN_EVENT_PACKAGE}${
+            refPackage(
+                generatorName(
+                    table,
+                    context
                 )
-            }"
+            )
+        }"
         return fullDomainEventType
     }
 
