@@ -49,7 +49,8 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     private fun buildDesignContext(): DesignContext {
         val builders = listOf(
             JsonDesignLoader(),            // order=10  - 加载 JSON 设计文件
-            KspMetadataLoader(),           // order=15  - 加载 KSP 元数据 + 构建 typeMapping
+            KspMetadataLoader(),           // order=15  - 加载 KSP 聚合元数据
+            TypeMappingBuilder(),          // order=18  - 构建类型映射 typeMapping
             UnifiedDesignBuilder()         // order=20  - 统一解析所有设计类型
         )
 
