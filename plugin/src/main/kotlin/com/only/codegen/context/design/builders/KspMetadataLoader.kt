@@ -10,8 +10,10 @@ import java.io.File
  * KSP 元数据加载器（重构版）
  *
  * Order: 15
- * 职责: 加载 KSP 生成的 aggregates.json（以聚合根为中心的层次结构）
- * 转换为 DesignContext 所需的 AggregateMetadata 和 EntityMetadata
+ * 职责:
+ * 1. 加载 KSP 生成的 aggregates.json（以聚合根为中心的层次结构）
+ * 2. 转换为 DesignContext 所需的 AggregateMetadata 和 EntityMetadata
+ * 3. 构建类型映射 typeMapping (聚合根、实体、Repository、Factory 等)
  */
 class KspMetadataLoader : DesignContextBuilder {
 
@@ -37,6 +39,7 @@ class KspMetadataLoader : DesignContextBuilder {
 
         logger.lifecycle("Loaded ${context.aggregateMetadataMap.size} aggregates, " +
                 "${context.entityMetadataMap.size} entities from KSP metadata")
+        logger.lifecycle("Built ${context.typeMapping.size} type mappings")
     }
 
     private fun getKspMetadataDir(context: MutableDesignContext): String {
@@ -106,11 +109,66 @@ class KspMetadataLoader : DesignContextBuilder {
                     context.entityMetadataMap[entity.name] = entity
                 }
 
+                // === 构建类型映射 typeMapping ===
+                buildTypeMapping(kspAggregate, context)
+
                 logger.info("Loaded aggregate: ${kspAggregate.aggregateName} " +
                     "(root=${aggregateRootEntity.name}, entities=${entities.size})")
             }
         } catch (e: Exception) {
             logger.error("Failed to load aggregates metadata: ${file.absolutePath}", e)
         }
+    }
+
+    /**
+     * 构建类型映射 (聚合根、实体、Repository、Factory、Specification、DomainEvent 等)
+     */
+    private fun buildTypeMapping(kspAggregate: KspAggregateMetadata, context: MutableDesignContext) {
+        // 聚合根类型映射
+        val aggregateRootName = kspAggregate.aggregateRoot.className
+        val aggregateRootFullName = kspAggregate.aggregateRoot.qualifiedName
+        context.typeMapping[aggregateRootName] = aggregateRootFullName
+
+        // 实体类型映射
+        kspAggregate.entities.forEach { entity ->
+            context.typeMapping[entity.className] = entity.qualifiedName
+        }
+
+        // ValueObject 类型映射
+        kspAggregate.valueObjects.forEach { vo ->
+            context.typeMapping[vo.className] = vo.qualifiedName
+        }
+
+        // Enum 类型映射
+        kspAggregate.enums.forEach { enum ->
+            context.typeMapping[enum.className] = enum.qualifiedName
+        }
+
+        // Repository 类型映射
+        kspAggregate.repository?.let { repo ->
+            context.typeMapping[repo.className] = repo.qualifiedName
+        }
+
+        // Factory 类型映射
+        kspAggregate.factory?.let { factory ->
+            context.typeMapping[factory.className] = factory.qualifiedName
+        }
+
+        // FactoryPayload 类型映射
+        kspAggregate.factoryPayload?.let { payload ->
+            context.typeMapping[payload.className] = payload.qualifiedName
+        }
+
+        // Specification 类型映射
+        kspAggregate.specification?.let { spec ->
+            context.typeMapping[spec.className] = spec.qualifiedName
+        }
+
+        // DomainEvent 类型映射
+        kspAggregate.domainEvents.forEach { event ->
+            context.typeMapping[event.className] = event.qualifiedName
+        }
+
+        logger.debug("Built type mappings for aggregate: ${kspAggregate.aggregateName}")
     }
 }

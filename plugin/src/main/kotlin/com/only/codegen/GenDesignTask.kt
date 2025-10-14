@@ -22,25 +22,7 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     override val entityMetadataMap = mutableMapOf<String, EntityMetadata>()
 
     @Internal
-    override val commandDesignMap = mutableMapOf<String, CommandDesign>()
-
-    @Internal
-    override val queryDesignMap = mutableMapOf<String, QueryDesign>()
-
-    @Internal
-    override val sagaDesignMap = mutableMapOf<String, SagaDesign>()
-
-    @Internal
-    override val clientDesignMap = mutableMapOf<String, ClientDesign>()
-
-    @Internal
-    override val integrationEventDesignMap = mutableMapOf<String, IntegrationEventDesign>()
-
-    @Internal
-    override val domainEventDesignMap = mutableMapOf<String, DomainEventDesign>()
-
-    @Internal
-    override val domainServiceDesignMap = mutableMapOf<String, DomainServiceDesign>()
+    override val designMap = mutableMapOf<String, MutableList<BaseDesign>>()
 
     @TaskAction
     override fun generate() {
@@ -53,13 +35,7 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     private fun genDesign() {
         val context = buildDesignContext()
 
-        val totalDesigns = context.commandDesignMap.size +
-                context.queryDesignMap.size +
-                context.sagaDesignMap.size +
-                context.clientDesignMap.size +
-                context.integrationEventDesignMap.size +
-                context.domainEventDesignMap.size +
-                context.domainServiceDesignMap.size
+        val totalDesigns = context.designMap.values.sumOf { it.size }
 
         if (totalDesigns == 0) {
             logger.warn("No design elements found")
@@ -73,13 +49,8 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     private fun buildDesignContext(): DesignContext {
         val builders = listOf(
             JsonDesignLoader(),            // order=10  - 加载 JSON 设计文件
-            KspMetadataLoader(),           // order=15  - 加载 KSP 元数据
-            CommandDesignBuilder(),        // order=20  - 解析命令设计
-            QueryDesignBuilder(),          // order=20  - 解析查询设计
-            SagaDesignBuilder(),           // order=20  - 解析 Saga 设计
-            ClientDesignBuilder(),         // order=20  - 解析客户端设计
-            DomainEventDesignBuilder(),    // order=25  - 解析领域事件设计
-            DomainServiceDesignBuilder()   // order=20  - 解析领域服务设计
+            KspMetadataLoader(),           // order=15  - 加载 KSP 元数据 + 构建 typeMapping
+            UnifiedDesignBuilder()         // order=20  - 统一解析所有设计类型
         )
 
         builders.sortedBy { it.order }.forEach { builder ->
@@ -111,7 +82,8 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         generator: DesignTemplateGenerator,
         context: DesignContext
     ) {
-        val designs = getDesignsForGenerator(generator, context)
+        // 从统一的 designMap 获取设计列表
+        val designs = context.designMap[generator.tag] ?: emptyList()
         var generatedCount = 0
         var skippedCount = 0
 
@@ -141,25 +113,6 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         }
 
         logger.lifecycle("Generated ${generatedCount} ${generator.tag} files (skipped: $skippedCount)")
-    }
-
-    /**
-     * 根据 Generator 获取对应的设计列表
-     */
-    private fun getDesignsForGenerator(
-        generator: DesignTemplateGenerator,
-        context: DesignContext
-    ): List<Any> {
-        return when (generator) {
-            is CommandGenerator -> context.commandDesignMap.values.toList()
-            is QueryGenerator -> context.queryDesignMap.values.toList()
-            is SagaGenerator -> context.sagaDesignMap.values.toList()
-            is ClientGenerator -> context.clientDesignMap.values.toList()
-            is IntegrationEventGenerator -> context.integrationEventDesignMap.values.toList()
-            is DomainEventGenerator -> context.domainEventDesignMap.values.toList()
-            is DomainServiceGenerator -> context.domainServiceDesignMap.values.toList()
-            else -> emptyList()
-        }
     }
 
     /**

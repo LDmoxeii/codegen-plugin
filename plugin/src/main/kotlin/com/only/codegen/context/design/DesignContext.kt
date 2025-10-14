@@ -7,7 +7,7 @@ import com.only.codegen.context.BaseContext
  *
  * 数据来源:
  * - JSON 设计文件 (_gen.json)
- * - KSP 聚合元信息 (aggregates.json / entities.json)
+ * - KSP 聚合元信息 (aggregates.json)
  */
 interface DesignContext : BaseContext {
 
@@ -34,53 +34,11 @@ interface DesignContext : BaseContext {
      */
     val entityMetadataMap: Map<String, EntityMetadata>
 
-    // === 设计元素解析结果 ===
+    // === 统一设计映射 ===
     /**
-     * 命令设计 Map
-     * key: commandFullName (如 category.CreateCategoryCmd)
-     * value: 命令设计对象
+     * 统一的设计映射 (替代 7 个独立 map)
+     * key: designType (cmd/qry/saga/cli/ie/de/svc)
+     * value: 该类型的所有设计对象列表
      */
-    val commandDesignMap: Map<String, CommandDesign>
-
-    /**
-     * 查询设计 Map
-     * key: queryFullName
-     * value: 查询设计对象
-     */
-    val queryDesignMap: Map<String, QueryDesign>
-
-    /**
-     * Saga 设计 Map
-     * key: sagaFullName
-     * value: Saga 设计对象
-     */
-    val sagaDesignMap: Map<String, SagaDesign>
-
-    /**
-     * 客户端设计 Map
-     * key: clientFullName
-     * value: 客户端设计对象
-     */
-    val clientDesignMap: Map<String, ClientDesign>
-
-    /**
-     * 集成事件设计 Map
-     * key: eventFullName
-     * value: 集成事件设计对象
-     */
-    val integrationEventDesignMap: Map<String, IntegrationEventDesign>
-
-    /**
-     * 领域事件设计 Map
-     * key: eventFullName
-     * value: 领域事件设计对象
-     */
-    val domainEventDesignMap: Map<String, DomainEventDesign>
-
-    /**
-     * 领域服务设计 Map
-     * key: serviceFullName
-     * value: 领域服务设计对象
-     */
-    val domainServiceDesignMap: Map<String, DomainServiceDesign>
+    val designMap: Map<String, List<BaseDesign>>
 }

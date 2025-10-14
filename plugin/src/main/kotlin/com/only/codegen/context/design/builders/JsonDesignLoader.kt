@@ -121,11 +121,14 @@ class JsonDesignLoader : DesignContextBuilder {
         val aggregate = jsonObj.getString("aggregate")
         val desc = jsonObj.getString("desc") ?: ""
 
+        // 解析 aggregates 数组 (多聚合支持)
+        val aggregates = jsonObj.getJSONArray("aggregates")?.map { it.toString() }
+
         // 解析 metadata 字段
         val metadata = mutableMapOf<String, Any?>()
         jsonObj.keys.forEach { key ->
             when (key) {
-                "name", "aggregate", "desc" -> {} // 跳过基础字段
+                "name", "aggregate", "aggregates", "desc" -> {} // 跳过基础字段
                 "metadata" -> {
                     // 如果有 metadata 对象,合并到 map
                     val metadataObj = jsonObj.getJSONObject(key)
@@ -144,6 +147,7 @@ class JsonDesignLoader : DesignContextBuilder {
             type = type,
             name = name,
             aggregate = aggregate,
+            aggregates = aggregates,
             desc = desc,
             metadata = metadata
         )

@@ -18,16 +18,6 @@ interface AnnotationContext : BaseContext {
      * value: AggregateInfo（包含聚合根、实体、值对象等）
      */
     val aggregateMap: Map<String, AggregateInfo>
-
-    /**
-     * 源代码根目录（用于 KSP 扫描）
-     */
-    val sourceRoots: List<String>
-
-    /**
-     * 扫描的包路径（可选过滤）
-     */
-    val scanPackages: List<String>
 }
 
 /**

@@ -54,16 +54,26 @@ class CommandGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "Comment", design.desc)
             resultContext.putContext(tag, "CommentEscaped", design.desc.replace(Regex("\\r\\n|[\\r\\n]"), " "))
 
-            // 聚合信息
+            // 主聚合信息 (单聚合场景)
             if (design.aggregate != null) {
                 resultContext.putContext(tag, "Aggregate", design.aggregate)
 
-                // 如果有聚合元数据,提供更多信息
-                design.aggregateMetadata?.let { aggMeta ->
+                // 主聚合元数据 (自动提供)
+                design.primaryAggregateMetadata?.let { aggMeta ->
                     resultContext.putContext(tag, "AggregateRoot", aggMeta.aggregateRoot.name)
                     resultContext.putContext(tag, "IdType", aggMeta.idType ?: "String")
+                    resultContext["aggregateRootFullName"] = aggMeta.aggregateRoot.fullName
+                    resultContext["aggregatePackage"] = aggMeta.packageName
+                    resultContext["entities"] = aggMeta.entities  // 聚合内所有实体
                 }
             }
+
+            // 所有关联聚合信息 (多聚合场景)
+            resultContext["aggregates"] = design.aggregates
+            resultContext["aggregateMetadataList"] = design.aggregateMetadataList
+
+            // 是否跨聚合
+            resultContext["crossAggregate"] = design.aggregates.size > 1
         }
 
         return resultContext

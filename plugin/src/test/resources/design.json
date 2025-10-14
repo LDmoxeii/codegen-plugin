@@ -1,0 +1,185 @@
+{
+  "cmd": [
+    {
+      "package": "category",
+      "name": "CreateCategory",
+      "aggregates": [
+        "category"
+      ],
+      "desc": "创建分类命令",
+      "requestFields": [
+        {
+          "name": "name",
+          "type": "String",
+          "isRequired": true,
+          "desc": "分类名称"
+        },
+        {
+          "name": "parentId",
+          "type": "Long",
+          "isRequired": false,
+          "desc": "父分类ID"
+        }
+      ],
+      "responseFields": [
+        {
+          "name": "id",
+          "type": "Long",
+          "desc": "分类ID"
+        }
+      ]
+    },
+    {
+      "package": "category",
+      "name": "UpdateCategory",
+      "aggregates": [
+        "category"
+      ],
+      "desc": "更新分类命令",
+      "requestFields": [
+        {
+          "name": "id",
+          "type": "Long",
+          "desc": "分类ID"
+        },
+        {
+          "name": "name",
+          "type": "String",
+          "desc": "新名称"
+        }
+      ]
+    }
+  ],
+  "qry": [
+    {
+      "package": "category",
+      "name": "GetCategoryTree",
+      "aggregates": [
+        "category"
+      ],
+      "desc": "获取分类树查询",
+      "requestFields": [
+        {
+          "name": "rootId",
+          "type": "Long",
+          "isRequired": false,
+          "desc": "根节点ID"
+        }
+      ],
+      "responseFields": [
+        {
+          "name": "tree",
+          "type": "List<CategoryTreeNode>",
+          "desc": "分类树"
+        }
+      ]
+    },
+    {
+      "package": "product",
+      "name": "SearchProducts",
+      "aggregates": [
+        "product",
+        "category",
+        "brand"
+      ],
+      "desc": "跨聚合查询商品",
+      "requestFields": [
+        {
+          "name": "keyword",
+          "type": "String",
+          "isRequired": true,
+          "desc": "搜索关键词"
+        },
+        {
+          "name": "categoryId",
+          "type": "Long",
+          "isRequired": false,
+          "desc": "分类ID"
+        }
+      ]
+    }
+  ],
+  "saga": [
+    {
+      "package": "order",
+      "name": "CreateOrderSaga",
+      "aggregates": ["order"],
+      "desc": "创建订单长事务",
+      "steps": [
+        "检查库存",
+        "扣减积分",
+        "创建订单",
+        "扣减库存"
+      ]
+    }
+  ],
+  "cli": [
+    {
+      "package": "payment",
+      "name": "AlipayClient",
+      "desc": "支付宝防腐层客户端",
+      "targetSystem": "Alipay",
+      "timeout": 5000
+    }
+  ],
+  "ie": [
+    {
+      "name": "order.OrderCreatedEvent",
+      "aggregate": "order",
+      "desc": "订单创建集成事件",
+      "mqTopic": "order.created",
+      "mqConsumer": "order-consumer-group",
+      "internal": false,
+      "fields": [
+        {
+          "name": "orderId",
+          "type": "Long"
+        },
+        {
+          "name": "userId",
+          "type": "Long"
+        },
+        {
+          "name": "totalAmount",
+          "type": "BigDecimal"
+        }
+      ]
+    }
+  ],
+  "de": [
+    {
+      "name": "category.CategoryCreatedEvent",
+      "aggregate": "category",
+      "entity": "Category",
+      "desc": "分类创建领域事件",
+      "persist": true,
+      "fields": [
+        {
+          "name": "categoryId",
+          "type": "Long"
+        },
+        {
+          "name": "name",
+          "type": "String"
+        }
+      ]
+    }
+  ],
+  "svc": [
+    {
+      "name": "category.CategoryTreeService",
+      "aggregate": "category",
+      "desc": "分类树领域服务",
+      "methods": [
+        {
+          "name": "buildTree",
+          "desc": "构建分类树"
+        },
+        {
+          "name": "flattenTree",
+          "desc": "扁平化分类树"
+        }
+      ]
+    }
+  ]
+}

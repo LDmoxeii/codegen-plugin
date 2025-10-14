@@ -91,7 +91,7 @@ class AnnotationProcessor(
             val identityType = resolveIdentityType(classDecl)
 
             val element = ElementMetadata(
-                className = classDecl.simpleName.asString(),
+                className = resolveClassName(classDecl),
                 qualifiedName = classDecl.qualifiedName?.asString() ?: "",
                 packageName = classDecl.packageName.asString(),
                 type = type,
@@ -228,6 +228,33 @@ class AnnotationProcessor(
                 "factory=${factory?.className}, " +
                 "domainEvents=${domainEvents.size})")
         }
+    }
+
+    /**
+     * 解析类名（处理嵌套类）
+     *
+     * 对于嵌套类，返回相对于包的完整路径，例如：
+     * - 普通类: "Category"
+     * - 嵌套类: "CategoryFactory.Payload"
+     */
+    private fun resolveClassName(classDecl: KSClassDeclaration): String {
+        val qualifiedName = classDecl.qualifiedName?.asString() ?: return classDecl.simpleName.asString()
+        val packageName = classDecl.packageName.asString()
+
+        // 如果没有包名，直接返回简单名
+        if (packageName.isEmpty()) {
+            return classDecl.simpleName.asString()
+        }
+
+        // 去掉包名前缀，得到类的相对路径
+        // 例如: "com.example.CategoryFactory.Payload" - "com.example" = "CategoryFactory.Payload"
+        val relativeClassName = if (qualifiedName.startsWith("$packageName.")) {
+            qualifiedName.substring(packageName.length + 1)
+        } else {
+            classDecl.simpleName.asString()
+        }
+
+        return relativeClassName
     }
 
     private fun resolveIdentityType(classDecl: KSClassDeclaration): String {

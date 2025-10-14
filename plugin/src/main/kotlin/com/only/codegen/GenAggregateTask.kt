@@ -15,14 +15,6 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
     @Internal
     override val aggregateMap: MutableMap<String, AggregateInfo> = mutableMapOf()
 
-    @get:Internal
-    override val sourceRoots: List<String>
-        get() = extension.get().annotation.sourceRoots.get()
-
-    @get:Internal
-    override val scanPackages: List<String>
-        get() = extension.get().annotation.scanPackages.get()
-
     @TaskAction
     override fun generate() {
         renderFileSwitch = false
@@ -51,38 +43,9 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
     }
 
     private fun resolveMetadataPath(): File {
-        val configuredPath = extension.get().annotation.metadataPath.orNull
-        if (!configuredPath.isNullOrBlank()) {
-            return File(configuredPath)
-        }
-
-        val ext = extension.get()
-        if (ext.multiModule.get()) {
-            val domainModuleName = "${projectName.get()}${ext.moduleNameSuffix4Domain.get()}"
-            val domainModulePath = File(projectDir.get(), domainModuleName)
-
+            val domainModulePath = File(getString("domainModulePath"))
             val domainKspPath = File(domainModulePath, "build/generated/ksp/main/resources/metadata")
-
-            if (domainKspPath.exists()) {
-                return domainKspPath
-            }
-
-            val projectRoot = File(projectDir.get())
-            val subModules = projectRoot.listFiles { file ->
-                file.isDirectory && file.name.startsWith(projectName.get())
-            }?.toList() ?: emptyList()
-
-            for (subModule in subModules) {
-                val kspPath = File(subModule, "build/generated/ksp/main/resources/metadata")
-                if (kspPath.exists()) {
-                    return kspPath
-                }
-            }
-
             return domainKspPath
-        }
-
-        return File(projectDir.get(), "build/generated/ksp/main/resources/metadata")
     }
 
     private fun buildGenerationContext(metadataPath: String): AnnotationContext {
