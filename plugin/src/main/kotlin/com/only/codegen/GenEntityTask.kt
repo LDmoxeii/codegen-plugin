@@ -8,6 +8,7 @@ import com.only.codegen.misc.resolvePackageDirectory
 import com.only.codegen.template.TemplateNode
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.util.regex.Pattern
 
 /**
  * 生成实体类任务
@@ -196,22 +197,30 @@ open class GenEntityTask : GenArchTask(), MutableEntityContext {
 
             val tableContext = generator.buildContext(table, context)
 
-            val templateNodes = listOf(generator.getDefaultTemplateNode()) + context.templateNodeMap.getOrDefault(generator.tag, emptyList())
+            val templateNodes = listOf(generator.getDefaultTemplateNode()) + context.templateNodeMap.getOrDefault(
+                generator.tag,
+                emptyList()
+            )
 
-            templateNodes.forEach { templateNode ->
-                val pathNode = templateNode.deepCopy().resolve(tableContext)
-                forceRender(
-                    pathNode,
-                    resolvePackageDirectory(
-                        tableContext["modulePath"].toString(),
-                        concatPackage(
-                            getString("basePackage"),
-                            tableContext["templatePackage"].toString(),
-                            tableContext["package"].toString()
+            templateNodes
+                .filter { templateNode ->
+                    templateNode.pattern.isBlank() || Pattern.compile(templateNode.pattern).asPredicate()
+                        .test(generator.generatorName(table, context))
+                }
+                .forEach { templateNode ->
+                    val pathNode = templateNode.deepCopy().resolve(tableContext)
+                    forceRender(
+                        pathNode,
+                        resolvePackageDirectory(
+                            tableContext["modulePath"].toString(),
+                            concatPackage(
+                                getString("basePackage"),
+                                tableContext["templatePackage"].toString(),
+                                tableContext["package"].toString()
+                            )
                         )
                     )
-                )
-            }
+                }
             generator.onGenerated(table, context)
         }
     }

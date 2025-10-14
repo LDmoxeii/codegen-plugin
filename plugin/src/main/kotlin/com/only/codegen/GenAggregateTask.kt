@@ -8,6 +8,7 @@ import com.only.codegen.misc.resolvePackageDirectory
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File
+import java.util.regex.Pattern
 
 open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
 
@@ -131,19 +132,24 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
             val templateNodes = context.templateNodeMap
                 .getOrDefault(generator.tag, listOf(generator.getDefaultTemplateNode()))
 
-            templateNodes.forEach { templateNode ->
-                val pathNode = templateNode.deepCopy().resolve(aggregateContext)
-                forceRender(
-                    pathNode,
-                    resolvePackageDirectory(
-                        aggregateContext["modulePath"].toString(),
-                        concatPackage(
-                            getString("basePackage"),
-                            aggregateContext["templatePackage"].toString()
+            templateNodes
+                .filter { templateNode ->
+                    templateNode.pattern.isBlank() || Pattern.compile(templateNode.pattern).asPredicate()
+                        .test(generator.generatorName(aggregateInfo, context))
+                }
+                .forEach { templateNode ->
+                    val pathNode = templateNode.deepCopy().resolve(aggregateContext)
+                    forceRender(
+                        pathNode,
+                        resolvePackageDirectory(
+                            aggregateContext["modulePath"].toString(),
+                            concatPackage(
+                                getString("basePackage"),
+                                aggregateContext["templatePackage"].toString()
+                            )
                         )
                     )
-                )
-            }
+                }
 
             generator.onGenerated(aggregateInfo, context)
         }
