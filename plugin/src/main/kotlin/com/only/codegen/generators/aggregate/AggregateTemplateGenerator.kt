@@ -1,7 +1,7 @@
 package com.only.codegen.generators.aggregate
 
 import com.only.codegen.context.aggregate.AggregateInfo
-import com.only.codegen.context.aggregate.AnnotationContext
+import com.only.codegen.context.aggregate.`AggregateContext.kt`
 import com.only.codegen.template.TemplateNode
 
 interface AggregateTemplateGenerator {

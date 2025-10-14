@@ -1,6 +1,8 @@
 package com.only.codegen
 
 import com.only.codegen.context.aggregate.*
+import com.only.codegen.context.aggregate.builders.KspMetadataContextBuilder
+import com.only.codegen.context.aggregate.models.AggregateInfo
 import com.only.codegen.generators.aggregate.AggregateTemplateGenerator
 import com.only.codegen.generators.aggregate.RepositoryGenerator
 import com.only.codegen.misc.concatPackage
@@ -10,7 +12,7 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.regex.Pattern
 
-open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
+open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
     @Internal
     override val aggregateMap: MutableMap<String, AggregateInfo> = mutableMapOf()
@@ -27,18 +29,15 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
 
         val metadataPath = resolveMetadataPath()
         if (!metadataPath.exists()) {
-            logger.warn("KSP metadata path not found: ${metadataPath.absolutePath}")
             return
         }
 
         val context = buildGenerationContext(metadataPath.absolutePath)
 
         if (context.aggregateMap.isEmpty()) {
-            logger.warn("No aggregates found in metadata")
             return
         }
 
-        logger.lifecycle("Found ${context.aggregateMap.size} aggregates, starting generation...")
         generateFiles(context)
     }
 
@@ -48,9 +47,7 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
             return domainKspPath
     }
 
-    private fun buildGenerationContext(metadataPath: String): AnnotationContext {
-        logger.lifecycle("Building annotation context from: $metadataPath")
-
+    private fun buildGenerationContext(metadataPath: String): AggregateContext {
         val contextBuilders = listOf(
             KspMetadataContextBuilder(metadataPath),  // order=10 - 读取并转换 KSP 元数据
             TypeMappingBuilder(),                     // order=20 - 收集类型映射
@@ -59,15 +56,13 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
         contextBuilders
             .sortedBy { it.order }
             .forEach { builder ->
-                logger.lifecycle("Running builder: ${builder.javaClass.simpleName} (order=${builder.order})")
                 builder.build(this)
             }
 
-        logger.lifecycle("Context built: ${aggregateMap.size} aggregates")
         return this
     }
 
-    private fun generateFiles(context: AnnotationContext) {
+    private fun generateFiles(context: AggregateContext) {
         val generators = listOf(
             RepositoryGenerator(),  // order=10 - Repository 接口
             // ServiceGenerator(),   // order=20 - Service 类（已排除）
@@ -83,7 +78,7 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
 
     private fun generateForAggregates(
         generator: AggregateTemplateGenerator,
-        context: AnnotationContext,
+        context: AggregateContext,
     ) {
         val aggregates = context.aggregateMap.values.toMutableList()
 

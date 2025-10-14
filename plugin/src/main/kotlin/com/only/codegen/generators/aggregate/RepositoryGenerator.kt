@@ -1,7 +1,7 @@
 package com.only.codegen.generators.aggregate
 
 import com.only.codegen.context.aggregate.AggregateInfo
-import com.only.codegen.context.aggregate.AnnotationContext
+import com.only.codegen.context.aggregate.`AggregateContext.kt`
 import com.only.codegen.manager.RepositoryImportManager
 import com.only.codegen.misc.refPackage
 import com.only.codegen.pebble.PebbleTemplateRenderer.renderString

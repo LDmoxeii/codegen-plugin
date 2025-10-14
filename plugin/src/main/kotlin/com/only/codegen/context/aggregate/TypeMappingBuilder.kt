@@ -1,5 +1,6 @@
 package com.only.codegen.context.aggregate
 
+import com.only.codegen.context.aggregate.builders.AggregateContextBuilder
 import com.only.codegen.ksp.models.ElementMetadata
 
 /**
@@ -14,7 +15,7 @@ class TypeMappingBuilder : AggregateContextBuilder {
 
     override val order: Int = 20
 
-    override fun build(context: MutableAnnotationContext) {
+    override fun build(context: MutableAggregateContext) {
         context.aggregateMap.values.forEach { aggregateInfo ->
             // 1. 注册聚合根类型
             registerElement(aggregateInfo.aggregateRoot, context)
@@ -67,7 +68,7 @@ class TypeMappingBuilder : AggregateContextBuilder {
     /**
      * 注册元素类型到 typeMapping
      */
-    private fun registerElement(element: ElementMetadata, context: MutableAnnotationContext) {
+    private fun registerElement(element: ElementMetadata, context: MutableAggregateContext) {
         context.typeMapping[element.className] = element.qualifiedName
     }
 
@@ -77,7 +78,7 @@ class TypeMappingBuilder : AggregateContextBuilder {
     private fun recordIdentityType(
         identityType: String,
         rootElement: ElementMetadata,
-        context: MutableAnnotationContext,
+        context: MutableAggregateContext,
     ) {
         when {
             // 复合主键 (User.PK)

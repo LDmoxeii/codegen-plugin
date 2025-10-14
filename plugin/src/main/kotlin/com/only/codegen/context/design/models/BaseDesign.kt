@@ -1,0 +1,16 @@
+package com.only.codegen.context.design.models
+
+/**
+ * 统一设计接口 (所有设计类的基类)
+ */
+interface BaseDesign {
+    val type: String               // cmd/qry/saga/cli/ie/de/svc
+    val name: String               // 设计类名 (如 CreateCategoryCmd)
+    val fullName: String           // 完整相对路径 (如 category.CreateCategoryCmd)
+    val packagePath: String        // 相对包路径 (如 category)
+    val aggregate: String?         // 主聚合 (第一个聚合,可能为 null)
+    val aggregates: List<String>   // 所有关联聚合
+    val desc: String               // 描述
+    val primaryAggregateMetadata: AggregateInfo?      // 主聚合元信息
+    val aggregateMetadataList: List<AggregateInfo>    // 所有聚合元信息
+}

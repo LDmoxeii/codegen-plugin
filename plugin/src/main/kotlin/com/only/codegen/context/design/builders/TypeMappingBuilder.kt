@@ -1,55 +1,94 @@
 package com.only.codegen.context.design.builders
 
-import com.only.codegen.context.design.DesignContextBuilder
 import com.only.codegen.context.design.MutableDesignContext
-import org.gradle.api.logging.Logging
+import com.only.codegen.ksp.models.ElementMetadata
 
-/**
- * 类型映射构建器
- *
- * Order: 18
- * 职责: 基于 KSP 加载的聚合元数据,构建全局类型映射 typeMapping
- *
- * 依赖: 依赖 KspMetadataLoader (order=15) 已填充 aggregateMetadataMap
- *
- * 映射内容:
- * - 聚合根 (AggregateRoot)
- * - 实体 (Entity)
- * - 值对象 (ValueObject)
- * - 枚举 (Enum)
- * - 仓储 (Repository)
- * - 工厂 (Factory, FactoryPayload)
- * - 规约 (Specification)
- * - 领域事件 (DomainEvent)
- */
 class TypeMappingBuilder : DesignContextBuilder {
-
-    private val logger = Logging.getLogger(TypeMappingBuilder::class.java)
 
     override val order: Int = 18
 
     override fun build(context: MutableDesignContext) {
-        if (context.aggregateMetadataMap.isEmpty()) {
-            logger.warn("No aggregate metadata found, skipping type mapping")
-            return
-        }
+        context.aggregateMap.values.forEach { aggregateInfo ->
+            registerElement(aggregateInfo.aggregateRoot, context)
 
-        var totalMappings = 0
+            recordIdentityType(aggregateInfo.identityType, aggregateInfo.aggregateRoot, context)
 
-        context.aggregateMetadataMap.values.forEach { aggregateMetadata ->
-            // 聚合根类型映射
-            context.typeMapping[aggregateMetadata.aggregateRoot.name] = aggregateMetadata.aggregateRoot.fullName
-            totalMappings++
-
-            // 实体类型映射
-            aggregateMetadata.entities.forEach { entity ->
-                context.typeMapping[entity.name] = entity.fullName
-                totalMappings++
+            aggregateInfo.entities.forEach { entity ->
+                registerElement(entity, context)
             }
 
-            logger.debug("Built type mappings for aggregate: ${aggregateMetadata.name}")
-        }
+            aggregateInfo.valueObjects.forEach { valueObject ->
+                registerElement(valueObject, context)
+            }
 
-        logger.lifecycle("Built $totalMappings type mappings from KSP metadata")
+            aggregateInfo.enums.forEach { enum ->
+                registerElement(enum, context)
+            }
+
+            aggregateInfo.repository?.let { repo ->
+                registerElement(repo, context)
+            }
+
+            aggregateInfo.factory?.let { factory ->
+                registerElement(factory, context)
+            }
+
+            aggregateInfo.factoryPayload?.let { payload ->
+                registerElement(payload, context)
+            }
+
+            aggregateInfo.specification?.let { spec ->
+                registerElement(spec, context)
+            }
+
+            aggregateInfo.domainEvents.forEach { event ->
+                registerElement(event, context)
+            }
+        }
+    }
+
+    private fun registerElement(element: ElementMetadata, context: MutableDesignContext) {
+        context.typeMapping[element.className] = element.qualifiedName
+    }
+
+    private fun recordIdentityType(
+        identityType: String,
+        rootElement: ElementMetadata,
+        context: MutableDesignContext,
+    ) {
+        when {
+            // 复合主键 (User.PK)
+            identityType.contains(".") -> {
+                val idTypeName = identityType.substringAfter(".")  // "PK"
+                val fullIdType = "${rootElement.qualifiedName}.$idTypeName"
+                context.typeMapping[identityType] = fullIdType  // "User.PK" -> "com.example.User.PK"
+                context.typeMapping[idTypeName] = fullIdType     // "PK" -> "com.example.User.PK"
+            }
+
+            // 原始类型 (Long, String, Int, UUID)
+            identityType in listOf("Long", "String", "Int", "UUID") -> {
+                // 不需要记录到 typeMapping
+            }
+
+            // 自定义 ID 类型 (UserId)
+            else -> {
+                // 查找是否在 aggregateMap 中
+                val idElement = context.aggregateMap.values
+                    .flatMap { listOfNotNull(
+                        it.aggregateRoot,
+                        *it.entities.toTypedArray(),
+                        *it.valueObjects.toTypedArray()
+                    ) }
+                    .find { it.className == identityType }
+
+                if (idElement != null) {
+                    context.typeMapping[identityType] = idElement.qualifiedName
+                } else {
+                    // 假设在聚合根同一包下
+                    val assumedFullName = "${rootElement.packageName}.$identityType"
+                    context.typeMapping[identityType] = assumedFullName
+                }
+            }
+        }
     }
 }

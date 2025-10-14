@@ -38,10 +38,10 @@ class CodegenPlugin : Plugin<Project> {
             task.projectDir.set(project.projectDir.absolutePath)
         }
 
-//
-//        project.tasks.register("genDesign", GenDesignTask::class.java) { task ->
-//            task.description = "Generate design elements (commands, queries, events)"
-//            task.extension.set(extension)
-//        }
+
+        project.tasks.register("genDesign", GenDesignTask::class.java) { task ->
+            task.description = "Generate design elements (commands, queries, events)"
+            task.extension.set(extension)
+        }
     }
 }

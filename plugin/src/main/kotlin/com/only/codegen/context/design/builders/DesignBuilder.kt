@@ -2,22 +2,12 @@ package com.only.codegen.context.design.builders
 
 import com.alibaba.fastjson.JSON
 import com.alibaba.fastjson.JSONObject
-import com.only.codegen.context.design.DesignContextBuilder
-import com.only.codegen.context.design.DesignElement
 import com.only.codegen.context.design.MutableDesignContext
-import org.gradle.api.logging.Logging
+import com.only.codegen.context.design.models.DesignElement
 import java.io.File
 import java.nio.charset.Charset
 
-/**
- * JSON 设计文件加载器
- *
- * Order: 10 (最先执行)
- * 职责: 解析 JSON 设计文件,填充 designElementMap
- */
-class JsonDesignLoader : DesignContextBuilder {
-
-    private val logger = Logging.getLogger(JsonDesignLoader::class.java)
+class DesignBuilder : DesignContextBuilder {
 
     override val order: Int = 10
 
@@ -25,25 +15,18 @@ class JsonDesignLoader : DesignContextBuilder {
         val designFiles = getDesignFiles(context)
 
         if (designFiles.isEmpty()) {
-            logger.warn("No design files configured")
             return
         }
 
         designFiles.forEach { file ->
             if (!file.exists()) {
-                logger.warn("Design file not found: ${file.absolutePath}")
                 return@forEach
             }
-
-            logger.lifecycle("Loading design file: ${file.absolutePath}")
             loadDesignFile(file, context)
         }
-
-        logger.lifecycle("Loaded ${context.designElementMap.values.sumOf { it.size }} design elements")
     }
 
     private fun getDesignFiles(context: MutableDesignContext): List<File> {
-        // 从配置中获取设计文件路径
         val designFilesConfig = context.getString("designFiles", "")
 
         if (designFilesConfig.isBlank()) {
@@ -57,15 +40,11 @@ class JsonDesignLoader : DesignContextBuilder {
     }
 
     private fun loadDesignFile(file: File, context: MutableDesignContext) {
-        try {
-            val encoding = context.getString("designEncoding", "UTF-8")
-            val content = file.readText(Charset.forName(encoding))
-            val jsonObj = JSON.parseObject(content)
+        val encoding = context.getString("designEncoding", "UTF-8")
+        val content = file.readText(Charset.forName(encoding))
+        val jsonObj = JSON.parseObject(content)
 
-            parseJsonDesign(jsonObj, context)
-        } catch (e: Exception) {
-            logger.error("Failed to load design file: ${file.absolutePath}", e)
-        }
+        parseJsonDesign(jsonObj, context)
     }
 
     private fun parseJsonDesign(jsonObj: JSONObject, context: MutableDesignContext) {
@@ -117,18 +96,16 @@ class JsonDesignLoader : DesignContextBuilder {
     }
 
     private fun parseDesignElement(type: String, jsonObj: JSONObject): DesignElement {
+        val `package` = jsonObj.getString("package") ?: ""
         val name = jsonObj.getString("name") ?: ""
-        val aggregate = jsonObj.getString("aggregate")
         val desc = jsonObj.getString("desc") ?: ""
-
-        // 解析 aggregates 数组 (多聚合支持)
         val aggregates = jsonObj.getJSONArray("aggregates")?.map { it.toString() }
 
-        // 解析 metadata 字段
         val metadata = mutableMapOf<String, Any?>()
         jsonObj.keys.forEach { key ->
             when (key) {
-                "name", "aggregate", "aggregates", "desc" -> {} // 跳过基础字段
+                "package", "name", "aggregate", "aggregates", "desc" -> {} // 跳过基础字段
+
                 "metadata" -> {
                     // 如果有 metadata 对象,合并到 map
                     val metadataObj = jsonObj.getJSONObject(key)
@@ -136,6 +113,7 @@ class JsonDesignLoader : DesignContextBuilder {
                         metadata[metaKey] = metadataObj[metaKey]
                     }
                 }
+
                 else -> {
                     // 其他字段直接作为 metadata
                     metadata[key] = jsonObj[key]
@@ -145,8 +123,8 @@ class JsonDesignLoader : DesignContextBuilder {
 
         return DesignElement(
             type = type,
+            `package` = `package`,
             name = name,
-            aggregate = aggregate,
             aggregates = aggregates,
             desc = desc,
             metadata = metadata

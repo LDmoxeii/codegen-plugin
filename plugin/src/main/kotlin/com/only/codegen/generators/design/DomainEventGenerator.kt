@@ -66,7 +66,7 @@ class DomainEventGenerator : DesignTemplateGenerator {
             tag = this@DomainEventGenerator.tag
             name = "{{ Name }}.kt"
             format = "resource"
-            data = "templates/domain/event/DomainEvent.peb"
+            data = "templates/DomainEvent.kt.peb"
             conflict = "skip"
         }
     }

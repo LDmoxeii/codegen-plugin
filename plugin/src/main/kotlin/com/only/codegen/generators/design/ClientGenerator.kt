@@ -76,7 +76,7 @@ class ClientGenerator : DesignTemplateGenerator {
             tag = this@ClientGenerator.tag
             name = "{{ Name }}.kt"
             format = "resource"
-            data = "templates/domain/client/Client.peb"
+            data = "templates/client.kt.peb"
             conflict = "skip"
         }
     }
