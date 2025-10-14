@@ -1,7 +1,10 @@
-package com.only.codegen.ksp.models
+package com.only.codegen.context.design.models
 
 /**
- * 聚合元数据（聚合级别）
+ * KSP 聚合元数据（设计上下文独立副本）
+ *
+ * 注意：此类是 ksp-processor 模块的 AggregateMetadata 的独立副本
+ * 目的是保持 plugin 模块的独立性，避免跨模块引用
  *
  * 以聚合根为核心，包含聚合内的所有元素：
  * - 1个聚合根（必须）
@@ -14,7 +17,7 @@ package com.only.codegen.ksp.models
  * - 0-1个规约
  * - 0-N个领域事件
  */
-data class AggregateMetadata(
+data class KspAggregateMetadata(
     /**
      * 聚合名称（来自 @Aggregate(aggregate = "...") 属性）
      */
@@ -23,47 +26,47 @@ data class AggregateMetadata(
     /**
      * 聚合根（必须存在，type=entity 且 root=true）
      */
-    val aggregateRoot: ElementMetadata,
+    val aggregateRoot: KspElementMetadata,
 
     /**
      * 聚合内的实体列表（type=entity 且 root=false）
      */
-    val entities: List<ElementMetadata> = emptyList(),
+    val entities: List<KspElementMetadata> = emptyList(),
 
     /**
      * 聚合内的值对象列表（type=value-object）
      */
-    val valueObjects: List<ElementMetadata> = emptyList(),
+    val valueObjects: List<KspElementMetadata> = emptyList(),
 
     /**
      * 聚合内的枚举列表（type=enum）
      */
-    val enums: List<ElementMetadata> = emptyList(),
+    val enums: List<KspElementMetadata> = emptyList(),
 
     /**
      * 聚合的仓储（type=repository，最多1个）
      */
-    val repository: ElementMetadata? = null,
+    val repository: KspElementMetadata? = null,
 
     /**
      * 聚合的工厂（type=factory，最多1个）
      */
-    val factory: ElementMetadata? = null,
+    val factory: KspElementMetadata? = null,
 
     /**
      * 工厂负载（type=factory-payload，最多1个）
      */
-    val factoryPayload: ElementMetadata? = null,
+    val factoryPayload: KspElementMetadata? = null,
 
     /**
      * 聚合的规约（type=specification，最多1个）
      */
-    val specification: ElementMetadata? = null,
+    val specification: KspElementMetadata? = null,
 
     /**
      * 聚合的领域事件列表（type=domain-event）
      */
-    val domainEvents: List<ElementMetadata> = emptyList()
+    val domainEvents: List<KspElementMetadata> = emptyList()
 ) {
     /**
      * 获取聚合根的 ID 类型

@@ -1,0 +1,26 @@
+package {{ basePackage }}{{ templatePackage }}{{ package }}
+
+import com.only4.cap4k.ddd.core.application.query.ListQuery
+import org.springframework.stereotype.Service
+
+/**
+{% for line in commentLines %}
+ * {{ line }}
+{% endfor %}
+ *
+ * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
+ * @author cap4k-ddd-codegen
+ * @date {{ date }}
+ */
+@Service
+class {{ Query }}Handler(
+) : ListQuery<{{ Query }}.Request, {{ Query }}.Response> {
+
+    override fun exec(request: {{ Query }}.Request): List<{{ Query }}.Response> {
+
+        return listOf({{ Query }}.Response(
+
+        ))
+
+    }
+}

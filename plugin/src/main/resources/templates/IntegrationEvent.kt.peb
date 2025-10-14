@@ -1,0 +1,18 @@
+package {{ basePackage }}{{ templatePackage }}{{ package }}
+
+import com.only4.cap4k.ddd.core.application.event.annotation.AutoRelease
+import com.only4.cap4k.ddd.core.application.event.annotation.IntegrationEvent
+
+/**
+{% for line in commentLines %}
+ * {{ line }}
+{% endfor %}
+ *
+ * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
+ * @author cap4k-ddd-codegen
+ * @date {{ date }}
+ */
+@IntegrationEvent(value = {{ MQ_TOPIC }}, subscriber = {{ MQ_CONSUMER }})
+class {{ IntegrationEvent }}(
+
+)

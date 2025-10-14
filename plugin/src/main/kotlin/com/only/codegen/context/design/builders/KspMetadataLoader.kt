@@ -1,17 +1,17 @@
 package com.only.codegen.context.design.builders
 
 import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.JSONArray
-import com.alibaba.fastjson.JSONObject
 import com.only.codegen.context.design.*
+import com.only.codegen.context.design.models.KspAggregateMetadata
 import org.gradle.api.logging.Logging
 import java.io.File
 
 /**
- * KSP 元数据加载器
+ * KSP 元数据加载器（重构版）
  *
  * Order: 15
- * 职责: 加载 KSP 生成的聚合/实体元数据 JSON
+ * 职责: 加载 KSP 生成的 aggregates.json（以聚合根为中心的层次结构）
+ * 转换为 DesignContext 所需的 AggregateMetadata 和 EntityMetadata
  */
 class KspMetadataLoader : DesignContextBuilder {
 
@@ -28,14 +28,11 @@ class KspMetadataLoader : DesignContextBuilder {
         }
 
         val aggregatesFile = File(kspMetadataDir, "aggregates.json")
-        val entitiesFile = File(kspMetadataDir, "entities.json")
 
         if (aggregatesFile.exists()) {
             loadAggregatesMetadata(aggregatesFile, context)
-        }
-
-        if (entitiesFile.exists()) {
-            loadEntitiesMetadata(entitiesFile, context)
+        } else {
+            logger.warn("KSP aggregates.json not found: ${aggregatesFile.absolutePath}")
         }
 
         logger.lifecycle("Loaded ${context.aggregateMetadataMap.size} aggregates, " +
@@ -46,100 +43,74 @@ class KspMetadataLoader : DesignContextBuilder {
         return context.getString("kspMetadataDir", "")
     }
 
+    /**
+     * 加载聚合元数据（以聚合为单位的层次结构）
+     */
     private fun loadAggregatesMetadata(file: File, context: MutableDesignContext) {
         try {
             val content = file.readText()
-            val jsonArray = JSON.parseArray(content)
+            val kspAggregates = JSON.parseArray(content, KspAggregateMetadata::class.java)
 
-            jsonArray.forEach { item ->
-                if (item is JSONObject) {
-                    val metadata = parseAggregateMetadata(item)
-                    context.aggregateMetadataMap[metadata.name] = metadata
+            kspAggregates.forEach { kspAggregate ->
+                // 转换聚合根为 EntityMetadata
+                val aggregateRootEntity = EntityMetadata(
+                    name = kspAggregate.aggregateRoot.className,
+                    fullName = kspAggregate.aggregateRoot.qualifiedName,
+                    packageName = kspAggregate.aggregateRoot.packageName,
+                    isAggregateRoot = true,
+                    idType = kspAggregate.aggregateRoot.identityType,
+                    fields = kspAggregate.aggregateRoot.fields.map { field ->
+                        FieldMetadata(
+                            name = field.name,
+                            type = field.type,
+                            nullable = field.isNullable
+                        )
+                    }
+                )
+
+                // 转换聚合内的实体
+                val entities = kspAggregate.entities.map { entity ->
+                    EntityMetadata(
+                        name = entity.className,
+                        fullName = entity.qualifiedName,
+                        packageName = entity.packageName,
+                        isAggregateRoot = false,
+                        idType = entity.identityType,
+                        fields = entity.fields.map { field ->
+                            FieldMetadata(
+                                name = field.name,
+                                type = field.type,
+                                nullable = field.isNullable
+                            )
+                        }
+                    )
                 }
+
+                // 构建 AggregateMetadata
+                val aggregateMetadata = AggregateMetadata(
+                    name = kspAggregate.aggregateName,
+                    fullName = kspAggregate.aggregateRoot.qualifiedName,
+                    packageName = kspAggregate.aggregateRoot.packageName,
+                    aggregateRoot = aggregateRootEntity,
+                    entities = entities,
+                    idType = kspAggregate.aggregateRoot.identityType
+                )
+
+                context.aggregateMetadataMap[kspAggregate.aggregateName] = aggregateMetadata
+
+                // 添加聚合根到 entityMetadataMap
+                context.entityMetadataMap[aggregateRootEntity.name] = aggregateRootEntity
+
+                // 添加聚合内的实体到 entityMetadataMap
+                entities.forEach { entity ->
+                    context.entityMetadataMap[entity.name] = entity
+                }
+
+                logger.info("Loaded aggregate: ${kspAggregate.aggregateName} " +
+                    "(root=${aggregateRootEntity.name}, entities=${entities.size})")
             }
         } catch (e: Exception) {
             logger.error("Failed to load aggregates metadata: ${file.absolutePath}", e)
         }
-    }
-
-    private fun loadEntitiesMetadata(file: File, context: MutableDesignContext) {
-        try {
-            val content = file.readText()
-            val jsonArray = JSON.parseArray(content)
-
-            jsonArray.forEach { item ->
-                if (item is JSONObject) {
-                    val metadata = parseEntityMetadata(item)
-                    context.entityMetadataMap[metadata.name] = metadata
-                }
-            }
-        } catch (e: Exception) {
-            logger.error("Failed to load entities metadata: ${file.absolutePath}", e)
-        }
-    }
-
-    private fun parseAggregateMetadata(jsonObj: JSONObject): AggregateMetadata {
-        val name = jsonObj.getString("name") ?: ""
-        val fullName = jsonObj.getString("fullName") ?: ""
-        val packageName = jsonObj.getString("packageName") ?: ""
-        val idType = jsonObj.getString("idType")
-
-        // 解析聚合根实体
-        val rootObj = jsonObj.getJSONObject("aggregateRoot")
-        val aggregateRoot = if (rootObj != null) {
-            parseEntityMetadata(rootObj)
-        } else {
-            EntityMetadata(
-                name = name,
-                fullName = fullName,
-                packageName = packageName,
-                isAggregateRoot = true,
-                idType = idType
-            )
-        }
-
-        // 解析包含的实体列表
-        val entitiesArray = jsonObj.getJSONArray("entities") ?: JSONArray()
-        val entities = entitiesArray.mapNotNull { item ->
-            if (item is JSONObject) parseEntityMetadata(item) else null
-        }
-
-        return AggregateMetadata(
-            name = name,
-            fullName = fullName,
-            packageName = packageName,
-            aggregateRoot = aggregateRoot,
-            entities = entities,
-            idType = idType
-        )
-    }
-
-    private fun parseEntityMetadata(jsonObj: JSONObject): EntityMetadata {
-        val name = jsonObj.getString("name") ?: ""
-        val fullName = jsonObj.getString("fullName") ?: ""
-        val packageName = jsonObj.getString("packageName") ?: ""
-        val isAggregateRoot = jsonObj.getBoolean("isAggregateRoot") ?: false
-        val idType = jsonObj.getString("idType")
-
-        // 解析字段列表
-        val fieldsArray = jsonObj.getJSONArray("fields") ?: JSONArray()
-        val fields = fieldsArray.mapNotNull { item ->
-            if (item is JSONObject) {
-                FieldMetadata(
-                    name = item.getString("name") ?: "",
-                    type = item.getString("type") ?: "",
-                    nullable = item.getBoolean("nullable") ?: false
-                )
-            } else null
-        }
-
-        return EntityMetadata(
-            name = name,
-            fullName = fullName,
-            packageName = packageName,
-            isAggregateRoot = isAggregateRoot,
-            idType = idType,
-            fields = fields
-        )
     }
 }

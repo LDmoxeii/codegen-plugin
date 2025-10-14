@@ -111,14 +111,14 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         generator: DesignTemplateGenerator,
         context: DesignContext
     ) {
-        val designs = getDesignsForGenerator(generator, context).toMutableList()
+        val designs = getDesignsForGenerator(generator, context)
+        var generatedCount = 0
+        var skippedCount = 0
 
-        while (designs.isNotEmpty()) {
-            val design = designs.first()
-
+        designs.forEach { design ->
             if (!generator.shouldGenerate(design, context)) {
-                designs.removeFirst()
-                continue
+                skippedCount++
+                return@forEach
             }
 
             val templateContext = generator.buildContext(design, context).toMutableMap()
@@ -134,10 +134,13 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                     val pathNode = templateNode.deepCopy().resolve(templateContext)
                     val parentPath = determineParentPath(templateContext, context)
                     forceRender(pathNode, parentPath)
+                    generatedCount++
                 }
 
             generator.onGenerated(design, context)
         }
+
+        logger.lifecycle("Generated ${generatedCount} ${generator.tag} files (skipped: $skippedCount)")
     }
 
     /**

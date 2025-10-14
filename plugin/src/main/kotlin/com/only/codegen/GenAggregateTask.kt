@@ -13,12 +13,6 @@ import java.util.regex.Pattern
 open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
 
     @Internal
-    override val classMap: MutableMap<String, ClassInfo> = mutableMapOf()
-
-    @Internal
-    override val annotationMap: MutableMap<String, MutableList<AnnotationInfo>> = mutableMapOf()
-
-    @Internal
     override val aggregateMap: MutableMap<String, AggregateInfo> = mutableMapOf()
 
     @get:Internal
@@ -41,15 +35,18 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
 
         val metadataPath = resolveMetadataPath()
         if (!metadataPath.exists()) {
+            logger.warn("KSP metadata path not found: ${metadataPath.absolutePath}")
             return
         }
 
         val context = buildGenerationContext(metadataPath.absolutePath)
 
         if (context.aggregateMap.isEmpty()) {
+            logger.warn("No aggregates found in metadata")
             return
         }
 
+        logger.lifecycle("Found ${context.aggregateMap.size} aggregates, starting generation...")
         generateFiles(context)
     }
 
@@ -89,18 +86,21 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
     }
 
     private fun buildGenerationContext(metadataPath: String): AnnotationContext {
+        logger.lifecycle("Building annotation context from: $metadataPath")
+
         val contextBuilders = listOf(
-            KspMetadataContextBuilder(metadataPath),  // order=10 - 读取元数据
-            AggregateInfoBuilder(),                   // order=20 - 聚合信息
-            IdentityTypeBuilder(),                    // order=30 - ID 类型映射
+            KspMetadataContextBuilder(metadataPath),  // order=10 - 读取并转换 KSP 元数据
+            TypeMappingBuilder(),                     // order=20 - 收集类型映射
         )
 
         contextBuilders
             .sortedBy { it.order }
             .forEach { builder ->
+                logger.lifecycle("Running builder: ${builder.javaClass.simpleName} (order=${builder.order})")
                 builder.build(this)
             }
 
+        logger.lifecycle("Context built: ${aggregateMap.size} aggregates")
         return this
     }
 
@@ -113,6 +113,7 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
 
         generators.sortedBy { it.order }
             .forEach { generator ->
+                logger.lifecycle("Generating ${generator.tag} files...")
                 generateForAggregates(generator, context)
             }
     }

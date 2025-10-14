@@ -1,30 +1,19 @@
 package com.only.codegen.context.aggregate
 
 import com.only.codegen.context.BaseContext
+import com.only.codegen.ksp.models.AggregateMetadata
+import com.only.codegen.ksp.models.ElementMetadata
 
 /**
  * 基于注解的代码生成上下文（只读接口）
  *
  * 与 EntityContext 完全独立，但共享 BaseContext 的基础属性
+ * 直接使用 KSP 的 AggregateMetadata 结构，避免冗余转换
  */
 interface AnnotationContext : BaseContext {
 
     /**
-     * 类信息映射
-     * key: 类的全限定名（FQN）
-     * value: ClassInfo（包含包名、类名、注解、字段等信息）
-     */
-    val classMap: Map<String, ClassInfo>
-
-    /**
-     * 注解信息映射
-     * key: 注解的简单名称（如 "Aggregate", "Entity"）
-     * value: 包含该注解的所有类的信息列表
-     */
-    val annotationMap: Map<String, List<AnnotationInfo>>
-
-    /**
-     * 聚合信息映射
+     * 聚合信息映射（直接映射 KSP 的 AggregateMetadata）
      * key: 聚合名称（如 "User", "Order"）
      * value: AggregateInfo（包含聚合根、实体、值对象等）
      */
@@ -44,61 +33,68 @@ interface AnnotationContext : BaseContext {
 /**
  * 可变的注解上下文（用于构建阶段）
  *
- * Builder 模式：各个 AnnotationContextBuilder 会修改此上下文
+ * Builder 模式：各个 AggregateContextBuilder 会修改此上下文
  */
 interface MutableAnnotationContext : AnnotationContext {
-    override val classMap: MutableMap<String, ClassInfo>
-    override val annotationMap: MutableMap<String, MutableList<AnnotationInfo>>
     override val aggregateMap: MutableMap<String, AggregateInfo>
 }
 
 /**
- * 类信息（从 KSP 元数据构建）
- */
-data class ClassInfo(
-    val packageName: String,
-    val simpleName: String,
-    val fullName: String,
-    val filePath: String,
-    val annotations: List<AnnotationInfo>,
-    val fields: List<FieldInfo>,
-    val superClass: String?,
-    val interfaces: List<String>,
-    val isAggregateRoot: Boolean = false,
-    val isEntity: Boolean = false,
-    val isValueObject: Boolean = false,
-)
-
-/**
- * 注解信息
- */
-data class AnnotationInfo(
-    val name: String,                        // 注解名称（如 "Aggregate"）
-    val fullName: String,                    // 完整注解名
-    val attributes: Map<String, Any?>,       // 注解属性
-    val targetClass: String,                  // 注解所在的类
-)
-
-/**
- * 字段信息
- */
-data class FieldInfo(
-    val name: String,
-    val type: String,
-    val annotations: List<AnnotationInfo>,
-    val isId: Boolean = false,
-    val isNullable: Boolean = false,
-    val defaultValue: String? = null,
-)
-
-/**
- * 聚合信息
+ * 聚合信息（从 KSP 的 AggregateMetadata 转换而来）
  */
 data class AggregateInfo(
     val name: String,                        // 聚合名称
-    val aggregateRoot: ClassInfo,            // 聚合根实体
-    val entities: List<ClassInfo>,           // 聚合内的实体
-    val valueObjects: List<ClassInfo>,       // 聚合内的值对象
+    val aggregateRoot: ElementMetadata,      // 聚合根（直接使用 KSP 的 ElementMetadata）
+    val entities: List<ElementMetadata>,     // 聚合内的实体
+    val valueObjects: List<ElementMetadata>, // 聚合内的值对象
+    val enums: List<ElementMetadata>,        // 聚合内的枚举
+    val repository: ElementMetadata?,        // 仓储（可选）
+    val factory: ElementMetadata?,           // 工厂（可选）
+    val factoryPayload: ElementMetadata?,    // 工厂负载（可选）
+    val specification: ElementMetadata?,     // 规约（可选）
+    val domainEvents: List<ElementMetadata>, // 领域事件
     val identityType: String,                // 聚合根的 ID 类型
     val modulePath: String,                   // 所属模块路径
-)
+) {
+    companion object {
+        /**
+         * 从 KSP 的 AggregateMetadata 转换
+         */
+        fun fromKspMetadata(
+            metadata: AggregateMetadata,
+            modulePath: String
+        ): AggregateInfo {
+            return AggregateInfo(
+                name = metadata.aggregateName,
+                aggregateRoot = metadata.aggregateRoot,
+                entities = metadata.entities,
+                valueObjects = metadata.valueObjects,
+                enums = metadata.enums,
+                repository = metadata.repository,
+                factory = metadata.factory,
+                factoryPayload = metadata.factoryPayload,
+                specification = metadata.specification,
+                domainEvents = metadata.domainEvents,
+                identityType = resolveIdentityType(metadata.aggregateRoot),
+                modulePath = modulePath
+            )
+        }
+
+        /**
+         * 解析 ID 类型
+         */
+        private fun resolveIdentityType(root: ElementMetadata): String {
+            val idFields = root.fields.filter { it.isId }
+
+            return when {
+                idFields.isEmpty() -> "Long"
+                idFields.size == 1 -> {
+                    val fieldType = idFields.first().type
+                    // 简化类型名（去掉包名）
+                    fieldType.substringAfterLast('.')
+                }
+                else -> "${root.className}.PK"
+            }
+        }
+    }
+}

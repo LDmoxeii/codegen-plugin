@@ -10,7 +10,6 @@ import com.only4.cap4k.ddd.core.domain.event.annotation.DomainEvent
 {% endfor %}
  *
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
- * 警告：可以在本文件中添加自定义领域事件类型
  * @author cap4k-ddd-codegen
  * @date {{ date }}
  */

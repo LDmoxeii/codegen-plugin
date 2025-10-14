@@ -1,0 +1,22 @@
+package {{ basePackage }}{{ templatePackage }}{{ package }}
+
+import com.only4.cap4k.ddd.core.application.ListQueryParam
+
+/**
+{% for line in commentLines %}
+ * {{ line }}
+{% endfor %}
+ *
+ * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
+ * @author cap4k-ddd-codegen
+ * @date {{ date }}
+ */
+object {{ Query }} {
+
+    class Request(
+
+    ) : ListQueryParam<Response>
+
+    class Response(
+    )
+}

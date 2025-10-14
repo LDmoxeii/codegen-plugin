@@ -28,7 +28,7 @@ class RepositoryGenerator : AggregateTemplateGenerator {
         val aggregateRoot = aggregateInfo.aggregateRoot
         val aggregateName = aggregateInfo.name
 
-        val fullRootEntityType = aggregateRoot.fullName  // 如 "com.example.domain.aggregates.user.User"
+        val fullRootEntityType = aggregateRoot.qualifiedName  // 如 "com.example.domain.aggregates.user.User"
         val identityType = aggregateInfo.identityType  // 如 "Long" 或 "UserId"
 
         val imports = RepositoryImportManager()
