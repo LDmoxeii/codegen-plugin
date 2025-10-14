@@ -121,11 +121,14 @@ open class GenAggregateTask : GenArchTask(), MutableAnnotationContext {
         generator: AggregateTemplateGenerator,
         context: AnnotationContext,
     ) {
-        val aggregates = context.aggregateMap.values.toList()
+        val aggregates = context.aggregateMap.values.toMutableList()
 
-        aggregates.forEach { aggregateInfo ->
+        while (aggregates.isNotEmpty()) {
+            val aggregateInfo = aggregates.first()
+
             if (!generator.shouldGenerate(aggregateInfo, context)) {
-                return@forEach
+                aggregates.removeFirst()
+                continue
             }
 
             val aggregateContext = generator.buildContext(aggregateInfo, context)

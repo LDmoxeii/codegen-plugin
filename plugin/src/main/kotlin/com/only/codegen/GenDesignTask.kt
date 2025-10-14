@@ -8,18 +8,8 @@ import com.only.codegen.misc.resolvePackageDirectory
 import com.only.codegen.template.TemplateNode
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import java.util.regex.Pattern
 
-/**
- * 设计元素代码生成任务
- *
- * 数据源:
- * - JSON 设计文件 (_gen.json)
- * - KSP 聚合元信息 (aggregates.json / entities.json)
- *
- * 生成目标:
- * - Application 层: Command, Query, Saga, Client, IntegrationEvent
- * - Domain 层: DomainEvent, DomainService
- */
 open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
     @Internal
@@ -80,9 +70,6 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         generateDesignFiles(context)
     }
 
-    /**
-     * 阶段1: 构建设计上下文
-     */
     private fun buildDesignContext(): DesignContext {
         val builders = listOf(
             JsonDesignLoader(),            // order=10  - 加载 JSON 设计文件
@@ -103,9 +90,6 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         return this
     }
 
-    /**
-     * 阶段2: 生成设计文件
-     */
     private fun generateDesignFiles(context: DesignContext) {
         val generators = listOf(
             CommandGenerator(),           // order=10 - 生成命令
@@ -123,33 +107,36 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         }
     }
 
-    /**
-     * 为指定 Generator 生成所有设计
-     */
     private fun generateForDesigns(
         generator: DesignTemplateGenerator,
         context: DesignContext
     ) {
-        val designs = getDesignsForGenerator(generator, context)
+        val designs = getDesignsForGenerator(generator, context).toMutableList()
 
-        designs.forEach { design ->
-            if (!generator.shouldGenerate(design, context)) return@forEach
+        while (designs.isNotEmpty()) {
+            val design = designs.first()
 
-            try {
-                val templateContext = generator.buildContext(design, context).toMutableMap()
-                val templateNodes = context.templateNodeMap
-                    .getOrDefault(generator.tag, listOf(generator.getDefaultTemplateNode()))
+            if (!generator.shouldGenerate(design, context)) {
+                designs.removeFirst()
+                continue
+            }
 
-                templateNodes.forEach { templateNode ->
+            val templateContext = generator.buildContext(design, context).toMutableMap()
+            val templateNodes = context.templateNodeMap
+                .getOrDefault(generator.tag, listOf(generator.getDefaultTemplateNode()))
+
+            templateNodes
+                .filter { templateNode ->
+                    templateNode.pattern.isBlank() || Pattern.compile(templateNode.pattern).asPredicate()
+                        .test(generator.generatorName(design, context))
+                }
+                .forEach { templateNode ->
                     val pathNode = templateNode.deepCopy().resolve(templateContext)
                     val parentPath = determineParentPath(templateContext, context)
                     forceRender(pathNode, parentPath)
                 }
 
-                generator.onGenerated(design, context)
-            } catch (e: Exception) {
-                logger.error("Failed to generate for design: $design", e)
-            }
+            generator.onGenerated(design, context)
         }
     }
 
