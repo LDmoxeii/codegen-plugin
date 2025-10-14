@@ -114,7 +114,7 @@ class FactoryGenerator : EntityTemplateGenerator {
             tag = this@FactoryGenerator.tag
             name = "{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
             format = "resource"
-            data = "templates/factory.peb"
+            data = "templates/factory.kt.peb"
             conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件
         }
     }

@@ -52,7 +52,7 @@ class SchemaBaseGenerator : EntityTemplateGenerator {
             tag = this@SchemaBaseGenerator.tag
             name = "{{ SchemaBase }}.kt"
             format = "resource"
-            data = "templates/schema_base.peb"
+            data = "templates/schema_base.kt.peb"
             conflict = "overwrite"
         }
     }

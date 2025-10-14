@@ -106,7 +106,7 @@ class DomainEventHandlerGenerator : EntityTemplateGenerator {
             tag = this@DomainEventHandlerGenerator.tag
             name = "{{ DomainEventHandler }}.kt"
             format = "resource"
-            data = "templates/domain_event_handler.peb"
+            data = "templates/domain_event_handler.kt.peb"
             conflict = "skip" // 事件处理器包含业务逻辑，不覆盖已有文件
         }
     }

@@ -165,7 +165,7 @@ class SchemaGenerator : EntityTemplateGenerator {
             tag = this@SchemaGenerator.tag
             name = "{{ Schema }}.kt"
             format = "resource"
-            data = "templates/schema.peb"
+            data = "templates/schema.kt.peb"
             conflict = "overwrite"
         }
     }

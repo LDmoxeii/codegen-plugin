@@ -91,7 +91,7 @@ class RepositoryGenerator : AggregateTemplateGenerator {
             tag = this@RepositoryGenerator.tag
             name = "{{ Repository }}.kt"
             format = "resource"
-            data = "templates/repository.peb"
+            data = "templates/repository.kt.peb"
             conflict = "overwrite"
         }
     }

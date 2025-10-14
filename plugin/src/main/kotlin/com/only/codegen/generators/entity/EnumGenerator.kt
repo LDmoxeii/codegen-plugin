@@ -106,7 +106,7 @@ class EnumGenerator : EntityTemplateGenerator {
             tag = this@EnumGenerator.tag
             name = "{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
             format = "resource"
-            data = "templates/enum.peb"
+            data = "templates/enum.kt.peb"
             conflict = "overwrite"
         }
     }

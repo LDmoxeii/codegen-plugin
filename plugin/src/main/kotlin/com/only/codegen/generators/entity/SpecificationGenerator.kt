@@ -101,7 +101,7 @@ class SpecificationGenerator : EntityTemplateGenerator {
             tag = this@SpecificationGenerator.tag
             name = "{{ DEFAULT_SPEC_PACKAGE }}{{ SEPARATOR }}{{ Specification }}.kt"
             format = "resource"
-            data = "templates/specification.peb"
+            data = "templates/specification.kt.peb"
             conflict = "skip" // Specification 通常包含业务逻辑，不覆盖已有文件
         }
     }

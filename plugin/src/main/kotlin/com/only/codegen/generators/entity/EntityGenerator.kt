@@ -193,7 +193,7 @@ class EntityGenerator : EntityTemplateGenerator {
             tag = this@EntityGenerator.tag
             name = "{{ Entity }}.kt"
             format = "resource"
-            data = "templates/entity.peb"
+            data = "templates/entity.kt.peb"
             conflict = "overwrite"
         }
     }

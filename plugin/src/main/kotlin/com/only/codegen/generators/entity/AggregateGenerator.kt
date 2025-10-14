@@ -112,7 +112,7 @@ class AggregateGenerator : EntityTemplateGenerator {
             tag = this@AggregateGenerator.tag
             name = "{{ AggregateName }}.kt"
             format = "resource"
-            data = "templates/aggregate.peb"
+            data = "templates/aggregate.kt.peb"
             conflict = "skip"
         }
     }

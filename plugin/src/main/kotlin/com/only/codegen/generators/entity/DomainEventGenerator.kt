@@ -116,7 +116,7 @@ class DomainEventGenerator : EntityTemplateGenerator {
             tag = this@DomainEventGenerator.tag
             name = "{{ DEFAULT_DOMAIN_EVENT_PACKAGE }}{{ SEPARATOR }}{{ DomainEvent }}.kt"
             format = "resource"
-            data = "templates/domain_event.peb"
+            data = "templates/domain_event.kt.peb"
             conflict = "skip" // 领域事件基类通常包含业务逻辑，不覆盖已有文件
         }
     }
