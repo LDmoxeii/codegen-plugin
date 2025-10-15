@@ -25,7 +25,7 @@ class CommandGenerator : DesignTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", applicationPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(design.`package`))
 
             resultContext.putContext(tag, "Command", generatorName(design, context))
@@ -42,7 +42,7 @@ class CommandGenerator : DesignTemplateGenerator {
         require(design is CommonDesign)
         with(context) {
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag]!!)
+            val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = refPackage(design.`package`)
 
             return "$basePackage$templatePackage$`package`${refPackage(generatorName(design, context))}"

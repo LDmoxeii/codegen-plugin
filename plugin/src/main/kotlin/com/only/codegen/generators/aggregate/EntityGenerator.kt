@@ -138,7 +138,7 @@ class EntityGenerator : AggregateTemplateGenerator {
         val resultContext = context.baseMap.toMutableMap()
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "Entity", entityType)
@@ -164,7 +164,7 @@ class EntityGenerator : AggregateTemplateGenerator {
             val entityType = entityTypeMap[tableName]!!
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag]!!)
+            val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = refPackage(aggregate)
 
             return "$basePackage${templatePackage}${`package`}${refPackage(entityType)}"
@@ -202,7 +202,7 @@ class EntityGenerator : AggregateTemplateGenerator {
             // Q类型（QueryDSL）
             val aggregate = resolveAggregateWithModule(tableName)
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag]!!)
+            val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = refPackage(aggregate)
             val fullQEntityType = "$basePackage${templatePackage}${`package`}${refPackage("Q$entityType")}"
             typeMapping["Q$entityType"] = fullQEntityType

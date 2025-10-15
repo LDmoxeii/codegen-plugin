@@ -46,7 +46,7 @@ class AggregateGenerator : AggregateTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(refPackage(aggregate)))
 
             resultContext.putContext(tag, "Entity", entityType)
@@ -75,7 +75,7 @@ class AggregateGenerator : AggregateTemplateGenerator {
             val entityType = entityTypeMap[tableName]!!
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag]!!)
+            val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = refPackage(aggregate)
 
             val aggregateTypeTemplate = getString("aggregateTypeTemplate")

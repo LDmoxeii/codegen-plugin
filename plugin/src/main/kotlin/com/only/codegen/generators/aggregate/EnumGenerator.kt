@@ -71,7 +71,7 @@ class EnumGenerator : AggregateTemplateGenerator {
             val resultContext = baseMap.toMutableMap()
 
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(concatPackage(refPackage(aggregate), refPackage("enums"))))
 
             resultContext.putContext(tag, "Enum", currentEnumType)
@@ -96,7 +96,7 @@ class EnumGenerator : AggregateTemplateGenerator {
             val aggregate = resolveAggregateWithModule(tableName)
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag]!!)
+            val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = refPackage(aggregate)
 
             return "$basePackage${templatePackage}${`package`}${refPackage(defaultEnumPackage)}${

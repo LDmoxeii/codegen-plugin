@@ -56,7 +56,7 @@ class RepositoryGenerator : AggregateTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", adapterPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", "")
 
             resultContext.putContext(tag, "supportQuerydsl", supportQuerydsl)

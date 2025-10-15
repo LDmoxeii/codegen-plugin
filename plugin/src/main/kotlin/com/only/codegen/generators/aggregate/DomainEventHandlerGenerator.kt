@@ -50,7 +50,7 @@ class DomainEventHandlerGenerator : AggregateTemplateGenerator {
 
         with(context) {
             resultContext.putContext(tag, "modulePath", applicationPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(context.templatePackage[tag]!!))
+            resultContext.putContext(tag, "templatePackage", refPackage(context.templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DomainEvent", domainEvent)
@@ -75,7 +75,7 @@ class DomainEventHandlerGenerator : AggregateTemplateGenerator {
         val aggregate = context.resolveAggregateWithModule(tableName)
 
         val basePackage = context.getString("basePackage")
-        val templatePackage = refPackage(context.templatePackage[tag]!!)
+        val templatePackage = refPackage(context.templatePackage[tag] ?: "")
         val `package` = refPackage(aggregate)
 
         return "$basePackage${templatePackage}${`package`}${refPackage(generatorName(table, context))}"
