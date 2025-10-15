@@ -84,7 +84,7 @@ class RepositoryGenerator : AggregateTemplateGenerator {
             val repositoryName = renderString(repositoryNameTemplate, mapOf("Aggregate" to entityType))
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag]!!)
+            val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = ""
 
             return "$basePackage${templatePackage}${`package`}${refPackage(repositoryName)}"

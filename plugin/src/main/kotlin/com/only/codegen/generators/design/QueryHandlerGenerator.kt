@@ -23,8 +23,11 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         val resultContext = context.baseMap.toMutableMap()
         val queryType = context.typeMapping[getQueryName(design, context)]!!
 
+        // 根据设计名称推断查询类型
+        val handlerQueryType = QueryHandlerImportManager.inferQueryType(design.name)
+
         // 创建 ImportManager
-        val importManager = QueryHandlerImportManager()
+        val importManager = QueryHandlerImportManager(handlerQueryType)
         importManager.addBaseImports()
         importManager.add(queryType)
 

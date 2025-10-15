@@ -76,7 +76,7 @@ class SpecificationGenerator : AggregateTemplateGenerator {
             val entityType = entityTypeMap[tableName]!!
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag]!!)
+            val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = refPackage(aggregate)
 
             val specificationType = "${entityType}Specification"

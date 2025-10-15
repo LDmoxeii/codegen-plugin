@@ -43,7 +43,7 @@ class SchemaBaseGenerator : AggregateTemplateGenerator {
     ): String {
         with(context) {
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag]!!)
+            val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = ""
 
             return "$basePackage$templatePackage$`package`${refPackage(generatorName(table, context))}"

@@ -133,7 +133,7 @@ class SchemaGenerator : AggregateTemplateGenerator {
             val entityType = entityTypeMap[tableName]!!
 
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag]!!)
+            val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = refPackage(aggregate)
 
             val schemaType = "S$entityType"
