@@ -2,13 +2,13 @@ package com.only.codegen.generators.design
 
 import com.only.codegen.context.design.DesignContext
 import com.only.codegen.context.design.models.CommonDesign
-import com.only.codegen.manager.QueryImportManager
+import com.only.codegen.manager.QueryHandlerImportManager
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
 
-class QueryGenerator : DesignTemplateGenerator {
+class QueryHandlerGenerator : DesignTemplateGenerator {
 
-    override val tag: String = "query"
+    override val tag: String = "query_handler"
     override val order: Int = 10
 
     override fun shouldGenerate(design: Any, context: DesignContext): Boolean {
@@ -23,11 +23,11 @@ class QueryGenerator : DesignTemplateGenerator {
         val resultContext = context.baseMap.toMutableMap()
 
         // 创建 ImportManager
-        val importManager = QueryImportManager()
+        val importManager = QueryHandlerImportManager()
         importManager.addBaseImports()
 
         with(context) {
-            resultContext.putContext(tag, "modulePath", applicationPath)
+            resultContext.putContext(tag, "modulePath", adapterPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(design.`package`))
 
@@ -66,29 +66,29 @@ class QueryGenerator : DesignTemplateGenerator {
         return listOf(
             TemplateNode().apply {
                 type = "file"
-                tag = this@QueryGenerator.tag
+                tag = this@QueryHandlerGenerator.tag
                 pattern = "^(?!.*(List|list|Page|page)).*\\$"
                 name = "{{ Query }}.kt"
                 format = "resource"
-                data = "templates/query.kt.peb"
+                data = "templates/query_handler.kt.peb"
                 conflict = "skip"
             },
             TemplateNode().apply {
                 type = "file"
-                tag = this@QueryGenerator.tag
+                tag = this@QueryHandlerGenerator.tag
                 pattern = "^.*(List|list).*\\$"
                 name = "{{ Query }}.kt"
                 format = "resource"
-                data = "templates/query_list.kt.peb"
+                data = "templates/query_list_handler.kt.peb"
                 conflict = "skip"
             },
             TemplateNode().apply {
                 type = "file"
-                tag = this@QueryGenerator.tag
+                tag = this@QueryHandlerGenerator.tag
                 pattern = "^.*(Page|page).*\\$"
                 name = "{{ Query }}.kt"
                 format = "resource"
-                data = "templates/query_page.kt.peb"
+                data = "templates/query_page_handler.kt.peb"
                 conflict = "skip"
             }
         )

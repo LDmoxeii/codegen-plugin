@@ -11,6 +11,7 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
 
     private val designTypeToGeneratorTags = mapOf(
         "domain_event" to listOf("domain_event", "domain_event_handler"),
+        "query" to listOf("query", "query_handler"),
     )
 
     override fun build(context: MutableDesignContext) {
