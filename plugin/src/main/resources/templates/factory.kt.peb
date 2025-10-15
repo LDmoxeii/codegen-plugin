@@ -7,9 +7,7 @@ import com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate
 import org.springframework.stereotype.Service
 
 /**
-{%- for line in commentLines %}
- * {{ line }}
-{%- endfor %}
+ * {{ Comment }}
  *
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
  * @author cap4k-ddd-codegen

@@ -6,9 +6,7 @@ import com.only4.cap4k.ddd.annotation.DomainService
 import com.only4.cap4k.ddd.core.share.X
 
 /**
-{% for line in commentLines %}
- * {{ line }}
-{% endfor %}
+ * {{ Comment }}
  *
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
  * @author cap4k-ddd-codegen

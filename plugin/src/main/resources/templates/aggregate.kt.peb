@@ -5,9 +5,7 @@ import {{ basePackage }}{{ templatePackage }}{{ package }}.factory.{{ Factory }}
 
 /**
  * {{ Entity }}聚合封装
-{% for line in commentLines %}
- * {{ line }}
-{% endfor %}
+ * {{ Comment }}
  *
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
  * @author cap4k-ddd-codegen

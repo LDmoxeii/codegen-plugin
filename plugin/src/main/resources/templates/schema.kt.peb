@@ -4,9 +4,7 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
 {%- endfor %}
 
 /**
-{%- for line in commentLines %}
- * {{ line }}
-{%- endfor %}
+ * {{ Comment }}
  *
  * Schema 类用于类型安全的 JPA Criteria 查询
  *

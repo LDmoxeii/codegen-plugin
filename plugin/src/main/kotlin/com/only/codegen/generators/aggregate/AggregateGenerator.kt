@@ -1,6 +1,5 @@
 package com.only.codegen.generators.aggregate
 
-import com.only.codegen.AbstractCodegenTask
 import com.only.codegen.context.aggregate.AggregateContext
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
@@ -50,20 +49,8 @@ class AggregateGenerator : AggregateTemplateGenerator {
 
             resultContext.putContext(tag, "fullFactoryType", fullFactoryType)
             resultContext.putContext(tag, "Factory", "${entityType}Factory")
-        }
 
-        // 准备注释行
-        val commentLines = SqlSchemaUtils.getComment(table)
-            .split(Regex(AbstractCodegenTask.PATTERN_LINE_BREAK))
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .map { line ->
-                if (line.endsWith(";")) line.dropLast(1).trim() else line
-            }
-            .filter { it.isNotEmpty() }
-
-        with(context) {
-            resultContext.putContext(tag, "commentLines", commentLines)
+            resultContext.putContext(tag, "Comment", SqlSchemaUtils.getComment(table))
         }
 
         return resultContext
