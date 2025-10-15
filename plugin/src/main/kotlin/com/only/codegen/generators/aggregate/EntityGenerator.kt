@@ -134,17 +134,6 @@ class EntityGenerator : AggregateTemplateGenerator {
         // 生成最终的 import 列表
         val finalImports = importManager.toImportLines()
 
-
-        // 准备注释行
-        val commentLines = SqlSchemaUtils.getComment(table)
-            .split(Regex(AbstractCodegenTask.PATTERN_LINE_BREAK))
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .map { line ->
-                if (line.endsWith(";")) line.dropLast(1).trim() else line
-            }
-            .filter { it.isNotEmpty() }
-
         // 构建上下文
         val resultContext = context.baseMap.toMutableMap()
         with(context) {
@@ -162,7 +151,7 @@ class EntityGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "annotationLines", annotationLines)
             resultContext.putContext(tag, "customerLines", customerLines)
             resultContext.putContext(tag, "imports", finalImports)
-            resultContext.putContext(tag, "commentLines", commentLines)
+            resultContext.putContext(tag, "Comment", SqlSchemaUtils.getComment(table))
         }
 
         return resultContext
