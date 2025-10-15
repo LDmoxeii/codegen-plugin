@@ -99,15 +99,17 @@ class DomainEventHandlerGenerator : AggregateTemplateGenerator {
             } ?: ""
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@DomainEventHandlerGenerator.tag
-            name = "{{ DomainEventHandler }}.kt"
-            format = "resource"
-            data = "templates/domain_event_handler.kt.peb"
-            conflict = "skip" // 事件处理器包含业务逻辑，不覆盖已有文件
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@DomainEventHandlerGenerator.tag
+                name = "{{ DomainEventHandler }}.kt"
+                format = "resource"
+                data = "templates/domain_event_handler.kt.peb"
+                conflict = "skip" // 事件处理器包含业务逻辑，不覆盖已有文件
+            }
+        )
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {

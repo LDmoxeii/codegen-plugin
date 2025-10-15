@@ -102,15 +102,17 @@ class RepositoryGenerator : AggregateTemplateGenerator {
         return renderString(repositoryNameTemplate, mapOf("Aggregate" to entityType))
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@RepositoryGenerator.tag
-            name = "{{ Repository }}.kt"
-            format = "resource"
-            data = "templates/repository.kt.peb"
-            conflict = "overwrite"
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@RepositoryGenerator.tag
+                name = "{{ Repository }}.kt"
+                format = "resource"
+                data = "templates/repository.kt.peb"
+                conflict = "overwrite"
+            }
+        )
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {

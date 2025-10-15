@@ -2,25 +2,8 @@ package com.only.codegen
 
 import com.only.codegen.context.aggregate.AggregateContext
 import com.only.codegen.context.aggregate.MutableAggregateContext
-import com.only.codegen.context.aggregate.builders.AggregateContextBuilder
-import com.only.codegen.context.aggregate.builders.AnnotationContextBuilder
-import com.only.codegen.context.aggregate.builders.EntityTypeContextBuilder
-import com.only.codegen.context.aggregate.builders.EnumContextBuilder
-import com.only.codegen.context.aggregate.builders.ModuleContextBuilder
-import com.only.codegen.context.aggregate.builders.RelationContextBuilder
-import com.only.codegen.context.aggregate.builders.TableContextBuilder
-import com.only.codegen.context.aggregate.builders.TablePackageContextBuilder
-import com.only.codegen.generators.aggregate.AggregateGenerator
-import com.only.codegen.generators.aggregate.DomainEventGenerator
-import com.only.codegen.generators.aggregate.DomainEventHandlerGenerator
-import com.only.codegen.generators.aggregate.EntityGenerator
-import com.only.codegen.generators.aggregate.AggregateTemplateGenerator
-import com.only.codegen.generators.aggregate.EnumGenerator
-import com.only.codegen.generators.aggregate.FactoryGenerator
-import com.only.codegen.generators.aggregate.RepositoryGenerator
-import com.only.codegen.generators.aggregate.SchemaBaseGenerator
-import com.only.codegen.generators.aggregate.SchemaGenerator
-import com.only.codegen.generators.aggregate.SpecificationGenerator
+import com.only.codegen.context.aggregate.builders.*
+import com.only.codegen.generators.aggregate.*
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.resolvePackageDirectory
@@ -217,7 +200,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
             val tableContext = generator.buildContext(table, context)
 
-            val templateNodes = listOf(generator.getDefaultTemplateNode()) + context.templateNodeMap.getOrDefault(
+            val templateNodes = generator.getDefaultTemplateNodes() + context.templateNodeMap.getOrDefault(
                 generator.tag,
                 emptyList()
             )

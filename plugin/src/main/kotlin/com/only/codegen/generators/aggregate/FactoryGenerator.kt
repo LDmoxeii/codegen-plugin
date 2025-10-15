@@ -108,15 +108,17 @@ class FactoryGenerator : AggregateTemplateGenerator {
         }
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@FactoryGenerator.tag
-            name = "{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
-            format = "resource"
-            data = "templates/factory.kt.peb"
-            conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@FactoryGenerator.tag
+                name = "{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
+                format = "resource"
+                data = "templates/factory.kt.peb"
+                conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件
+            }
+        )
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {

@@ -85,7 +85,11 @@ class SpecificationGenerator : AggregateTemplateGenerator {
             val `package` = refPackage(aggregate)
 
             val specificationType = "${entityType}Specification"
-            return "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_SPEC_PACKAGE)}${refPackage(specificationType)}"
+            return "$basePackage${templatePackage}${`package`}${refPackage(DEFAULT_SPEC_PACKAGE)}${
+                refPackage(
+                    specificationType
+                )
+            }"
         }
     }
 
@@ -95,15 +99,17 @@ class SpecificationGenerator : AggregateTemplateGenerator {
         return "${entityType}Specification"
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@SpecificationGenerator.tag
-            name = "{{ DEFAULT_SPEC_PACKAGE }}{{ SEPARATOR }}{{ Specification }}.kt"
-            format = "resource"
-            data = "templates/specification.kt.peb"
-            conflict = "skip" // Specification 通常包含业务逻辑，不覆盖已有文件
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@SpecificationGenerator.tag
+                name = "{{ DEFAULT_SPEC_PACKAGE }}{{ SEPARATOR }}{{ Specification }}.kt"
+                format = "resource"
+                data = "templates/specification.kt.peb"
+                conflict = "skip" // Specification 通常包含业务逻辑，不覆盖已有文件
+            }
+        )
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {

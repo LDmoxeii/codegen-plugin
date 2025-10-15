@@ -106,18 +106,20 @@ class AggregateGenerator : AggregateTemplateGenerator {
         }
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@AggregateGenerator.tag
-            name = "{{ AggregateName }}.kt"
-            format = "resource"
-            data = "templates/aggregate.kt.peb"
-            conflict = "skip"
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@AggregateGenerator.tag
+                name = "{{ AggregateName }}.kt"
+                format = "resource"
+                data = "templates/aggregate.kt.peb"
+                conflict = "skip"
+            }
+        )
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
-       context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
+        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
     }
 }

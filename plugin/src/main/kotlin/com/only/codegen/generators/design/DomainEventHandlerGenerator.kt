@@ -78,15 +78,17 @@ class DomainEventHandlerGenerator : DesignTemplateGenerator {
         return name
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@DomainEventHandlerGenerator.tag
-            name = "{{ DomainEventHandler }}.kt"
-            format = "resource"
-            data = "templates/domain_event_handler.kt.peb"
-            conflict = "skip"
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@DomainEventHandlerGenerator.tag
+                name = "{{ DomainEventHandler }}.kt"
+                format = "resource"
+                data = "templates/domain_event_handler.kt.peb"
+                conflict = "skip"
+            }
+        )
     }
 
     override fun onGenerated(design: Any, context: DesignContext) {

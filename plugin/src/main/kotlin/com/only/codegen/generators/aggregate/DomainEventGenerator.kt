@@ -113,15 +113,17 @@ class DomainEventGenerator : AggregateTemplateGenerator {
         } ?: ""
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@DomainEventGenerator.tag
-            name = "{{ DEFAULT_DOMAIN_EVENT_PACKAGE }}{{ SEPARATOR }}{{ DomainEvent }}.kt"
-            format = "resource"
-            data = "templates/domain_event.kt.peb"
-            conflict = "skip" // 领域事件基类通常包含业务逻辑，不覆盖已有文件
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@DomainEventGenerator.tag
+                name = "{{ DEFAULT_DOMAIN_EVENT_PACKAGE }}{{ SEPARATOR }}{{ DomainEvent }}.kt"
+                format = "resource"
+                data = "templates/domain_event.kt.peb"
+                conflict = "skip" // 领域事件基类通常包含业务逻辑，不覆盖已有文件
+            }
+        )
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {

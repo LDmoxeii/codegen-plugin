@@ -52,15 +52,17 @@ class CommandGenerator : DesignTemplateGenerator {
         }
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@CommandGenerator.tag
-            name = "{{ Command }}.kt"
-            format = "resource"
-            data = "templates/command.kt.peb"
-            conflict = "skip"
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@CommandGenerator.tag
+                name = "{{ Command }}.kt"
+                format = "resource"
+                data = "templates/command.kt.peb"
+                conflict = "skip"
+            }
+        )
     }
 
     override fun onGenerated(design: Any, context: DesignContext) {

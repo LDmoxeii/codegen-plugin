@@ -159,15 +159,17 @@ class SchemaGenerator : AggregateTemplateGenerator {
         return "S$entityType"
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@SchemaGenerator.tag
-            name = "{{ Schema }}.kt"
-            format = "resource"
-            data = "templates/schema.kt.peb"
-            conflict = "overwrite"
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@SchemaGenerator.tag
+                name = "{{ Schema }}.kt"
+                format = "resource"
+                data = "templates/schema.kt.peb"
+                conflict = "overwrite"
+            }
+        )
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {

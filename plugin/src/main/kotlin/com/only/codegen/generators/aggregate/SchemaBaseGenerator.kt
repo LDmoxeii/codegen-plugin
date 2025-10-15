@@ -47,15 +47,17 @@ class SchemaBaseGenerator : AggregateTemplateGenerator {
         context: AggregateContext
     ): String = "Schema"
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@SchemaBaseGenerator.tag
-            name = "{{ SchemaBase }}.kt"
-            format = "resource"
-            data = "templates/schema_base.kt.peb"
-            conflict = "overwrite"
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@SchemaBaseGenerator.tag
+                name = "{{ SchemaBase }}.kt"
+                format = "resource"
+                data = "templates/schema_base.kt.peb"
+                conflict = "overwrite"
+            }
+        )
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {

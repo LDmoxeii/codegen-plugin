@@ -92,7 +92,11 @@ class EnumGenerator : AggregateTemplateGenerator {
             val templatePackage = refPackage(templatePackage[tag]!!)
             val `package` = refPackage(aggregate)
 
-            return "$basePackage${templatePackage}${`package`}${refPackage(defaultEnumPackage)}${refPackage(currentEnumType)}"
+            return "$basePackage${templatePackage}${`package`}${refPackage(defaultEnumPackage)}${
+                refPackage(
+                    currentEnumType
+                )
+            }"
         }
     }
 
@@ -100,15 +104,17 @@ class EnumGenerator : AggregateTemplateGenerator {
         return currentEnumType
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@EnumGenerator.tag
-            name = "{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
-            format = "resource"
-            data = "templates/enum.kt.peb"
-            conflict = "overwrite"
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@EnumGenerator.tag
+                name = "{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
+                format = "resource"
+                data = "templates/enum.kt.peb"
+                conflict = "overwrite"
+            }
+        )
     }
 
     override fun onGenerated(

@@ -8,7 +8,6 @@ import com.only.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_ID_ALIAS
 import com.only.codegen.misc.SqlSchemaUtils.RIGHT_QUOTES_4_ID_ALIAS
 import com.only.codegen.template.TemplateNode
 import java.io.File
-import kotlin.collections.iterator
 
 /**
  * 实体文件生成器
@@ -188,15 +187,17 @@ class EntityGenerator : AggregateTemplateGenerator {
         return context.entityTypeMap[tableName]!!
     }
 
-    override fun getDefaultTemplateNode(): TemplateNode {
-        return TemplateNode().apply {
-            type = "file"
-            tag = this@EntityGenerator.tag
-            name = "{{ Entity }}.kt"
-            format = "resource"
-            data = "templates/entity.kt.peb"
-            conflict = "overwrite"
-        }
+    override fun getDefaultTemplateNodes(): List<TemplateNode> {
+        return listOf(
+            TemplateNode().apply {
+                type = "file"
+                tag = this@EntityGenerator.tag
+                name = "{{ Entity }}.kt"
+                format = "resource"
+                data = "templates/entity.kt.peb"
+                conflict = "overwrite"
+            }
+        )
     }
 
     override fun onGenerated(

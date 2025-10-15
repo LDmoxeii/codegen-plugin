@@ -46,9 +46,17 @@ interface DesignTemplateGenerator {
     fun generatorName(design: Any, context: DesignContext): String
 
     /**
-     * 获取默认模板节点
+     * 获取默认模板节点列表
+     *
+     * 一个设计可能需要生成多个文件，例如：
+     * - Command 可能需要生成 Cmd.kt + CmdRequest.kt + CmdResponse.kt
+     * - Entity 可能需要生成 Entity.kt + EntityRepository.kt + EntityMapper.kt
+     *
+     * 使用方可以通过 TemplateNode.pattern 属性来过滤需要生成的模板
+     *
+     * @return 模板节点列表
      */
-    fun getDefaultTemplateNode(): TemplateNode
+    fun getDefaultTemplateNodes(): List<TemplateNode>
 
     /**
      * 生成完成后的回调
