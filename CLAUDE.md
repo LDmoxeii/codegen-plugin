@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Gradle plugin for code generation from database schemas. It generates Kotlin domain entities, enums, and other DDD (Domain-Driven Design) artifacts using Pebble templates. The plugin supports both MySQL and PostgreSQL databases.
 
-**Plugin ID**: `com.only.codegen`
+**Plugin ID**: `com.only4.codegen`
+**Code Package**: `com.only4.codegen`
+**Maven GroupId**: `com.only4`
 
 ## Build & Test Commands
 
@@ -66,22 +68,20 @@ All generation tasks follow a consistent two-phase pattern:
 
 The plugin uses **generic, composable interfaces** that enable different code generation pipelines:
 
-**Context Layer** (`com.only.codegen.context`):
+**Context Layer** (`com.only4.codegen.context`):
 - `BaseContext` - Base configuration and template aliasing system (shared by all contexts)
-- `EntityContext : BaseContext` - Database-driven generation context (tables, columns, relations, enums)
-- `AnnotationContext : BaseContext` - Annotation-driven generation context (classes, annotations, aggregates)
-- `MutableEntityContext` - Mutable version of EntityContext for context building phase
-- `MutableAnnotationContext` - Mutable version of AnnotationContext for context building phase
+- `AggregateContext : BaseContext` - Database-driven generation context (tables, columns, relations, enums)
+- `DesignContext : BaseContext` - Design file-driven generation context (KSP metadata, design elements)
+- `MutableAggregateContext` - Mutable version of AggregateContext for context building phase
+- `MutableDesignContext` - Mutable version of DesignContext for context building phase
 
-**Builder Layer** (`com.only.codegen.context.builders`):
+**Builder Layer** (`com.only4.codegen.context`):
 - `ContextBuilder<T>` - **Generic base interface** with type parameter `T`
   - Defines `order: Int` property for execution sequencing
   - Defines `build(context: T)` method for filling context data
   - **Enables type-safe builder composition for different context types**
-- `ContextBuilder<MutableEntityContext> : ContextBuilder<MutableEntityContext>` - Specialized for entity generation
-- `AggregateContextBuilder : ContextBuilder<MutableAnnotationContext>` - Specialized for annotation-based generation
 
-**Entity Context Builders** (for database-driven generation):
+**Aggregate Context Builders** (`com.only4.codegen.context.aggregate.builders`) - for database-driven generation:
 - Builders execute in order:
   - `TableContextBuilder` (order=10) - Collects table and column metadata from database
   - `EntityTypeContextBuilder` (order=20) - Determines entity class names from table names
@@ -91,25 +91,40 @@ The plugin uses **generic, composable interfaces** that enable different code ge
   - `EnumContextBuilder` (order=20) - Extracts enum definitions from table comments
   - `AggregateContextBuilder` (order=30) - Identifies aggregates and aggregate roots
   - `TablePackageContextBuilder` (order=40) - Determines package structure for each table
-- Each builder populates specific maps in `EntityContext`
+- Each builder populates specific maps in `AggregateContext`
 
-**Generator Layer** (`com.only.codegen.generators`):
-- `TemplateGenerator` - Interface for entity/database-driven generators
+**Design Context Builders** (`com.only4.codegen.context.design.builders`) - for design file-driven generation:
+- Builders execute in order:
+  - `DesignContextBuilder` (order=10) - Loads design elements from JSON files
+  - `KspMetadataContextBuilder` (order=15) - Loads aggregate metadata from KSP processor output
+  - `TypeMappingBuilder` (order=18) - Builds type mapping from KSP metadata
+  - `UnifiedDesignBuilder` (order=20) - Unified parsing for all design types (commands, queries, events)
+
+**Generator Layer**:
+- `AggregateTemplateGenerator` (`com.only4.codegen.generators.aggregate`) - Interface for aggregate/database-driven generators
   - Properties: `tag: String`, `order: Int`
-  - Methods: `shouldGenerate()`, `buildContext()`, `getDefaultTemplateNode()`, `onGenerated()`
-- `AnnotationTemplateGenerator` - Interface for annotation-driven generators (planned)
-  - Similar structure but operates on `AggregateInfo` and `AnnotationContext`
+  - Methods: `shouldGenerate()`, `buildContext()`, `getDefaultTemplateNodes()`, `onGenerated()`, `generatorName()`
+- `DesignTemplateGenerator` (`com.only4.codegen.generators.design`) - Interface for design-driven generators
+  - Similar structure but operates on `BaseDesign` and `DesignContext`
 
-**Entity Generators** (for database-driven generation, order 10-40):
+**Aggregate Generators** (`com.only4.codegen.generators.aggregate`) - for database-driven generation:
 - `SchemaBaseGenerator` (order=10) - Generates SchemaBase base class for metadata tracking
 - `EnumGenerator` (order=10) - Generates enum classes, tracks generated enums to avoid duplicates
 - `EntityGenerator` (order=20) - Generates entity classes with full DDD support, handles custom code preservation
-- `SchemaGenerator` (order=30) - Generates Schema classes (similar to JPA Metamodel) for type-safe queries
 - `SpecificationGenerator` (order=30) - Generates Specification base classes for domain specifications
 - `FactoryGenerator` (order=30) - Generates Factory classes for aggregate root creation
 - `DomainEventGenerator` (order=30) - Generates domain event classes for event-driven architecture
-- `DomainEventHandlerGenerator` (order=40) - Generates domain event handler/subscriber classes
+- `DomainEventHandlerGenerator` (order=30) - Generates domain event handler/subscriber classes
+- `RepositoryGenerator` (order=30) - Generates Repository interfaces and adapters
 - `AggregateGenerator` (order=40) - Generates aggregate wrapper classes for aggregate root management
+- `SchemaGenerator` (order=50) - Generates Schema classes (similar to JPA Metamodel) for type-safe queries
+
+**Design Generators** (`com.only4.codegen.generators.design`) - for design file-driven generation:
+- `CommandGenerator` (order=10) - Generates command classes
+- `QueryGenerator` (order=10) - Generates query classes
+- `DomainEventGenerator` (order=10) - Generates domain event classes
+- `DomainEventHandlerGenerator` (order=20) - Generates domain event handler classes
+- `QueryHandlerGenerator` (order=20) - Generates query handler classes
 
 ### Tasks
 
@@ -117,47 +132,37 @@ The plugin uses **generic, composable interfaces** that enable different code ge
 
 ```
 AbstractCodegenTask                  # Base: Pebble rendering + template aliasing
-    ├── GenArchTask                  # Architecture scaffolding
-    │   ├── GenDesignTask            # Design file-driven generation (Case study)
-    │   └── [Custom tasks...]        # User-extensible
-    ├── GenEntityTask                # Database → Domain layer
-    └── GenAnnotationTask (planned)  # Annotations → Infrastructure layer
+    └── GenArchTask                  # Architecture scaffolding
+        ├── GenAggregateTask         # Database → Domain layer (Entity-driven)
+        └── GenDesignTask            # KSP + Design files → Application/Domain layer
 ```
 
-**GenEntityTask** - Database-driven domain generation
-- Location: `com.only.codegen.GenEntityTask`
-- Data source: Database metadata via JDBC
-- Context: Implements `MutableEntityContext`
-- Workflow: `genEntity()` → `buildGenerationContext()` → `generateFiles()`
-- Output: Domain entities, enums, schemas, specifications, factories, domain events
-
 **GenArchTask** - Architecture scaffolding base task
+- Location: `com.only4.codegen.GenArchTask`
 - Reads architecture templates and creates directory structure
 - Base class providing common scaffolding functionality
 - Can be extended for custom generation scenarios
+- Implements `renderTemplate()` for template node management
 
-**GenDesignTask** - Design file-driven generation (Case study in `Case/GenDesignTask.kt`)
-- Location: `Case/GenDesignTask.kt` (example implementation demonstrating framework extensibility)
-- Data source: Declarative design files (text-based DSL)
-- Generates DDD design elements from design declarations
-- Demonstrates **alternative data source integration pattern**
+**GenAggregateTask** - Database-driven domain generation
+- Location: `com.only4.codegen.GenAggregateTask`
+- Data source: Database metadata via JDBC
+- Context: Implements `MutableAggregateContext`
+- Workflow: `genEntity()` → `buildGenerationContext()` → `generateFiles()`
+- Output: Domain entities, enums, schemas, specifications, factories, domain events, repositories, aggregates
+
+**GenDesignTask** - Design file-driven generation
+- Location: `com.only4.codegen.GenDesignTask`
+- Data sources:
+  - KSP metadata from `build/generated/ksp/main/resources/metadata`
+  - Design JSON files from project configuration
+- Context: Implements `MutableDesignContext`
+- Workflow: `genDesign()` → `buildDesignContext()` → `generateDesignFiles()`
+- Output: Commands, queries, domain events, event handlers, query handlers
 - Supported design element types:
-  - **Application Layer**: Command, Saga, Query, Client (Anti-Corruption Layer), Integration Events
-  - **Domain Layer**: Domain Events, Specifications, Factories, Domain Services
-- Design format: `element_type:ElementName:param1:param2:...`
-- Features:
-  - Alias system for element type normalization (e.g., "cmd", "command", "commands" → "command")
-  - Regex pattern matching for filtering designs
-  - Specialized rendering methods per element type
-- Key methods:
-  - `resolveLiteralDesign(design: String)` - Parses design file into structured map
-  - `alias4Design(name: String)` - Normalizes element type names
-  - `renderAppLayerCommand()`, `renderDomainLayerDomainEvent()`, etc. - Element-specific rendering
-- **Architecture lesson**: Shows how to create custom generation tasks by:
-  1. Extending `GenArchTask`
-  2. Implementing custom parsing logic for alternative data sources
-  3. Reusing template rendering infrastructure
-  4. Defining element-specific context building
+  - **Application Layer**: Command, Query, Integration Events
+  - **Domain Layer**: Domain Events, Domain Event Handlers
+- Design tag alias system for element type normalization (e.g., "cmd", "command", "commands" → "command")
 
 ### Template Alias System
 
@@ -169,6 +174,7 @@ The plugin uses a sophisticated template aliasing system (`BaseContext.putContex
 ### Database Support
 
 **SqlSchemaUtils** - Core utility for database metadata extraction
+- Location: `com.only4.codegen.misc.SqlSchemaUtils`
 - `SqlSchemaUtils4Mysql` - MySQL-specific implementation
 - `SqlSchemaUtils4Postgresql` - PostgreSQL-specific implementation
 - Helper methods: `isIgnore()`, `hasRelation()`, `hasEnum()`, `getTableName()`, `getType()`, etc.
@@ -302,100 +308,144 @@ open class MyCustomTask : AbstractCodegenTask(), MutableMyCustomContext {
 
 ### Adding a Generator to Existing Pipeline
 
-**For Entity Generation (EntityContext)**:
+**For Aggregate Generation (AggregateContext)**:
 
-1. Create class implementing `TemplateGenerator` in `com.only.codegen.generators`
+1. Create class implementing `AggregateTemplateGenerator` in `com.only4.codegen.generators.aggregate`
 2. Set `tag` (e.g., "repository") and `order` (higher = later execution)
-3. Implement `shouldGenerate()` - return true if this table needs this generator
-4. Implement `buildContext()` - prepare template context map using `context.putContext(tag, key, value)`
-5. Implement `getDefaultTemplateNode()` - define default template path and conflict resolution
-6. Implement `onGenerated()` - cache generated type full name in `typeMapping` for reference by other generators
-7. Register in `GenEntityTask.generateFiles()` by adding to generators list
+3. Implement `shouldGenerate(table, context)` - return true if this table needs this generator
+4. Implement `buildContext(table, context)` - prepare template context map using `context.putContext(tag, key, value)`
+5. Implement `getDefaultTemplateNodes()` - define default template paths and conflict resolution
+6. Implement `onGenerated(table, context)` - cache generated type full name in `typeMapping` for reference by other generators
+7. Implement `generatorName(table, context)` - return the name of the generated artifact
+8. Register in `GenAggregateTask.generateFiles()` by adding to generators list
 
-**For Annotation Generation (AnnotationContext)**:
+**For Design Generation (DesignContext)**:
 
-1. Create class implementing `AnnotationTemplateGenerator`
-2. Similar structure but operates on `AggregateInfo` and `AnnotationContext`
-3. Register in `GenAnnotationTask` (when implemented)
+1. Create class implementing `DesignTemplateGenerator` in `com.only4.codegen.generators.design`
+2. Similar structure but operates on `BaseDesign` and `DesignContext`
+3. Register in `GenDesignTask.generateDesignFiles()` by adding to generators list
 
 ### Adding a Context Builder to Existing Pipeline
 
-**For Entity Context**:
+**For Aggregate Context**:
 
-1. Create class implementing `ContextBuilder<MutableEntityContext> : ContextBuilder<MutableEntityContext>`
+1. Create class implementing `ContextBuilder<MutableAggregateContext>` in `com.only4.codegen.context.aggregate.builders`
 2. Set `order` based on dependencies (lower = earlier execution)
-3. Implement `build(context: MutableEntityContext)` to populate context maps
-4. Register in `GenEntityTask.buildGenerationContext()` by adding to contextBuilders list
+3. Implement `build(context: MutableAggregateContext)` to populate context maps
+4. Register in `GenAggregateTask.buildGenerationContext()` by adding to contextBuilders list
 
-**For Annotation Context**:
+**For Design Context**:
 
-1. Create class implementing `AggregateContextBuilder : ContextBuilder<MutableAnnotationContext>`
-2. Similar structure but works with annotation metadata
-3. Register in `GenAnnotationTask` (when implemented)
+1. Create class implementing `ContextBuilder<MutableDesignContext>` in `com.only4.codegen.context.design.builders`
+2. Similar structure but works with design metadata
+3. Register in `GenDesignTask.buildDesignContext()` by adding to builders list
 
 ### Import Management
 
-The `ImportManager` system (in `com.only.codegen.generators.manager`) handles automatic import resolution:
+The `ImportManager` system (in `com.only4.codegen.manager`) handles automatic import resolution:
+- `BaseImportManager` - Base class for import management
 - `EntityImportManager` - Manages entity-specific imports with collision detection
+- `SchemaImportManager`, `RepositoryImportManager`, `FactoryImportManager`, etc. - Specialized import managers for different generators
 - Automatically handles Java/Kotlin type mappings and wildcard imports
 - Use when building complex contexts that need precise import control
 
 ## Key Files Reference
 
-- `CodegenPlugin.kt` - Plugin registration and task setup
+- `CodegenPlugin.kt` - Plugin registration and task setup (registers genArch, genAggregate, genDesign tasks)
 - `CodegenExtension.kt` - Configuration DSL (database, generation options)
-- `GenEntityTask.kt` - Main entity generation orchestrator, implements MutableEntityContext
+- `GenAggregateTask.kt` - Main aggregate generation orchestrator, implements MutableAggregateContext
+- `GenDesignTask.kt` - Design file-driven generation orchestrator, implements MutableDesignContext
+- `GenArchTask.kt` - Base architecture scaffolding task
 - `AbstractCodegenTask.kt` - Base task with rendering and template alias logic
 - `PebbleTemplateRenderer.kt` - Pebble template rendering wrapper
 - Context interfaces (`context/`):
   - `BaseContext.kt` - Base configuration with template aliasing via `putContext()` extension
-  - `EntityContext.kt` - Read-only interface with all generation context data
-  - `MutableEntityContext.kt` - Mutable version used during context building
-- Context builders (`context/builders/`): 8 builders that populate EntityContext in phases
-- Generators (`generators/`): 10 generators that produce files in order
-- Import management (`generators/manager/`): `ImportManager` and `EntityImportManager`
+  - `aggregate/AggregateContext.kt` - Read-only interface with all aggregate generation context data
+  - `aggregate/MutableAggregateContext.kt` - Mutable version used during context building
+  - `design/DesignContext.kt` - Read-only interface with all design generation context data
+  - `design/MutableDesignContext.kt` - Mutable version used during context building
+- Context builders:
+  - `context/aggregate/builders/` - 8 builders that populate AggregateContext in phases
+  - `context/design/builders/` - 4 builders that populate DesignContext in phases
+- Generators:
+  - `generators/aggregate/` - 10 generators that produce domain layer files from database
+  - `generators/design/` - 5 generators that produce application/domain layer files from design
+- Import management (`manager/`): Multiple specialized ImportManager classes
 - SQL utilities (`misc/`): `SqlSchemaUtils`, MySQL/PostgreSQL implementations
-- Documentation: `重构进度报告.md`, `EntityGenerator实现计划.md` (in Chinese)
+- Other utilities (`misc/`): `NamingUtils`, `Inflector`, `TextUtils`, `ResourceUtils`, `SourceFileUtils`
 
 ## Module Structure
 
 ```
 codegen-plugin/
 ├── plugin/                           # Main plugin module
-│   └── src/main/kotlin/com/only/codegen/
+│   └── src/main/kotlin/com/only4/codegen/
 │       ├── CodegenPlugin.kt         # Plugin entry point
 │       ├── CodegenExtension.kt      # Configuration DSL
-│       ├── GenEntityTask.kt         # Main entity generation task
+│       ├── GenAggregateTask.kt      # Main aggregate generation task
+│       ├── GenDesignTask.kt         # Design file-driven generation task
 │       ├── GenArchTask.kt           # Architecture generation base task
 │       ├── AbstractCodegenTask.kt   # Base task with template rendering
 │       ├── context/                 # Context interfaces and builders
 │       │   ├── BaseContext.kt       # Base configuration interface
-│       │   ├── EntityContext.kt     # Read-only generation context
-│       │   ├── MutableEntityContext.kt  # Mutable context for building
-│       │   └── builders/            # Context builders (8 builders)
-│       │       ├── ContextBuilder.kt
-│       │       ├── TableContextBuilder.kt
-│       │       ├── EntityTypeContextBuilder.kt
-│       │       ├── AnnotationContextBuilder.kt
-│       │       ├── ModuleContextBuilder.kt
-│       │       ├── RelationContextBuilder.kt
-│       │       ├── EnumContextBuilder.kt
-│       │       ├── AggregateContextBuilder.kt
-│       │       └── TablePackageContextBuilder.kt
-│       ├── generators/              # File generators (10 generators)
-│       │   ├── TemplateGenerator.kt # Generator interface
-│       │   ├── SchemaBaseGenerator.kt
-│       │   ├── EnumGenerator.kt
-│       │   ├── EntityGenerator.kt   # Core entity generator (~720 lines)
-│       │   ├── SchemaGenerator.kt
-│       │   ├── SpecificationGenerator.kt
-│       │   ├── FactoryGenerator.kt
-│       │   ├── DomainEventGenerator.kt
-│       │   ├── DomainEventHandlerGenerator.kt
-│       │   ├── AggregateGenerator.kt
-│       │   └── manager/             # Import management
-│       │       ├── ImportManager.kt
-│       │       └── EntityImportManager.kt
+│       │   ├── ContextBuilder.kt    # Generic context builder interface
+│       │   ├── aggregate/           # Aggregate context (database-driven)
+│       │   │   ├── AggregateContext.kt     # Read-only generation context
+│       │   │   ├── MutableAggregateContext.kt  # Mutable context for building
+│       │   │   └── builders/        # Aggregate context builders (8 builders)
+│       │   │       ├── TableContextBuilder.kt
+│       │   │       ├── EntityTypeContextBuilder.kt
+│       │   │       ├── AnnotationContextBuilder.kt
+│       │   │       ├── ModuleContextBuilder.kt
+│       │   │       ├── RelationContextBuilder.kt
+│       │   │       ├── EnumContextBuilder.kt
+│       │   │       ├── AggregateContextBuilder.kt
+│       │   │       └── TablePackageContextBuilder.kt
+│       │   └── design/              # Design context (KSP + design file driven)
+│       │       ├── DesignContext.kt         # Read-only design context
+│       │       ├── MutableDesignContext.kt  # Mutable design context
+│       │       ├── builders/        # Design context builders (4 builders)
+│       │       │   ├── DesignContextBuilder.kt
+│       │       │   ├── KspMetadataContextBuilder.kt
+│       │       │   ├── TypeMappingBuilder.kt
+│       │       │   └── UnifiedDesignBuilder.kt
+│       │       └── models/          # Design element models
+│       │           ├── DesignElement.kt
+│       │           ├── BaseDesign.kt
+│       │           ├── CommonDesign.kt
+│       │           ├── DomainEventDesign.kt
+│       │           ├── IntegrationEventDesign.kt
+│       │           └── AggregateInfo.kt
+│       ├── generators/              # File generators
+│       │   ├── aggregate/           # Aggregate generators (10 generators)
+│       │   │   ├── AggregateTemplateGenerator.kt  # Generator interface
+│       │   │   ├── SchemaBaseGenerator.kt
+│       │   │   ├── EnumGenerator.kt
+│       │   │   ├── EntityGenerator.kt   # Core entity generator
+│       │   │   ├── SchemaGenerator.kt
+│       │   │   ├── SpecificationGenerator.kt
+│       │   │   ├── FactoryGenerator.kt
+│       │   │   ├── DomainEventGenerator.kt
+│       │   │   ├── DomainEventHandlerGenerator.kt
+│       │   │   ├── RepositoryGenerator.kt
+│       │   │   └── AggregateGenerator.kt
+│       │   └── design/              # Design generators (5 generators)
+│       │       ├── DesignTemplateGenerator.kt  # Generator interface
+│       │       ├── CommandGenerator.kt
+│       │       ├── QueryGenerator.kt
+│       │       ├── DomainEventGenerator.kt
+│       │       ├── DomainEventHandlerGenerator.kt
+│       │       └── QueryHandlerGenerator.kt
+│       ├── manager/                 # Import management (15+ managers)
+│       │   ├── BaseImportManager.kt
+│       │   ├── ImportManager.kt
+│       │   ├── EntityImportManager.kt
+│       │   ├── SchemaImportManager.kt
+│       │   ├── RepositoryImportManager.kt
+│       │   ├── FactoryImportManager.kt
+│       │   ├── CommandImportManager.kt
+│       │   ├── QueryImportManager.kt
+│       │   └── ... (and more)
 │       ├── misc/                    # Utilities
 │       │   ├── SqlSchemaUtils.kt    # Abstract SQL utilities
 │       │   ├── SqlSchemaUtils4Mysql.kt
@@ -408,12 +458,13 @@ codegen-plugin/
 │       ├── pebble/                  # Template rendering
 │       │   ├── PebbleTemplateRenderer.kt
 │       │   ├── PebbleConfig.kt
-│       │   ├── PebbleInitializer.kt
-│       │   └── CompositeLoader.kt
+│       │   └── PebbleInitializer.kt
 │       └── template/                # Template model
 │           ├── Template.kt
 │           ├── TemplateNode.kt
 │           └── PathNode.kt
+├── ksp-processor/                   # KSP metadata processor module
+│   └── src/main/kotlin/...
 └── settings.gradle.kts
 ```
 
@@ -434,15 +485,20 @@ codegen-plugin/
 ### Code Generation Pipelines
 
 **Current Implementations**:
-1. **Database → Domain** (`GenEntityTask` + `EntityContext` + `ContextBuilder<MutableEntityContext>` + `TemplateGenerator`)
-2. **Design Files → Application/Domain** (`GenDesignTask` - Case study)
+1. **Database → Domain** (`GenAggregateTask` + `AggregateContext` + `ContextBuilder<MutableAggregateContext>` + `AggregateTemplateGenerator`)
+   - Generates domain layer code from database metadata
+   - Output: Entities, Enums, Schemas, Specifications, Factories, Domain Events, Repositories, Aggregates
 
-**Planned**:
-3. **Annotations → Infrastructure** (`GenAnnotationTask` + `AnnotationContext` + `AggregateContextBuilder` + `AnnotationTemplateGenerator`)
+2. **KSP + Design Files → Application/Domain** (`GenDesignTask` + `DesignContext` + `ContextBuilder<MutableDesignContext>` + `DesignTemplateGenerator`)
+   - Generates application/domain layer code from KSP metadata and design files
+   - Output: Commands, Queries, Domain Events, Event Handlers, Query Handlers
 
-**Future Extensibility**:
-4. **KSP + Templates + Custom Design** (user-defined context + builders + generators)
-5. Any combination of data sources via generic framework
+**Architecture Capabilities**:
+3. **Custom Generation Pipelines** - The generic framework supports creating new pipelines by:
+   - Defining custom Context interfaces (extending `BaseContext`)
+   - Implementing `ContextBuilder<T>` for your context type
+   - Creating generators implementing the appropriate generator interface
+   - Registering builders and generators in your custom task
 
 ### Technical Details
 
@@ -456,70 +512,26 @@ codegen-plugin/
 - **Type mapping is crucial**: All generated types are cached in `typeMapping` for cross-referencing
 - **Custom code preservation**: EntityGenerator uses markers "【字段映射开始】" and "【字段映射结束】" to separate generated fields from custom code
 - **State machine for annotations**: Uses `inAnnotationBlock` flag to distinguish class-level annotations from field annotations
+- **KSP Integration**: GenDesignTask reads KSP-generated metadata from `build/generated/ksp/main/resources/metadata`
+- **Design Tag Aliasing**: Both GenAggregateTask and GenDesignTask use tag alias maps to normalize element type names
 
-## Future Direction: Annotation-Based Code Generation
+## Published Artifacts
 
-**⚠️ IMPORTANT: This is the planned future implementation direction**
+The plugin publishes to Aliyun Maven repository with the following artifacts:
 
-A new annotation-based code generation subsystem is planned to complement the existing database-driven generation. See `ANNOTATION_BASED_CODEGEN_DESIGN.md` for complete technical design.
+1. **`com.only4:plugin:0.1.0-SNAPSHOT`** - Main plugin implementation
+2. **`com.only4:ksp-processor:0.1.0-SNAPSHOT`** - KSP metadata processor
+3. **`com.only4:com.only4.codegen.gradle.plugin:0.1.0-SNAPSHOT`** - Gradle plugin marker artifact
 
-### Key Concepts
-
-**GenAnnotationTask** - New task for annotation-based generation (parallel to GenEntityTask)
-- Scans generated domain code (Entity classes) for annotations
-- Uses **AnnotationContext** (independent from EntityContext)
-- Generates infrastructure layer code (Repository, Service, Controller, Mapper)
-- Follows the same Context + ContextBuilder + Generator architecture pattern
-
-### Architecture Comparison
-
-| Aspect | GenEntityTask | GenAnnotationTask (Planned) |
-|--------|---------------|---------------------------|
-| **Data Source** | Database metadata | Source code annotations |
-| **Context** | EntityContext | AnnotationContext |
-| **Key Maps** | tableMap, columnsMap, relationsMap | classMap, annotationMap, aggregateMap |
-| **Scan Target** | Database tables | .kt files |
-| **Dependencies** | JDBC driver | Regex parsing (zero new dependencies) |
-| **Timing** | Before compilation (read database) | After domain generation (read generated code) |
-| **Output** | Domain layer | Adapter/Application layer |
-
-### Planned Components
-
-**Context Layer**:
-- `AnnotationContext` - Read-only interface with classMap, annotationMap, aggregateMap
-- `MutableAnnotationContext` - Mutable version for building phase
-- Inherits `BaseContext` for configuration and template aliasing
-
-**Builder Layer**:
-- `AnnotationContextBuilder` (order=10) - Scans .kt files and parses annotations using regex
-- `AggregateInfoBuilder` (order=20) - Identifies aggregates and aggregate roots
-- `IdentityTypeBuilder` (order=30) - Resolves ID types from @Id annotations
-
-**Generator Layer**:
-- `RepositoryGenerator` (order=10) - Generates JPA Repository interfaces
-- `ServiceGenerator` (order=20) - Generates Application Services
-- `ControllerGenerator` (order=30) - Generates REST Controllers
-- `MapperGenerator` (order=40) - Generates DTO Mappers
-
-### Usage Example
-
-```bash
-# Step 1: Generate domain layer from database
-./gradlew genEntity
-
-# Step 2: Generate infrastructure layer from annotations
-./gradlew genAnnotation
-
-# Or: One-command generation
-./gradlew genAll
+Users can apply the plugin using:
+```kotlin
+plugins {
+    id("com.only4.codegen") version "0.1.0-SNAPSHOT"
+}
 ```
 
-### Design Principles
+## Available Gradle Tasks
 
-1. **Architecture Consistency**: Maintains Context + ContextBuilder + Generator pattern
-2. **Independence**: Completely decoupled from EntityContext
-3. **Zero New Dependencies**: Uses regex parsing (validated in GenRepositoryTask case study)
-4. **Flexibility**: Can run independently or composed with GenEntityTask
-5. **Extensibility**: Easy to add new generators for different infrastructure components
-
-For complete implementation details, migration path, and code examples, refer to `ANNOTATION_BASED_CODEGEN_DESIGN.md`.
+- **`genArch`** - Generate project architecture structure
+- **`genAggregate`** - Generate domain layer code (entities, enums, schemas, etc.) from database
+- **`genDesign`** - Generate application/domain layer code (commands, queries, events) from design files and KSP metadata
