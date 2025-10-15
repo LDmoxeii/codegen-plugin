@@ -37,6 +37,11 @@ class CodegenPlugin : Plugin<Project> {
             task.projectGroup.set(project.group.toString())
             task.projectVersion.set(project.version.toString())
             task.projectDir.set(project.projectDir.absolutePath)
+
+            // GenDesignTask depends on kspKotlin to read KSP metadata
+            project.tasks.findByName("kspKotlin")?.let { kspTask ->
+                task.dependsOn(kspTask)
+            }
         }
     }
 }
