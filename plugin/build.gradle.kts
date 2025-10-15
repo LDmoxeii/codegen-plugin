@@ -56,8 +56,8 @@ gradlePlugin {
 
     // Define the plugin
     val codegen by plugins.creating {
-        id = "com.only.codegen"
-        implementationClass = "com.only.codegen.CodegenPlugin"
+        id = "com.only4.codegen"
+        implementationClass = "com.only4.codegen.CodegenPlugin"
         displayName = "Codegen Plugin"
         description = "Generates code from database schema using templates"
     }
