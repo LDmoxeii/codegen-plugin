@@ -11,7 +11,7 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
  * @date {{ date }}
  */
 @Service
-class {{ Query }}Handler(
+class {{ QueryHandler }}(
 ) : Query<{{ Query }}.Request, {{ Query }}.Response> {
 
     override fun exec(request: {{ Query }}.Request): {{ Query }}.Response {

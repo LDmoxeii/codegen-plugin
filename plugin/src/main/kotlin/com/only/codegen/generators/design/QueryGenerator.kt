@@ -67,7 +67,7 @@ class QueryGenerator : DesignTemplateGenerator {
             TemplateNode().apply {
                 type = "file"
                 tag = this@QueryGenerator.tag
-                pattern = "^(?!.*(List|list|Page|page)).*\\$"
+                pattern = "^(?!.*(List|list|Page|page)).*$"
                 name = "{{ Query }}.kt"
                 format = "resource"
                 data = "templates/query.kt.peb"
@@ -76,7 +76,7 @@ class QueryGenerator : DesignTemplateGenerator {
             TemplateNode().apply {
                 type = "file"
                 tag = this@QueryGenerator.tag
-                pattern = "^.*(List|list).*\\$"
+                pattern = "^.*(List|list).*$"
                 name = "{{ Query }}.kt"
                 format = "resource"
                 data = "templates/query_list.kt.peb"
@@ -85,7 +85,7 @@ class QueryGenerator : DesignTemplateGenerator {
             TemplateNode().apply {
                 type = "file"
                 tag = this@QueryGenerator.tag
-                pattern = "^.*(Page|page).*\\$"
+                pattern = "^.*(Page|page).*$"
                 name = "{{ Query }}.kt"
                 format = "resource"
                 data = "templates/query_page.kt.peb"

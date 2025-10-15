@@ -9,7 +9,7 @@ import com.only.codegen.template.TemplateNode
 class QueryHandlerGenerator : DesignTemplateGenerator {
 
     override val tag: String = "query_handler"
-    override val order: Int = 10
+    override val order: Int = 20
 
     override fun shouldGenerate(design: Any, context: DesignContext): Boolean {
         if (design !is CommonDesign) return false
@@ -21,17 +21,21 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         require(design is CommonDesign) { "Design must be CommonDesign" }
 
         val resultContext = context.baseMap.toMutableMap()
+        val queryType = context.typeMapping[getQueryName(design, context)]!!
 
         // 创建 ImportManager
         val importManager = QueryHandlerImportManager()
         importManager.addBaseImports()
+        importManager.add(queryType)
 
         with(context) {
             resultContext.putContext(tag, "modulePath", adapterPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(design.`package`))
 
-            resultContext.putContext(tag, "Query", generatorName(design, context))
+            resultContext.putContext(tag, "QueryHandler", generatorName(design, context))
+            resultContext.putContext(tag, "Query", getQueryName(design, context))
+
             resultContext.putContext(tag, "Comment", design.desc)
 
             // 添加 imports
@@ -52,7 +56,7 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         }
     }
 
-    override fun generatorName(design: Any, context: DesignContext): String {
+    private fun getQueryName(design: Any, context: DesignContext): String {
         require(design is CommonDesign)
         val name = design.name
         return if (name.endsWith("Qry")) {
@@ -62,13 +66,19 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         }
     }
 
+    override fun generatorName(design: Any, context: DesignContext): String {
+        require(design is CommonDesign)
+        val queryName = getQueryName(design, context)
+        return "${queryName}Handler"
+    }
+
     override fun getDefaultTemplateNodes(): List<TemplateNode> {
         return listOf(
             TemplateNode().apply {
                 type = "file"
                 tag = this@QueryHandlerGenerator.tag
-                pattern = "^(?!.*(List|list|Page|page)).*\\$"
-                name = "{{ Query }}.kt"
+                pattern = "^(?!.*(List|list|Page|page)).*$"
+                name = "{{ QueryHandler }}.kt"
                 format = "resource"
                 data = "templates/query_handler.kt.peb"
                 conflict = "skip"
@@ -76,8 +86,8 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
             TemplateNode().apply {
                 type = "file"
                 tag = this@QueryHandlerGenerator.tag
-                pattern = "^.*(List|list).*\\$"
-                name = "{{ Query }}.kt"
+                pattern = "^.*(List|list).*$"
+                name = "{{ QueryHandler }}.kt"
                 format = "resource"
                 data = "templates/query_list_handler.kt.peb"
                 conflict = "skip"
@@ -85,8 +95,8 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
             TemplateNode().apply {
                 type = "file"
                 tag = this@QueryHandlerGenerator.tag
-                pattern = "^.*(Page|page).*\\$"
-                name = "{{ Query }}.kt"
+                pattern = "^.*(Page|page).*$"
+                name = "{{ QueryHandler }}.kt"
                 format = "resource"
                 data = "templates/query_page_handler.kt.peb"
                 conflict = "skip"

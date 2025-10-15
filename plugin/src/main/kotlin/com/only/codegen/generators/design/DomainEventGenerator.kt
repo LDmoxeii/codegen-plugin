@@ -13,7 +13,7 @@ class DomainEventGenerator : DesignTemplateGenerator {
     private val logger = Logging.getLogger(DomainEventGenerator::class.java)
 
     override val tag: String = "domain_event"
-    override val order: Int = 30
+    override val order: Int = 10
 
     override fun shouldGenerate(design: Any, context: DesignContext): Boolean {
         if (design !is DomainEventDesign) return false

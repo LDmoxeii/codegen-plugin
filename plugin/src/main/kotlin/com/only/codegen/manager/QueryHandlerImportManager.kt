@@ -5,6 +5,7 @@ package com.only.codegen.manager
  */
 class QueryHandlerImportManager : BaseImportManager() {
     override fun addBaseImports() {
-        requiredImports.add("com.only4.cap4k.ddd.core.application.RequestParam")
+        requiredImports.add("com.only4.cap4k.ddd.core.application.query.Query")
+        requiredImports.add("org.springframework.stereotype.Service")
     }
 }

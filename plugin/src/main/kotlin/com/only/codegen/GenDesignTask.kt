@@ -9,10 +9,7 @@ import com.only.codegen.context.design.builders.UnifiedDesignBuilder
 import com.only.codegen.context.design.models.AggregateInfo
 import com.only.codegen.context.design.models.BaseDesign
 import com.only.codegen.context.design.models.DesignElement
-import com.only.codegen.generators.design.CommandGenerator
-import com.only.codegen.generators.design.DesignTemplateGenerator
-import com.only.codegen.generators.design.DomainEventGenerator
-import com.only.codegen.generators.design.DomainEventHandlerGenerator
+import com.only.codegen.generators.design.*
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.resolvePackageDirectory
 import com.only.codegen.template.TemplateNode
@@ -146,13 +143,10 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     private fun generateDesignFiles(context: DesignContext) {
         val generators = listOf(
             CommandGenerator(),           // order=10 - 生成命令
-//            QueryGenerator(),             // order=10 - 生成查询
-//            SagaGenerator(),              // order=10 - 生成 Saga
-//            ClientGenerator(),            // order=10 - 生成客户端
-//            IntegrationEventGenerator(),  // order=20 - 生成集成事件
-//            DomainServiceGenerator(),     // order=20 - 生成领域服务
-            DomainEventGenerator(),        // order=30 - 生成领域事件
-            DomainEventHandlerGenerator()  // order=40 - 生成领域事件处理器
+            QueryGenerator(),             // order=10 - 生成查询
+            DomainEventGenerator(),        // order=10 - 生成领域事件
+            DomainEventHandlerGenerator(),  // order=20 - 生成领域事件处理器
+            QueryHandlerGenerator()         // order=20 - 生成查询处理器
         )
 
         generators.sortedBy { it.order }.forEach { generator ->
