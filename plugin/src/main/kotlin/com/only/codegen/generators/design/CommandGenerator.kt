@@ -2,7 +2,7 @@ package com.only.codegen.generators.design
 
 import com.only.codegen.context.design.DesignContext
 import com.only.codegen.context.design.models.CommonDesign
-import com.only.codegen.misc.distinctText
+import com.only.codegen.manager.CommandImportManager
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
 
@@ -19,6 +19,10 @@ class CommandGenerator : DesignTemplateGenerator {
 
         val resultContext = context.baseMap.toMutableMap()
 
+        // 创建 ImportManager
+        val importManager = CommandImportManager()
+        importManager.addBaseImports()
+
         with(context) {
             resultContext.putContext(tag, "modulePath", applicationPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
@@ -26,6 +30,9 @@ class CommandGenerator : DesignTemplateGenerator {
 
             resultContext.putContext(tag, "Command", generatorName(design, context))
             resultContext.putContext(tag, "Comment", design.desc)
+
+            // 添加 imports
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
         return resultContext

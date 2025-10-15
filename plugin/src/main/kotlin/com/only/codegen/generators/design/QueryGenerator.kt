@@ -2,6 +2,7 @@ package com.only.codegen.generators.design
 
 import com.only.codegen.context.design.DesignContext
 import com.only.codegen.context.design.models.CommonDesign
+import com.only.codegen.manager.QueryImportManager
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
 import org.gradle.api.logging.Logging
@@ -24,6 +25,10 @@ class QueryGenerator : DesignTemplateGenerator {
 
         val resultContext = context.baseMap.toMutableMap()
 
+        // 创建 ImportManager
+        val importManager = QueryImportManager()
+        importManager.addBaseImports()
+
         with(context) {
             resultContext.putContext(tag, "modulePath", applicationPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
@@ -31,6 +36,9 @@ class QueryGenerator : DesignTemplateGenerator {
 
             resultContext.putContext(tag, "Query", generatorName(design, context))
             resultContext.putContext(tag, "Comment", design.desc)
+
+            // 添加 imports
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
         return resultContext

@@ -1,6 +1,7 @@
 package com.only.codegen.generators.aggregate
 
 import com.only.codegen.context.aggregate.AggregateContext
+import com.only.codegen.manager.SchemaBaseImportManager
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
 
@@ -18,12 +19,19 @@ class SchemaBaseGenerator : AggregateTemplateGenerator {
     override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
         val resultContext = context.baseMap.toMutableMap()
 
+        // 创建 ImportManager
+        val importManager = SchemaBaseImportManager()
+        importManager.addBaseImports()
+
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
             resultContext.putContext(tag, "package", "")
 
             resultContext.putContext(tag, "SchemaBase", generatorName(table, context))
+
+            // 添加 imports
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
         return resultContext

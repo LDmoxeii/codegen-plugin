@@ -1,7 +1,9 @@
 package com.only.codegen.generators.aggregate
 
 import com.only.codegen.context.aggregate.AggregateContext
+import com.only.codegen.manager.DomainEventImportManager
 import com.only.codegen.misc.SqlSchemaUtils
+import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
@@ -31,7 +33,7 @@ class DomainEventGenerator : AggregateTemplateGenerator {
 
         val domainEvents = SqlSchemaUtils.getDomainEvents(table)
 
-        return domainEvents.any { domainEventInfo ->
+        return domainEvents.any { _ ->
             val currentDomainEvent = generatorName(table, context)
             currentDomainEvent.isNotBlank() && !(context.typeMapping.containsKey(currentDomainEvent))
         }
@@ -44,23 +46,29 @@ class DomainEventGenerator : AggregateTemplateGenerator {
         val entityType = context.entityTypeMap[tableName]!!
         val fullEntityType = context.typeMapping[entityType]!!
 
+        // 创建 ImportManager
+        val importManager = DomainEventImportManager()
+        importManager.addBaseImports()
+        importManager.add(fullEntityType)
+
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
-            resultContext.putContext(tag, "package", refPackage(aggregate))
+            resultContext.putContext(tag, "package", concatPackage(refPackage(aggregate), refPackage(DEFAULT_DOMAIN_EVENT_PACKAGE)))
 
-            resultContext.putContext(tag, "DEFAULT_DOMAIN_EVENT_PACKAGE", DEFAULT_DOMAIN_EVENT_PACKAGE)
             resultContext.putContext(tag, "DomainEvent", generatorName(table, context))
 
-            resultContext.putContext(tag, "fullEntityType", fullEntityType)
             resultContext.putContext(tag, "Entity", entityType)
 
             resultContext.putContext(tag, "persist", context.getBoolean("domainEventPersist", false))
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
 
             resultContext.putContext(tag, "Comment", SqlSchemaUtils.getComment(table))
+
+            // 添加 imports
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
 
@@ -106,7 +114,7 @@ class DomainEventGenerator : AggregateTemplateGenerator {
             TemplateNode().apply {
                 type = "file"
                 tag = this@DomainEventGenerator.tag
-                name = "{{ DEFAULT_DOMAIN_EVENT_PACKAGE }}{{ SEPARATOR }}{{ DomainEvent }}.kt"
+                name = "{{ DomainEvent }}.kt"
                 format = "resource"
                 data = "templates/domain_event.kt.peb"
                 conflict = "skip" // 领域事件基类通常包含业务逻辑，不覆盖已有文件

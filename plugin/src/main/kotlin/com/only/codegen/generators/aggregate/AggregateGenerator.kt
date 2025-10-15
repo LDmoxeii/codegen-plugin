@@ -1,6 +1,7 @@
 package com.only.codegen.generators.aggregate
 
 import com.only.codegen.context.aggregate.AggregateContext
+import com.only.codegen.manager.AggregateImportManager
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.pebble.PebbleTemplateRenderer.renderString
@@ -30,10 +31,16 @@ class AggregateGenerator : AggregateTemplateGenerator {
         val aggregate = context.resolveAggregateWithModule(tableName)
 
         val entityType = context.entityTypeMap[tableName]!!
-        val fullFactoryType = context.typeMapping["${entityType}Factory"]!!
+        val factoryType = "${entityType}Factory"
+        val fullFactoryType = context.typeMapping[factoryType]!!
 
         val ids = columns!!.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
         val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
+
+        // 创建 ImportManager
+        val importManager = AggregateImportManager()
+        importManager.addBaseImports()
+        importManager.add(fullFactoryType)
 
         val resultContext = context.baseMap.toMutableMap()
 
@@ -47,10 +54,12 @@ class AggregateGenerator : AggregateTemplateGenerator {
 
             resultContext.putContext(tag, "AggregateName", generatorName(table, context))
 
-            resultContext.putContext(tag, "fullFactoryType", fullFactoryType)
-            resultContext.putContext(tag, "Factory", "${entityType}Factory")
+            resultContext.putContext(tag, "Factory", factoryType)
 
             resultContext.putContext(tag, "Comment", SqlSchemaUtils.getComment(table))
+
+            // 添加 imports
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
         return resultContext

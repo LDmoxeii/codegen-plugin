@@ -1,0 +1,77 @@
+=== Template Imports Analysis ===
+
+✓ CommandImportManager:
+  File: command.kt.peb
+  Base imports:
+    - com.only4.cap4k.ddd.core.Mediator
+    - com.only4.cap4k.ddd.core.application.RequestParam
+    - com.only4.cap4k.ddd.core.application.command.Command
+    - org.springframework.stereotype.Service
+
+✓ QueryImportManager:
+  File: query.kt.peb
+  Base imports:
+    - com.only4.cap4k.ddd.core.application.RequestParam
+
+✓ DomainEventImportManager:
+  File: domain_event.kt.peb
+  Base imports:
+    - com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate
+    - com.only4.cap4k.ddd.core.domain.event.annotation.DomainEvent
+
+✓ DomainEventHandlerImportManager:
+  File: domain_event_handler.kt.peb
+  Base imports:
+    - org.springframework.context.event.EventListener
+    - org.springframework.stereotype.Service
+
+✓ FactoryImportManager:
+  File: factory.kt.peb
+  Base imports:
+    - com.only4.cap4k.ddd.core.domain.aggregate.AggregateFactory
+    - com.only4.cap4k.ddd.core.domain.aggregate.AggregatePayload
+    - com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate
+    - org.springframework.stereotype.Service
+
+✓ AggregateImportManager:
+  File: aggregate.kt.peb
+  Base imports:
+    - com.only4.cap4k.ddd.core.domain.aggregate.Aggregate
+
+✓ EnumImportManager:
+  File: enum.kt.peb
+  Base imports:
+    - com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate
+    - jakarta.persistence.AttributeConverter
+
+✓ ClientImportManager:
+  File: client.kt.peb
+  Base imports:
+    - com.only4.cap4k.ddd.application.RequestParam
+
+✓ ClientHandlerImportManager:
+  File: client_handler.kt.peb
+  Base imports:
+    - org.slf4j.LoggerFactory
+    - org.springframework.stereotype.Service
+    - com.only4.cap4k.ddd.application.distributed.client.DistributedClient
+
+✓ DomainServiceImportManager:
+  File: domain_service.kt.peb
+  Base imports:
+    - org.slf4j.LoggerFactory
+    - org.springframework.stereotype.Service
+    - com.only4.cap4k.ddd.annotation.DomainService
+    - com.only4.cap4k.ddd.core.share.X
+
+✓ IntegrationEventImportManager:
+  File: integration_event.kt.peb
+  Base imports:
+    - com.only4.cap4k.ddd.core.application.event.annotation.AutoRelease
+    - com.only4.cap4k.ddd.core.application.event.annotation.IntegrationEvent
+
+✓ IntegrationEventHandlerImportManager:
+  File: integration_event_handler.kt.peb
+  Base imports:
+    - org.springframework.context.event.EventListener
+    - org.springframework.stereotype.Service

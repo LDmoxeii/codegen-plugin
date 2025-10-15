@@ -1,7 +1,9 @@
 package com.only.codegen.generators.aggregate
 
 import com.only.codegen.context.aggregate.AggregateContext
+import com.only.codegen.manager.FactoryImportManager
 import com.only.codegen.misc.SqlSchemaUtils
+import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
@@ -42,22 +44,28 @@ class FactoryGenerator : AggregateTemplateGenerator {
         val entityType = context.entityTypeMap[tableName]!!
         val fullEntityType = context.typeMapping[entityType]!!
 
+        // 创建 ImportManager
+        val importManager = FactoryImportManager()
+        importManager.addBaseImports()
+        importManager.add(fullEntityType)
+
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
-            resultContext.putContext(tag, "package", refPackage(aggregate))
+            resultContext.putContext(tag, "package", refPackage(concatPackage(refPackage(aggregate), refPackage(DEFAULT_FAC_PACKAGE))))
 
-            resultContext.putContext(tag, "DEFAULT_FAC_PACKAGE", DEFAULT_FAC_PACKAGE)
             resultContext.putContext(tag, "Factory", generatorName(table, context))
             resultContext.putContext(tag, "Payload", "${entityType}Payload")
 
-            resultContext.putContext(tag, "fullEntityType", fullEntityType)
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
 
             resultContext.putContext(tag, "Comment", SqlSchemaUtils.getComment(table))
+
+            // 添加 imports
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
 
@@ -101,7 +109,7 @@ class FactoryGenerator : AggregateTemplateGenerator {
             TemplateNode().apply {
                 type = "file"
                 tag = this@FactoryGenerator.tag
-                name = "{{ DEFAULT_FAC_PACKAGE }}{{ SEPARATOR }}{{ Factory }}.kt"
+                name = "{{ Factory }}.kt"
                 format = "resource"
                 data = "templates/factory.kt.peb"
                 conflict = "skip" // Factory 通常包含业务逻辑，不覆盖已有文件

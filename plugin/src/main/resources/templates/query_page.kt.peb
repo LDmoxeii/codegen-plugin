@@ -1,6 +1,7 @@
 package {{ basePackage }}{{ templatePackage }}{{ package }}
-
-import com.only4.cap4k.ddd.core.application.PageQueryParam
+{%- for import in imports %}
+{{ import }}
+{%- endfor %}
 
 /**
  * {{ Comment }}

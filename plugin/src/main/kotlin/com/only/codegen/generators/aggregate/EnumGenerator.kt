@@ -1,7 +1,9 @@
 package com.only.codegen.generators.aggregate
 
 import com.only.codegen.context.aggregate.AggregateContext
+import com.only.codegen.manager.EnumImportManager
 import com.only.codegen.misc.SqlSchemaUtils
+import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
@@ -42,6 +44,10 @@ class EnumGenerator : AggregateTemplateGenerator {
             val columns = columnsMap[tableName]!!
             val aggregate = resolveAggregateWithModule(tableName)
 
+            // 创建 ImportManager
+            val importManager = EnumImportManager()
+            importManager.addBaseImports()
+
             columns.first { column ->
                 if (SqlSchemaUtils.hasEnum(column) && !SqlSchemaUtils.isIgnore(column)) {
                     val enumType = SqlSchemaUtils.getType(column)
@@ -66,16 +72,17 @@ class EnumGenerator : AggregateTemplateGenerator {
 
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag]!!))
-            resultContext.putContext(tag, "package", refPackage(aggregate))
+            resultContext.putContext(tag, "package", refPackage(concatPackage(refPackage(aggregate), refPackage("enums"))))
 
-            resultContext["DEFAULT_ENUM_PACKAGE"] = "enums"
             resultContext.putContext(tag, "Enum", currentEnumType)
 
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
-            resultContext.putContext(tag, "CommentEscaped", "")
             resultContext.putContext(tag, "EnumValueField", getString("enumValueField"))
             resultContext.putContext(tag, "EnumNameField", getString("enumNameField"))
             resultContext.putContext(tag, "EnumItems", enumItems)
+
+            // 添加 imports
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
 
             return resultContext
         }
@@ -109,7 +116,7 @@ class EnumGenerator : AggregateTemplateGenerator {
             TemplateNode().apply {
                 type = "file"
                 tag = this@EnumGenerator.tag
-                name = "{{ DEFAULT_ENUM_PACKAGE }}{{ SEPARATOR }}{{ Enum }}.kt"
+                name = "{{ Enum }}.kt"
                 format = "resource"
                 data = "templates/enum.kt.peb"
                 conflict = "overwrite"

@@ -1,7 +1,6 @@
 package com.only.codegen.manager
 
-class RepositoryImportManager : ImportManager {
-    override val requiredImports = mutableSetOf<String>()
+class RepositoryImportManager : BaseImportManager() {
 
     override fun addBaseImports() {
         requiredImports.add("org.springframework.data.jpa.repository.JpaRepository")
@@ -12,26 +11,4 @@ class RepositoryImportManager : ImportManager {
         requiredImports.add("org.springframework.stereotype.Component")
     }
 
-    override fun toImportLines(): List<String> {
-        val sorted = requiredImports.sorted()
-        val result = mutableListOf<String>()
-
-        result.add("")
-
-        var lastPackageGroup: String? = null
-        sorted.forEach { importStr ->
-            val currentGroup = when {
-                else -> "other"
-            }
-
-            if (lastPackageGroup != null && lastPackageGroup != currentGroup) {
-                result.add("")
-            }
-
-            result.add("import $importStr")
-            lastPackageGroup = currentGroup
-        }
-
-        return result
-    }
 }

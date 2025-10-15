@@ -1,8 +1,8 @@
-package {{ basePackage }}{{ templatePackage }}{{ package }}{{ DEFAULT_DOMAIN_EVENT_PACKAGE }}
+package {{ basePackage }}{{ templatePackage }}{{ package }}
+{%- for import in imports %}
+{{ import }}
+{%- endfor %}
 
-import {{ fullEntityType }}
-import com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate
-import com.only4.cap4k.ddd.core.domain.event.annotation.DomainEvent
 
 /**
  * {{ Comment }}

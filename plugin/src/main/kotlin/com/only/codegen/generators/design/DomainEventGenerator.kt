@@ -2,6 +2,7 @@ package com.only.codegen.generators.design
 
 import com.only.codegen.context.design.DesignContext
 import com.only.codegen.context.design.models.DomainEventDesign
+import com.only.codegen.manager.DomainEventImportManager
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
 import com.only.codegen.template.TemplateNode
@@ -23,11 +24,15 @@ class DomainEventGenerator : DesignTemplateGenerator {
     override fun buildContext(design: Any, context: DesignContext): Map<String, Any?> {
         require(design is DomainEventDesign) { "Design must be DomainEventDesign" }
 
+        val fullEntityType = context.typeMapping[design.entity]!!
+
+        // 创建 ImportManager
+        val importManager = DomainEventImportManager()
+        importManager.addBaseImports()
+        importManager.add(fullEntityType)
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
-            val fullEntityType = typeMapping[design.entity]!!
-
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(concatPackage(refPackage(design.`package`), refPackage("events"))))
@@ -36,12 +41,14 @@ class DomainEventGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "DomainEvent", generatorName(design, context))
 
             resultContext.putContext(tag, "Entity", design.entity)
-            resultContext.putContext(tag, "fullEntityType", fullEntityType)
             resultContext.putContext(tag, "Aggregate", design.aggregate)
 
             resultContext.putContext(tag, "persist", design.persist.toString())
 
             resultContext.putContext(tag, "Comment", design.desc)
+
+            // 添加 imports
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
         return resultContext

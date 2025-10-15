@@ -1,10 +1,7 @@
 package {{ basePackage }}{{ templatePackage }}{{ package }}
-
-import jakarta.persistence.criteria.*
-import org.hibernate.query.NullPrecedence
-import org.hibernate.query.SortDirection
-import org.hibernate.query.sqm.tree.domain.SqmBasicValuedSimplePath
-import org.hibernate.query.sqm.tree.select.SqmSortSpecification
+{%- for import in imports %}
+{{ import }}
+{%- endfor %}
 
 /**
  * 实体结构基类

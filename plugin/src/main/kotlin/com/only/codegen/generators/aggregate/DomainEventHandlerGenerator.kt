@@ -1,6 +1,7 @@
 package com.only.codegen.generators.aggregate
 
 import com.only.codegen.context.aggregate.AggregateContext
+import com.only.codegen.manager.DomainEventHandlerImportManager
 import com.only.codegen.misc.SqlSchemaUtils
 import com.only.codegen.misc.refPackage
 import com.only.codegen.misc.toUpperCamelCase
@@ -38,6 +39,12 @@ class DomainEventHandlerGenerator : AggregateTemplateGenerator {
         val aggregate = context.resolveAggregateWithModule(tableName)
 
         val domainEvent = generatorName(table, context).replace("Subscriber", "")
+        val fullDomainEventType = context.typeMapping[domainEvent]!!
+
+        // 创建 ImportManager
+        val importManager = DomainEventHandlerImportManager()
+        importManager.addBaseImports()
+        importManager.add(fullDomainEventType)
 
         val resultContext = context.baseMap.toMutableMap()
 
@@ -47,11 +54,13 @@ class DomainEventHandlerGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DomainEvent", domainEvent)
-            resultContext.putContext(tag, "fullDomainEventType", typeMapping[domainEvent]!!)
 
             resultContext.putContext(tag, "DomainEventHandler", generatorName(table, context))
 
             resultContext.putContext(tag, "Comment", SqlSchemaUtils.getComment(table))
+
+            // 添加 imports
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
 
