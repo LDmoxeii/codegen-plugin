@@ -70,9 +70,28 @@ class QueryGenerator : DesignTemplateGenerator {
             TemplateNode().apply {
                 type = "file"
                 tag = this@QueryGenerator.tag
+                pattern = "^(?!.*(List|list|Page|page)).*\\$"
                 name = "{{ Query }}.kt"
                 format = "resource"
                 data = "templates/query.kt.peb"
+                conflict = "skip"
+            },
+            TemplateNode().apply {
+                type = "file"
+                tag = this@QueryGenerator.tag
+                pattern = "^.*(List|list).*\\$"
+                name = "{{ Query }}.kt"
+                format = "resource"
+                data = "templates/query_list.kt.peb"
+                conflict = "skip"
+            },
+            TemplateNode().apply {
+                type = "file"
+                tag = this@QueryGenerator.tag
+                pattern = "^.*(Page|page).*\\$"
+                name = "{{ Query }}.kt"
+                format = "resource"
+                data = "templates/query_page.kt.peb"
                 conflict = "skip"
             }
         )
