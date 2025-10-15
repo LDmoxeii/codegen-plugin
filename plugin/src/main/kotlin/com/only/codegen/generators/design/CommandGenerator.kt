@@ -4,6 +4,7 @@ import com.only.codegen.context.design.DesignContext
 import com.only.codegen.context.design.models.CommonDesign
 import com.only.codegen.manager.CommandImportManager
 import com.only.codegen.misc.refPackage
+import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
 
 class CommandGenerator : DesignTemplateGenerator {
@@ -53,9 +54,9 @@ class CommandGenerator : DesignTemplateGenerator {
         require(design is CommonDesign)
         val name = design.name
         return if (name.endsWith("Cmd")) {
-            name
+            toUpperCamelCase(name)!!
         } else {
-            "${name}Cmd"
+            toUpperCamelCase("${name}Cmd")!!
         }
     }
 

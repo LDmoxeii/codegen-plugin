@@ -5,6 +5,7 @@ import com.only.codegen.context.design.models.DomainEventDesign
 import com.only.codegen.manager.DomainEventHandlerImportManager
 import com.only.codegen.misc.concatPackage
 import com.only.codegen.misc.refPackage
+import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
 import org.gradle.api.logging.Logging
 
@@ -72,7 +73,7 @@ class DomainEventHandlerGenerator : DesignTemplateGenerator {
         require(design is DomainEventDesign)
         val domainEventName = getDomainEventName(design, context)
 
-        return "${domainEventName}Subscriber"
+        return toUpperCamelCase("${domainEventName}Subscriber")!!
     }
 
     private fun getDomainEventName(design: DomainEventDesign, context: DesignContext): String {
@@ -82,7 +83,7 @@ class DomainEventHandlerGenerator : DesignTemplateGenerator {
             name += "DomainEvent"
         }
 
-        return name
+        return toUpperCamelCase(name)!!
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {

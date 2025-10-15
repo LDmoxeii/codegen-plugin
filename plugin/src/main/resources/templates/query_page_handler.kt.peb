@@ -15,5 +15,6 @@ class {{ Query }}Handler(
 ) : PageQuery<{{ Query }}.Request, {{ Query }}.Response> {
 
     override fun exec(request: {{ Query }}.Request): PageData<{{ Query }}.Response> {
+        TODO()
     }
 }

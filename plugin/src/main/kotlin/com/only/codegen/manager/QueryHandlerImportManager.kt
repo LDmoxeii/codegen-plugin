@@ -22,8 +22,8 @@ class QueryHandlerImportManager(private val queryType: QueryType = QueryType.SIN
                 requiredImports.add("com.only4.cap4k.ddd.core.application.query.ListQuery")
             }
             QueryType.PAGE -> {
-                requiredImports.add("org.netcorepal.cap4j.ddd.application.query.PageQuery")
-                requiredImports.add("org.netcorepal.cap4j.ddd.application.query.PageData")
+                requiredImports.add("com.only4.cap4k.ddd.core.application.query.PageQuery")
+                requiredImports.add("com.only4.cap4k.ddd.core.share.PageData")
             }
         }
     }

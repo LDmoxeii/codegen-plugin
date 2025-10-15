@@ -20,7 +20,7 @@ class QueryImportManager(private val queryType: QueryType = QueryType.SINGLE) : 
                 requiredImports.add("com.only4.cap4k.ddd.core.application.query.ListQueryParam")
             }
             QueryType.PAGE -> {
-                requiredImports.add("org.netcorepal.cap4j.ddd.application.query.PageQueryParam")
+                requiredImports.add("com.only4.cap4k.ddd.core.application.query.PageQueryParam")
             }
         }
     }

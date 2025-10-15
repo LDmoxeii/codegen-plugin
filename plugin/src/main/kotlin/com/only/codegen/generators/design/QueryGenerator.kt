@@ -4,6 +4,7 @@ import com.only.codegen.context.design.DesignContext
 import com.only.codegen.context.design.models.CommonDesign
 import com.only.codegen.manager.QueryImportManager
 import com.only.codegen.misc.refPackage
+import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
 
 class QueryGenerator : DesignTemplateGenerator {
@@ -59,9 +60,9 @@ class QueryGenerator : DesignTemplateGenerator {
         require(design is CommonDesign)
         val name = design.name
         return if (name.endsWith("Qry")) {
-            name
+            toUpperCamelCase(name)!!
         } else {
-            "${name}Qry"
+            toUpperCamelCase("${name}Qry")!!
         }
     }
 

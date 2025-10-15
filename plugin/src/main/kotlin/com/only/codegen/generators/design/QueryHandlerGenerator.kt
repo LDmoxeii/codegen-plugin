@@ -4,6 +4,7 @@ import com.only.codegen.context.design.DesignContext
 import com.only.codegen.context.design.models.CommonDesign
 import com.only.codegen.manager.QueryHandlerImportManager
 import com.only.codegen.misc.refPackage
+import com.only.codegen.misc.toUpperCamelCase
 import com.only.codegen.template.TemplateNode
 
 class QueryHandlerGenerator : DesignTemplateGenerator {
@@ -63,16 +64,16 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         require(design is CommonDesign)
         val name = design.name
         return if (name.endsWith("Qry")) {
-            name
+            toUpperCamelCase(name)!!
         } else {
-            "${name}Qry"
+            toUpperCamelCase("${name}Qry")!!
         }
     }
 
     override fun generatorName(design: Any, context: DesignContext): String {
         require(design is CommonDesign)
         val queryName = getQueryName(design, context)
-        return "${queryName}Handler"
+        return toUpperCamelCase("${queryName}Handler")!!
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {
