@@ -11,7 +11,12 @@ plugins {
 
     // Apply the Kotlin JVM plugin to add support for Kotlin.
     alias(libs.plugins.kotlin.jvm)
+
+    `maven-publish`
 }
+
+group = "com.only4"
+version = "0.1.0-SNAPSHOT"
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -46,6 +51,9 @@ dependencies {
 }
 
 gradlePlugin {
+    website.set("https://github.com/yourorg/codegen-plugin")
+    vcsUrl.set("https://github.com/yourorg/codegen-plugin")
+
     // Define the plugin
     val codegen by plugins.creating {
         id = "com.only.codegen"
@@ -58,4 +66,32 @@ gradlePlugin {
 tasks.named<Test>("test") {
     // Use JUnit Jupiter for unit tests.
     useJUnitPlatform()
+}
+
+// 添加源码 jar 任务
+val sourcesJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("sources")
+    from(sourceSets.main.get().allSource)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+            artifact(sourcesJar)
+            groupId = project.group.toString()
+            artifactId = project.name
+            version = project.version.toString()
+        }
+    }
+    repositories {
+        maven {
+            name = "AliYunMaven"
+            url = uri("https://packages.aliyun.com/67053c6149e9309ce56b9e9e/maven/code-gen")
+            credentials {
+                username = providers.gradleProperty("aliyun.maven.username").get()
+                password = providers.gradleProperty("aliyun.maven.password").get()
+            }
+        }
+    }
 }

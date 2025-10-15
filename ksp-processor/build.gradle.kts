@@ -3,8 +3,8 @@ plugins {
     `maven-publish`
 }
 
-group = "com.only"
-version = "1.0.0"
+group = "com.only4"
+version = "0.1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -37,14 +37,31 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     }
 }
 
+// 添加源码 jar 任务
+val sourcesJar by tasks.registering(Jar::class) {
+    archiveClassifier.set("sources")
+    from(sourceSets.main.get().allSource)
+}
+
 // Publishing configuration
 publishing {
     publications {
         create<MavenPublication>("maven") {
             from(components["java"])
-            groupId = "com.only"
-            artifactId = "ksp-processor"
-            version = "1.0.0"
+            artifact(sourcesJar)
+            groupId = project.group.toString()
+            artifactId = project.name
+            version = project.version.toString()
+        }
+    }
+    repositories {
+        maven {
+            name = "AliYunMaven"
+            url = uri("https://packages.aliyun.com/67053c6149e9309ce56b9e9e/maven/code-gen")
+            credentials {
+                username = providers.gradleProperty("aliyun.maven.username").get()
+                password = providers.gradleProperty("aliyun.maven.password").get()
+            }
         }
     }
 }

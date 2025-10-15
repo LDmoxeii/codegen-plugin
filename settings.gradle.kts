@@ -5,6 +5,24 @@
  * For more detailed information on multi-project builds, please refer to https://docs.gradle.org/8.13/userguide/multi_project_builds.html in the Gradle documentation.
  */
 
+dependencyResolutionManagement {
+    @Suppress("UnstableApiUsage")
+    repositories {
+        mavenLocal()
+        maven {
+            credentials {
+                username = providers.gradleProperty("aliyun.maven.username").get()
+                password = providers.gradleProperty("aliyun.maven.password").get()
+            }
+            url = uri("https://packages.aliyun.com/67053c6149e9309ce56b9e9e/maven/code-gen")
+        }
+        maven {
+            url = uri("https://maven.aliyun.com/repository/public")
+        }
+        mavenCentral()
+    }
+}
+
 rootProject.name = "codegen-plugin"
 include("plugin")
 include("ksp-processor")
