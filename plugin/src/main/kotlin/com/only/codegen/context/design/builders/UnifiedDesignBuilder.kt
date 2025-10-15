@@ -9,6 +9,14 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
 
     override val order: Int = 20
 
+    private val designTypeToGeneratorTags = mapOf(
+        "domain_event_handler" to listOf("domain_event", "domain_event_handler"),
+        "domain_event" to listOf("domain_event", "domain_event_handler"),
+        // 未来可扩展：
+        // "integration_event_handler" to listOf("integration_event", "integration_event_handler"),
+        // "crud" to listOf("command", "query", "repository", "service"),
+    )
+
     override fun build(context: MutableDesignContext) {
         val designMap = mutableMapOf<String, MutableList<BaseDesign>>()
 
@@ -17,7 +25,14 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
 
             elements.forEach {
                 val design = buildDesign(normalizedType, it, context)
-                designMap.computeIfAbsent(normalizedType) { mutableListOf() }.add(design)
+
+                // 获取该设计类型对应的所有生成器标签（默认只有自己）
+                val targetTags = designTypeToGeneratorTags[normalizedType] ?: listOf(normalizedType)
+
+                // 将设计数据添加到所有目标生成器的列表中
+                targetTags.forEach { tag ->
+                    designMap.computeIfAbsent(tag) { mutableListOf() }.add(design)
+                }
             }
         }
 
@@ -133,12 +148,11 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         aggregateMetadataList: List<AggregateInfo>,
     ): DomainEventDesign {
         require(primaryAggregate != null) { "Domain event must have an aggregate: ${element.name}" }
-        val eventName = normalizeName(element.name, "Event")
 
         return DomainEventDesign(
             type = type,
             `package` = element.`package`,
-            name = eventName,
+            name = element.name,
             desc = element.desc,
             aggregate = primaryAggregate,
             aggregates = aggregates,

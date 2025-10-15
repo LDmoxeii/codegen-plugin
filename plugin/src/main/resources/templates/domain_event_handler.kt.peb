@@ -5,9 +5,7 @@ import org.springframework.context.event.EventListener
 import org.springframework.stereotype.Service
 
 /**
-{%- for line in commentLines %}
- * {{ line }}
-{%- endfor %}
+ * {{ Comment }}
  *
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
  * 警告：可以在本文件中添加自定义事件处理方法
