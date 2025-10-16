@@ -1,0 +1,10 @@
+{# Field segment template - Pebble macro for rendering entity fields #}
+{% macro render(column) %}
+{%- if column.needGenerate %}
+
+    /**
+     * {{ column.comment }}
+     */
+    var {{ column.fieldName }}: {{ column.fieldType }},
+{%- endif %}
+{% endmacro %}

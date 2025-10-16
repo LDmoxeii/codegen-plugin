@@ -52,6 +52,14 @@ open class PathNode {
      */
     var children: MutableList<PathNode>? = null
 
+    /**
+     * 缓存的上下文数据
+     * - 所有节点类型都可以使用
+     * - segment: 缓存片段上下文
+     * - file: 可用于调试/日志
+     */
+    var cachedContext: Map<String, Any?>? = null
+
     companion object {
         private val directory = ThreadLocal<String>()
         fun setDirectory(dir: String) = directory.set(dir)
