@@ -5,68 +5,67 @@ import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.template.TemplateNode
 
 /**
- * Entity 字段片段生成器
+ * 测试字段片段生成器
  *
- * 负责构建 entity 的字段上下文（columns）
- * 不生成实际文件，只缓存上下文供 EntityGenerator 使用
+ * 演示如何创建一个 segment generator
  */
-class FieldSegmentGenerator : AggregateTemplateGenerator {
-    override val tag = "entity:field"  // 复合 tag: parentTag:segmentVar
-    override val order = 0  // 在 EntityGenerator (order=20) 之前执行
+class TestFieldSegmentGenerator : AggregateTemplateGenerator {
+    override val tag = "testfull:field"  // 复合 tag: parentTag:segmentVar
+    override val order = 15  // 在 TestFullFileGenerator (order=20) 之前执行
 
     @Volatile
     private var generated = false
 
     override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
-        if (SqlSchemaUtils.isIgnore(table)) return false
-        if (SqlSchemaUtils.hasRelation(table)) return false
-
-        val tableName = SqlSchemaUtils.getTableName(table)
-        return context.columnsMap.containsKey(tableName) && !generated
+        return !generated
     }
 
     override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
         val columns = context.columnsMap[tableName]!!
 
-        val columnDataList = columns.map { column ->
+        // 构建字段数据列表
+        val fieldDataList = columns.map { column ->
             mapOf(
-                "columnName" to SqlSchemaUtils.getColumnName(column),
-                "fieldName" to SqlSchemaUtils.getColumnName(column).lowercase(),
-                "fieldType" to SqlSchemaUtils.getColumnType(column),
-                "comment" to SqlSchemaUtils.getComment(column),
+                "columnName" to "testColumnName",
+                "fieldName" to "testFieldName",
+                "fieldType" to "testFieldType",
+                "comment" to "testComment",
                 "needGenerate" to true
             )
         }
+
+        // 缓存到 segmentContextCache
         val parentTag = tag.substringBefore(":")
         val segmentVar = tag.substringAfter(":")
         val cacheKey = "$parentTag:$tableName:$segmentVar"
 
-        context.putSegmentContext(cacheKey, mapOf("columns" to columnDataList))
+        context.putSegmentContext(cacheKey, mapOf("fields" to fieldDataList))
 
-        return mapOf("columns" to columnDataList)
+        return mapOf("fields" to fieldDataList)
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {
         return listOf(
             TemplateNode().apply {
-                type = "segment"  // 关键：标记为 segment
-                tag = this@FieldSegmentGenerator.tag
+                type = "segment"  // 标记为 segment，不生成文件
+                tag = this@TestFieldSegmentGenerator.tag
                 format = "resource"
-                data = "templates/segments/field.kt.peb"
+                data = "templates/segments/test-field.kt.peb"
             }
         )
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
         generated = true
+
     }
 
     override fun generatorName(table: Map<String, Any?>, context: AggregateContext): String {
-        return "field-segment"
+        return "test-field-segment"
     }
 
     override fun generatorFullName(table: Map<String, Any?>, context: AggregateContext): String {
-        return "field-segment"
+        return "test-field-segment"
     }
 }

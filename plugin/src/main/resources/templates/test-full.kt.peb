@@ -1,0 +1,27 @@
+package {{ basePackage }}.{{ package }}
+
+/**
+ * 测试生成的完整文件
+ *
+ * 演示如何通过 segment macro 组合生成文件
+ *
+ * @author codegen
+ * @date {{ date }}
+ */
+class Test{{ Entity }} {
+    // ========== 字段（来自 TestFieldSegmentGenerator）==========
+{%- for field in fields %}
+    {%- if field.needGenerate %}
+    /**
+     * {{ field.comment }}
+     * Column: {{ field.columnName }}
+     */
+    var {{ field.fieldName }}: {{ field.fieldType }}
+    {%- endif %}
+{%- endfor %}
+
+    // ========== 方法 ==========
+    fun testMethod() {
+        println("This is a test method in Test{{ Entity }}")
+    }
+}

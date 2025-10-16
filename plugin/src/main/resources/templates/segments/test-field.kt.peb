@@ -1,0 +1,10 @@
+{# 测试字段片段模板 - Pebble macro #}
+{% macro render(field) %}
+{%- if field.needGenerate %}
+    /**
+     * {{ field.comment }}
+     * Column: {{ field.columnName }}
+     */
+    var {{ field.fieldName }}: {{ field.fieldType }}
+{%- endif %}
+{% endmacro %}
