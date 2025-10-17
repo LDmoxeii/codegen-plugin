@@ -23,7 +23,7 @@ import java.time.format.DateTimeFormatter
 abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
 
     init {
-        group = "cap4k codegen"
+        group = "code gen"
     }
 
     companion object {

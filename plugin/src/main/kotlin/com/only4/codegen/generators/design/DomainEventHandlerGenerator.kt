@@ -36,7 +36,7 @@ class DomainEventHandlerGenerator : DesignTemplateGenerator {
         val resultContext = context.baseMap.toMutableMap()
 
         with(context) {
-            resultContext.putContext(tag, "modulePath", domainPath)
+            resultContext.putContext(tag, "modulePath", applicationPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(concatPackage(refPackage(design.`package`))))
 
