@@ -24,9 +24,6 @@ interface BaseContext {
     // === 模板信息 ===
     val templateNodeMap: MutableMap<String, MutableList<TemplateNode>>
 
-    // === 片段上下文 ===
-    val segmentContextCache: MutableMap<String, Map<String, Any>>
-
     // === baseMap 辅助访问方法 ===
     fun getString(key: String, default: String = ""): String = baseMap[key]?.toString() ?: default
     fun getBoolean(key: String, default: Boolean = false): Boolean =
@@ -42,13 +39,5 @@ interface BaseContext {
      * 会根据 templateAliasMap 中的映射，将 "User" 同时放入多个别名 key 中
      */
     fun MutableMap<String, Any?>.putContext(tag: String, variable: String, value: Any)
-
-    fun getSegmentContext(key: String): Map<String, Any>? {
-        return segmentContextCache[key]
-    }
-
-    fun putSegmentContext(key: String, context: Map<String, Any>) {
-        segmentContextCache[key] = context
-    }
 }
 

@@ -12,23 +12,22 @@ import com.only4.codegen.template.TemplateNode
  */
 class FieldSegmentGenerator : AggregateTemplateGenerator {
     override val tag = "entity:field"  // 复合 tag: parentTag:segmentVar
-    override val order = 0  // 在 EntityGenerator (order=20) 之前执行
-
-    @Volatile
-    private var generated = false
+    override val order = 15  // 在 EntityGenerator (order=20) 之前执行
 
     override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
-        return context.columnsMap.containsKey(tableName) && !generated
+        return context.columnsMap.containsKey(tableName)
     }
 
     override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
         val columns = context.columnsMap[tableName]!!
 
+        // 简化示例：直接使用列数据
+        // 实际应用中，这里应该调用 EntityGenerator.prepareColumnData()
         val columnDataList = columns.map { column ->
             mapOf(
                 "columnName" to SqlSchemaUtils.getColumnName(column),
@@ -38,11 +37,6 @@ class FieldSegmentGenerator : AggregateTemplateGenerator {
                 "needGenerate" to true
             )
         }
-        val parentTag = tag.substringBefore(":")
-        val segmentVar = tag.substringAfter(":")
-        val cacheKey = "$parentTag:$tableName:$segmentVar"
-
-        context.putSegmentContext(cacheKey, mapOf("columns" to columnDataList))
 
         return mapOf("columns" to columnDataList)
     }
@@ -59,7 +53,17 @@ class FieldSegmentGenerator : AggregateTemplateGenerator {
     }
 
     override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
-        generated = true
+        // Segment generator: 缓存上下文到 segmentContextCache
+        val tableName = SqlSchemaUtils.getTableName(table)
+        val parentTag = tag.substringBefore(":")
+        val segmentVar = tag.substringAfter(":")
+        val cacheKey = "$parentTag:$tableName:$segmentVar"
+
+        // 获取已缓存的上下文（来自 cachedContext）
+        val templateNode = getDefaultTemplateNodes().first()
+        val segmentContext = templateNode.cachedContext ?: buildContext(table, context)
+
+        context.putSegmentContext(cacheKey, segmentContext)
     }
 
     override fun generatorName(table: Map<String, Any?>, context: AggregateContext): String {
@@ -67,6 +71,6 @@ class FieldSegmentGenerator : AggregateTemplateGenerator {
     }
 
     override fun generatorFullName(table: Map<String, Any?>, context: AggregateContext): String {
-        return "field-segment"
+        return "field-segment"  // Segment 不需要完整名称
     }
 }

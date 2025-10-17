@@ -168,8 +168,24 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     @Internal
     override val templateNodeMap = mutableMapOf<String, MutableList<TemplateNode>>()
 
-    @Internal
-    override val segmentContextCache = mutableMapOf<String, Map<String, Any>>()
+    /**
+     * 全局 segment 上下文缓存
+     * Key: "parentTag:tableName:segmentVar"
+     * Value: segment context map
+     */
+    private val segmentContextCache = mutableMapOf<String, Map<String, Any?>>()
+
+    protected fun getSegmentContext(key: String): Map<String, Any?>? {
+        return segmentContextCache[key]
+    }
+
+    protected fun putSegmentContext(key: String, context: Map<String, Any?>) {
+        segmentContextCache[key] = context
+    }
+
+    protected fun clearSegmentCache() {
+        segmentContextCache.clear()
+    }
 
     protected fun mergeSegmentContexts(
         parentTag: String,
@@ -178,7 +194,7 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     ) {
         segmentContextCache.entries
             .filter { it.key.startsWith("$parentTag:$tableName:") }
-            .forEach { (_, segmentContext) ->
+            .forEach { (cacheKey, segmentContext) ->
                 // Merge each segment context item
                 segmentContext.forEach { (key, value) ->
                     baseContext.putContext(parentTag, key, value)

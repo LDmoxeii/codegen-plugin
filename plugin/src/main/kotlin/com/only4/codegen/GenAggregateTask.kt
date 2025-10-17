@@ -165,20 +165,16 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
     private fun generateFiles(context: AggregateContext) {
         val generators = listOf(
-            // 测试 segment 功能
-            TestFieldSegmentGenerator(),     // order=15 - 测试字段片段
-            TestFullFileGenerator(),         // order=20 - 测试完整文件
-
-//            SchemaBaseGenerator(),           // order=10 - Schema 基类
-//            EnumGenerator(),                 // order=10 - 枚举类
-//            EntityGenerator(),               // order=20 - 实体类
-//            SpecificationGenerator(),        // order=30 - 规约类
-//            FactoryGenerator(),              // order=30 - 工厂类
-//            DomainEventGenerator(),          // order=30 - 领域事件类
-//            DomainEventHandlerGenerator(),   // order=30 - 领域事件处理器
-//            RepositoryGenerator(),           // order=30 - Repository 接口及适配器
-//            AggregateGenerator(),            // order=40 - 聚合封装类
-//            SchemaGenerator(),               // order=50 - Schema 类
+            SchemaBaseGenerator(),           // order=10 - Schema 基类
+            EnumGenerator(),                 // order=10 - 枚举类
+            EntityGenerator(),               // order=20 - 实体类
+            SpecificationGenerator(),        // order=30 - 规约类
+            FactoryGenerator(),              // order=30 - 工厂类
+            DomainEventGenerator(),          // order=30 - 领域事件类
+            DomainEventHandlerGenerator(),   // order=30 - 领域事件处理器
+            RepositoryGenerator(),           // order=30 - Repository 接口及适配器
+            AggregateGenerator(),            // order=40 - 聚合封装类
+            SchemaGenerator(),               // order=50 - Schema 类
         )
 
         generators.sortedBy { it.order }
@@ -219,29 +215,60 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
                         .test(generator.generatorName(table, context))
                 }
                 .forEach { templateNode ->
-                    val parentTag = generator.tag
-                    val mergedContext = tableContext.toMutableMap()
-                    mergeSegmentContexts(parentTag, tableName, mergedContext)
+                    val pathNode = templateNode.deepCopy().resolve(tableContext)
 
-                    val pathNode = templateNode.deepCopy().resolve(mergedContext)
-                    forceRender(
-                        pathNode,
-                        resolvePackageDirectory(
-                            mergedContext["modulePath"].toString(),
-                            concatPackage(
-                                getString("basePackage"),
-                                mergedContext["templatePackage"].toString(),
-                                mergedContext["package"].toString()
+                    when (pathNode.type?.lowercase()) {
+                        "segment" -> {
+                            // Segment: cache context, skip rendering
+                            pathNode.cachedContext = tableContext
+                            logger.quiet("Cached segment: ${pathNode.tag} for table $tableName")
+                        }
+
+                        "file" -> {
+                            // File: merge segment contexts and render
+                            val parentTag = generator.tag
+                            val mergedContext = tableContext.toMutableMap()
+                            mergeSegmentContexts(parentTag, tableName, mergedContext)
+
+                            // Resolve and render with merged context
+                            val resolvedPathNode = pathNode.resolve(mergedContext)
+                            forceRender(
+                                resolvedPathNode,
+                                resolvePackageDirectory(
+                                    mergedContext["modulePath"].toString(),
+                                    concatPackage(
+                                        getString("basePackage"),
+                                        mergedContext["templatePackage"].toString(),
+                                        mergedContext["package"].toString()
+                                    )
+                                )
                             )
-                        )
-                    )
-                }
+                        }
 
+                        else -> {
+                            // Other types (dir, root): render normally
+                            forceRender(
+                                pathNode,
+                                resolvePackageDirectory(
+                                    tableContext["modulePath"].toString(),
+                                    concatPackage(
+                                        getString("basePackage"),
+                                        tableContext["templatePackage"].toString(),
+                                        tableContext["package"].toString()
+                                    )
+                                )
+                            )
+                        }
+                    }
+                }
 
             // 4. Post-generation callback
             generator.onGenerated(table, context)
 
-            tables.clear()
+            tables.removeFirst()
         }
+
+        // Clear segment cache after all tables processed
+        clearSegmentCache()
     }
 }
