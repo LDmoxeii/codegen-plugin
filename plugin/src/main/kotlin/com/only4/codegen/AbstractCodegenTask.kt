@@ -168,40 +168,6 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     @Internal
     override val templateNodeMap = mutableMapOf<String, MutableList<TemplateNode>>()
 
-    /**
-     * 全局 segment 上下文缓存
-     * Key: "parentTag:tableName:segmentVar"
-     * Value: segment context map
-     */
-    private val segmentContextCache = mutableMapOf<String, Map<String, Any?>>()
-
-    protected fun getSegmentContext(key: String): Map<String, Any?>? {
-        return segmentContextCache[key]
-    }
-
-    protected fun putSegmentContext(key: String, context: Map<String, Any?>) {
-        segmentContextCache[key] = context
-    }
-
-    protected fun clearSegmentCache() {
-        segmentContextCache.clear()
-    }
-
-    protected fun mergeSegmentContexts(
-        parentTag: String,
-        tableName: String,
-        baseContext: MutableMap<String, Any?>
-    ) {
-        segmentContextCache.entries
-            .filter { it.key.startsWith("$parentTag:$tableName:") }
-            .forEach { (cacheKey, segmentContext) ->
-                // Merge each segment context item
-                segmentContext.forEach { (key, value) ->
-                    baseContext.putContext(parentTag, key, value)
-                }
-            }
-    }
-
 
     /**
      * 根据 tag 和 variable 生成别名列表

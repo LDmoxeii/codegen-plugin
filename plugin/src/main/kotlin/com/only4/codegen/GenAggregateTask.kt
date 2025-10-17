@@ -192,23 +192,19 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
         while (tables.isNotEmpty()) {
             val table = tables.first()
-            val tableName = SqlSchemaUtils.getTableName(table)
 
             if (!generator.shouldGenerate(table, context)) {
                 tables.removeFirst()
                 continue
             }
 
-            // 1. Build context
             val tableContext = generator.buildContext(table, context)
 
-            // 2. Get template nodes
             val templateNodes = generator.getDefaultTemplateNodes() + context.templateNodeMap.getOrDefault(
                 generator.tag,
                 emptyList()
             )
 
-            // 3. Render templates based on type
             templateNodes
                 .filter { templateNode ->
                     templateNode.pattern.isBlank() || Pattern.compile(templateNode.pattern).asPredicate()
@@ -216,59 +212,19 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
                 }
                 .forEach { templateNode ->
                     val pathNode = templateNode.deepCopy().resolve(tableContext)
-
-                    when (pathNode.type?.lowercase()) {
-                        "segment" -> {
-                            // Segment: cache context, skip rendering
-                            pathNode.cachedContext = tableContext
-                            logger.quiet("Cached segment: ${pathNode.tag} for table $tableName")
-                        }
-
-                        "file" -> {
-                            // File: merge segment contexts and render
-                            val parentTag = generator.tag
-                            val mergedContext = tableContext.toMutableMap()
-                            mergeSegmentContexts(parentTag, tableName, mergedContext)
-
-                            // Resolve and render with merged context
-                            val resolvedPathNode = pathNode.resolve(mergedContext)
-                            forceRender(
-                                resolvedPathNode,
-                                resolvePackageDirectory(
-                                    mergedContext["modulePath"].toString(),
-                                    concatPackage(
-                                        getString("basePackage"),
-                                        mergedContext["templatePackage"].toString(),
-                                        mergedContext["package"].toString()
-                                    )
-                                )
+                    forceRender(
+                        pathNode,
+                        resolvePackageDirectory(
+                            tableContext["modulePath"].toString(),
+                            concatPackage(
+                                getString("basePackage"),
+                                tableContext["templatePackage"].toString(),
+                                tableContext["package"].toString()
                             )
-                        }
-
-                        else -> {
-                            // Other types (dir, root): render normally
-                            forceRender(
-                                pathNode,
-                                resolvePackageDirectory(
-                                    tableContext["modulePath"].toString(),
-                                    concatPackage(
-                                        getString("basePackage"),
-                                        tableContext["templatePackage"].toString(),
-                                        tableContext["package"].toString()
-                                    )
-                                )
-                            )
-                        }
-                    }
+                        )
+                    )
                 }
-
-            // 4. Post-generation callback
             generator.onGenerated(table, context)
-
-            tables.removeFirst()
         }
-
-        // Clear segment cache after all tables processed
-        clearSegmentCache()
     }
 }
