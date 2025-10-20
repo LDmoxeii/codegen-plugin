@@ -34,7 +34,7 @@ class {{ Schema }}(
          * @return
          */
         @JvmStatic
-        fun specify(builder: Schema.PredicateBuilder<S{{ Entity }}>): Specification<{{ Entity }}> {
+        fun specify(builder: PredicateBuilder<S{{ Entity }}>): Specification<{{ Entity }}> {
             return specify(builder, false, emptyList())
         }
 
@@ -46,7 +46,7 @@ class {{ Schema }}(
          * @return
          */
         @JvmStatic
-        fun specify(builder: Schema.PredicateBuilder<S{{ Entity }}>, distinct: Boolean): Specification<{{ Entity }}> {
+        fun specify(builder: PredicateBuilder<S{{ Entity }}>, distinct: Boolean): Specification<{{ Entity }}> {
             return specify(builder, distinct, emptyList())
         }
 
@@ -59,8 +59,8 @@ class {{ Schema }}(
          */
         @JvmStatic
         fun specify(
-            builder: Schema.PredicateBuilder<S{{ Entity }}>,
-            vararg orderBuilders: Schema.OrderBuilder<S{{ Entity }}>,
+            builder: PredicateBuilder<S{{ Entity }}>,
+            vararg orderBuilders: OrderBuilder<S{{ Entity }}>,
         ): Specification<{{ Entity }}> {
             return specify(builder, orderBuilders.toList())
         }
@@ -74,8 +74,8 @@ class {{ Schema }}(
          */
         @JvmStatic
         fun specify(
-            builder: Schema.PredicateBuilder<S{{ Entity }}>,
-            orderBuilders: List<Schema.OrderBuilder<S{{ Entity }}>>,
+            builder: PredicateBuilder<S{{ Entity }}>,
+            orderBuilders: List<OrderBuilder<S{{ Entity }}>>,
         ): Specification<{{ Entity }}> {
             return specify(builder, false, orderBuilders)
         }
@@ -90,9 +90,9 @@ class {{ Schema }}(
         */
         @JvmStatic
         fun specify(
-            builder: Schema.PredicateBuilder<S{{ Entity }}>,
+            builder: PredicateBuilder<S{{ Entity }}>,
             distinct: Boolean,
-            vararg orderBuilders: Schema.OrderBuilder<S{{ Entity }}>,
+            vararg orderBuilders: OrderBuilder<S{{ Entity }}>,
         ): Specification<{{ Entity }}> {
             return specify(builder, distinct, orderBuilders.toList())
         }
@@ -107,9 +107,9 @@ class {{ Schema }}(
         */
         @JvmStatic
         fun specify(
-            builder: Schema.PredicateBuilder<S{{ Entity }}>,
+            builder: PredicateBuilder<S{{ Entity }}>,
             distinct: Boolean,
-            orderBuilders: List<Schema.OrderBuilder<S{{ Entity }}>>,
+            orderBuilders: List<OrderBuilder<S{{ Entity }}>>,
         ): Specification<{{ Entity }}> {
             return specify { schema, criteriaQuery, criteriaBuilder ->
                 criteriaQuery.where(builder.build(schema))
@@ -128,7 +128,7 @@ class {{ Schema }}(
          * @return
          */
         @JvmStatic
-        fun specify(specifier: Schema.Specification<{{ Entity }}, S{{ Entity }}>): Specification<{{ Entity }}> {
+        fun specify(specifier: SchemaSpecification<{{ Entity }}, S{{ Entity }}>): Specification<{{ Entity }}> {
             return Specification { root, criteriaQuery, criteriaBuilder ->
                 val schema = S{{ Entity }}(root, criteriaBuilder)
                 specifier.toPredicate(schema, criteriaQuery, criteriaBuilder)
@@ -149,8 +149,8 @@ class {{ Schema }}(
         @JvmStatic
         fun <E> subquery(
             resultClass: Class<E>,
-            selectBuilder: Schema.ExpressionBuilder<S{{ Entity }}, E>,
-            predicateBuilder: Schema.PredicateBuilder<S{{ Entity }}>,
+            selectBuilder: ExpressionBuilder<S{{ Entity }}, E>,
+            predicateBuilder: PredicateBuilder<S{{ Entity }}>,
             criteriaBuilder: CriteriaBuilder,
             criteriaQuery: CriteriaQuery<*>,
         ): Subquery<E> {
@@ -173,7 +173,7 @@ class {{ Schema }}(
         @JvmStatic
         fun <E> subquery(
             resultClass: Class<E>,
-            subqueryConfigure: Schema.SubqueryConfigure<E, S{{ Entity }}>,
+            subqueryConfigure: SubqueryConfigure<E, S{{ Entity }}>,
             criteriaBuilder: CriteriaBuilder,
             criteriaQuery: CriteriaQuery<*>,
         ): Subquery<E> {
@@ -225,7 +225,7 @@ class {{ Schema }}(
          * @return
          */
         @JvmStatic
-        fun predicate(builder: Schema.PredicateBuilder<S{{ Entity }}>): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
+        fun predicate(builder: PredicateBuilder<S{{ Entity }}>): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
             return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder)).toAggregatePredicate(Agg{{ Entity }}::class.java)
         }
 
@@ -237,7 +237,7 @@ class {{ Schema }}(
          * @return
          */
         @JvmStatic
-        fun predicate(builder: Schema.PredicateBuilder<S{{ Entity }}>, distinct: Boolean): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
+        fun predicate(builder: PredicateBuilder<S{{ Entity }}>, distinct: Boolean): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
             return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, distinct)).toAggregatePredicate(Agg{{ Entity }}::class.java)
         }
 
@@ -250,8 +250,8 @@ class {{ Schema }}(
          */
         @JvmStatic
         fun predicate(
-            builder: Schema.PredicateBuilder<S{{ Entity }}>,
-            orderBuilders: List<Schema.OrderBuilder<S{{ Entity }}>>,
+            builder: PredicateBuilder<S{{ Entity }}>,
+            orderBuilders: List<OrderBuilder<S{{ Entity }}>>,
         ): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
             return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, false, orderBuilders)).toAggregatePredicate(Agg{{ Entity }}::class.java)
         }
@@ -265,8 +265,8 @@ class {{ Schema }}(
          */
         @JvmStatic
         fun predicate(
-            builder: Schema.PredicateBuilder<S{{ Entity }}>,
-            vararg orderBuilders: Schema.OrderBuilder<S{{ Entity }}>,
+            builder: PredicateBuilder<S{{ Entity }}>,
+            vararg orderBuilders: OrderBuilder<S{{ Entity }}>,
         ): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
             return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, false, *orderBuilders)).toAggregatePredicate(Agg{{ Entity }}::class.java)
         }
@@ -281,9 +281,9 @@ class {{ Schema }}(
          */
         @JvmStatic
         fun predicate(
-            builder: Schema.PredicateBuilder<S{{ Entity }}>,
+            builder: PredicateBuilder<S{{ Entity }}>,
             distinct: Boolean,
-            orderBuilders: List<Schema.OrderBuilder<S{{ Entity }}>>,
+            orderBuilders: List<OrderBuilder<S{{ Entity }}>>,
         ): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
             return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, distinct, orderBuilders)).toAggregatePredicate(Agg{{ Entity }}::class.java)
         }
@@ -298,9 +298,9 @@ class {{ Schema }}(
          */
         @JvmStatic
         fun predicate(
-            builder: Schema.PredicateBuilder<S{{ Entity }}>,
+            builder: PredicateBuilder<S{{ Entity }}>,
             distinct: Boolean,
-            vararg orderBuilders: Schema.OrderBuilder<S{{ Entity }}>,
+            vararg orderBuilders: OrderBuilder<S{{ Entity }}>,
         ): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
             return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, distinct, *orderBuilders)).toAggregatePredicate(Agg{{ Entity }}::class.java)
         }
@@ -312,7 +312,7 @@ class {{ Schema }}(
          * @return
          */
         @JvmStatic
-        fun predicate(specifier: Schema.Specification<{{ Entity }}, S{{ Entity }}>): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
+        fun predicate(specifier: SchemaSpecification<{{ Entity }}, S{{ Entity }}>): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
             return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(specifier)).toAggregatePredicate(Agg{{ Entity }}::class.java)
         }
 {%- endif %}
@@ -364,8 +364,8 @@ class {{ Schema }}(
     /**
      * {{ field.comment }}
      */
-    val {{ field.fieldName }}: {{ SchemaBase }}.Field<{{ field.fieldType }}> by lazy {
-        {{ SchemaBase }}.Field(root.get("{{ field.fieldName }}"), criteriaBuilder)
+    val {{ field.fieldName }}: Field<{{ field.fieldType }}> by lazy {
+        Field(root.get("{{ field.fieldName }}"), criteriaBuilder)
     }
 
 {% endfor %}
@@ -373,8 +373,8 @@ class {{ Schema }}(
     /**
      * 关联: {{ relationField.relation }} - {{ relationField.refEntityType }}
      */
-    val {{ relationField.fieldName }}: {{ SchemaBase }}.Field<Any> by lazy {
-        {{ SchemaBase }}.Field(root.get("{{ relationField.fieldName }}"), criteriaBuilder)
+    val {{ relationField.fieldName }}: Field<Any> by lazy {
+        Field(root.get("{{ relationField.fieldName }}"), criteriaBuilder)
     }
 
 {% endfor %}
@@ -397,12 +397,41 @@ class {{ Schema }}(
     }
 
     /**
+     * 满足所有条件（过滤 null）
+     * 类似 Jimmer 的 where { } 自动过滤 null 的行为
+     */
+    fun allNotNull(vararg restrictions: Predicate?): Predicate? {
+        val nonNullRestrictions = restrictions.filterNotNull().toTypedArray()
+        return when {
+            nonNullRestrictions.isEmpty() -> null
+            nonNullRestrictions.size == 1 -> nonNullRestrictions[0]
+            else -> criteriaBuilder.and(*nonNullRestrictions)
+        }
+    }
+
+    /**
+     * 满足任一条件（过滤 null）
+     */
+    fun anyNotNull(vararg restrictions: Predicate?): Predicate? {
+        val nonNullRestrictions = restrictions.filterNotNull().toTypedArray()
+        return when {
+            nonNullRestrictions.isEmpty() -> null
+            nonNullRestrictions.size == 1 -> nonNullRestrictions[0]
+            else -> criteriaBuilder.or(*nonNullRestrictions)
+        }
+    }
+
+    /**
+     * NOT 操作
+     */
+    fun not(restriction: Predicate): Predicate = criteriaBuilder.not(restriction)
+
+    /**
      * 指定条件
      * @param builder
      * @return
      */
-    fun spec(builder: {{ SchemaBase }}.PredicateBuilder<{{ Schema }}>): Predicate
-    {
+    fun spec(builder: PredicateBuilder<{{ Schema }}>): Predicate {
         return builder.build(this)
     }
 }

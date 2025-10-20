@@ -37,11 +37,10 @@ class SchemaGenerator : AggregateTemplateGenerator {
         val repositorySupportQuerydsl = context.getBoolean("repositorySupportQuerydsl")
 
         // 创建 ImportManager
-        val importManager = SchemaImportManager()
+        val importManager = SchemaImportManager(getPackageFromClassName(context.typeMapping["Schema"]!!))
         importManager.addBaseImports()
         importManager.add(
             context.typeMapping[entityType]!!,
-            context.typeMapping["Schema"]!!,
         )
         importManager.addIfNeeded(
             isAggregateRoot && repositorySupportQuerydsl,
