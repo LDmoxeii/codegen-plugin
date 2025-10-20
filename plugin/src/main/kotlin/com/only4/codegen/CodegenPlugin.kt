@@ -41,11 +41,27 @@ class CodegenPlugin : Plugin<Project> {
 
         // Configure genDesign to depend on kspKotlin after project evaluation
         project.afterEvaluate {
-            val genDesignTask = project.tasks.findByName("genDesign")
-            val kspKotlinTask = project.tasks.findByName("kspKotlin")
+            val genDesignTask = project.tasks.findByName("genDesign") ?: return@afterEvaluate
 
-            if (genDesignTask != null && kspKotlinTask != null) {
-                genDesignTask.dependsOn(kspKotlinTask)
+            // Try to find kspKotlin in current project first
+            val currentKspTask = project.tasks.findByName("kspKotlin")
+            if (currentKspTask != null) {
+                genDesignTask.dependsOn(currentKspTask)
+                return@afterEvaluate
+            }
+
+            // Try to find kspKotlin in domain submodule
+            val domainModuleName = project.name + extension.moduleNameSuffix4Domain.getOrElse("-domain")
+            val domainProject = project.rootProject.allprojects.find { it.name == domainModuleName }
+
+            if (domainProject != null) {
+                // Use task path dependency to allow Gradle to resolve the task even if it's created later
+                val kspTaskPath = "${domainProject.path}:kspKotlin"
+                try {
+                    genDesignTask.dependsOn(kspTaskPath)
+                } catch (e: Exception) {
+                    project.logger.warn("Could not add dependency on $kspTaskPath: ${e.message}")
+                }
             }
         }
     }
