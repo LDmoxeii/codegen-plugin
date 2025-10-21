@@ -315,7 +315,139 @@ class {{ Schema }}(
         fun predicate(specifier: SchemaSpecification<{{ Entity }}, S{{ Entity }}>): AggregatePredicate<Agg{{ Entity }}, {{ Entity }}> {
             return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(specifier)).toAggregatePredicate(Agg{{ Entity }}::class.java)
         }
-{%- endif %}
+{% elseif isAggregateRoot %}
+        /**
+         * 构建查询条件
+         *
+         * @param id 主键
+         * @return
+         */
+        @JvmStatic
+        fun predicateById(id: Any): JpaPredicate<{{ Entity }}> {
+            return JpaPredicate.byId({{ Entity }}::class.java, id)
+        }
+
+        /**
+        * 构建查询条件
+        *
+        * @param ids 主键
+        * @return
+        */
+        @JvmStatic
+        fun predicateByIds(ids: Iterable<*>): JpaPredicate<{{ Entity }}> {
+            @Suppress("UNCHECKED_CAST")
+            return JpaPredicate.byIds({{ Entity }}::class.java, ids as Iterable<Any>)
+        }
+
+        /**
+         * 构建查询条件
+         *
+         * @param ids 主键
+         * @return
+         */
+        @JvmStatic
+        fun predicateByIds(vararg ids: Any): JpaPredicate<{{ Entity }}> {
+            return JpaPredicate.byIds({{ Entity }}::class.java, ids.toList())
+        }
+
+        /**
+         * 构建查询条件
+         *
+         * @param builder 查询条件构造器
+         * @return
+         */
+        @JvmStatic
+        fun predicate(builder: PredicateBuilder<S{{ Entity }}>): JpaPredicate<{{ Entity }}> {
+            return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder))
+        }
+
+        /**
+         * 构建查询条件
+         *
+         * @param builder  查询条件构造器
+         * @param distinct 是否去重
+         * @return
+         */
+        @JvmStatic
+        fun predicate(builder: PredicateBuilder<S{{ Entity }}>, distinct: Boolean): JpaPredicate<{{ Entity }}> {
+            return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, distinct))
+        }
+
+        /**
+         * 构建查询条件
+         *
+         * @param builder       查询条件构造器
+         * @param orderBuilders 排序构造器
+         * @return
+         */
+        @JvmStatic
+        fun predicate(
+            builder: PredicateBuilder<S{{ Entity }}>,
+            orderBuilders: List<OrderBuilder<S{{ Entity }}>>,
+        ): JpaPredicate<{{ Entity }}> {
+            return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, false, orderBuilders))
+        }
+
+        /**
+         * 构建查询条件
+         *
+         * @param builder       查询条件构造器
+         * @param orderBuilders 排序构造器
+         * @return
+         */
+        @JvmStatic
+        fun predicate(
+            builder: PredicateBuilder<S{{ Entity }}>,
+            vararg orderBuilders: OrderBuilder<S{{ Entity }}>,
+        ): JpaPredicate<{{ Entity }}> {
+            return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, false, *orderBuilders))
+        }
+
+        /**
+         * 构建查询条件
+         *
+         * @param builder       查询条件构造器
+         * @param distinct      是否去重
+         * @param orderBuilders 排序构造器
+         * @return
+         */
+        @JvmStatic
+        fun predicate(
+            builder: PredicateBuilder<S{{ Entity }}>,
+            distinct: Boolean,
+            orderBuilders: List<OrderBuilder<S{{ Entity }}>>,
+        ): JpaPredicate<{{ Entity }}> {
+            return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, distinct, orderBuilders))
+        }
+
+        /**
+         * 构建查询条件
+         *
+         * @param builder       查询条件构造器
+         * @param distinct      是否去重
+         * @param orderBuilders 排序构造器
+         * @return
+         */
+        @JvmStatic
+        fun predicate(
+            builder: PredicateBuilder<S{{ Entity }}>,
+            distinct: Boolean,
+            vararg orderBuilders: OrderBuilder<S{{ Entity }}>,
+        ): JpaPredicate<{{ Entity }}> {
+            return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(builder, distinct, *orderBuilders))
+        }
+
+        /**
+         * 构建查询条件
+         *
+         * @param specifier 查询条件构造器
+         * @return
+         */
+        @JvmStatic
+        fun predicate(specifier: SchemaSpecification<{{ Entity }}, S{{ Entity }}>): JpaPredicate<{{ Entity }}> {
+            return JpaPredicate.bySpecification({{ Entity }}::class.java, specify(specifier))
+        }
+{% endif %}
 
 {%- if isAggregateRoot and generateAggregate and repositorySupportQuerydsl %}
        /**
