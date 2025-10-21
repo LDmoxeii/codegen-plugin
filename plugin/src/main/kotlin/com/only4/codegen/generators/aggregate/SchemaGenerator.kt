@@ -43,8 +43,11 @@ class SchemaGenerator : AggregateTemplateGenerator {
             context.typeMapping[entityType]!!,
         )
         importManager.addIfNeeded(
+            isAggregateRoot,
+            "com.only4.cap4k.ddd.domain.repo.JpaPredicate"
+        )
+        importManager.addIfNeeded(
             isAggregateRoot && repositorySupportQuerydsl,
-            "com.only4.cap4k.ddd.domain.repo.JpaPredicate",
             "com.querydsl.core.types.OrderSpecifier",
             "com.only4.cap4k.ddd.core.domain.aggregate.AggregatePredicate",
             "com.only4.cap4k.ddd.domain.repo.querydsl.QuerydslPredicate"
