@@ -16,7 +16,7 @@ plugins {
 }
 
 group = "com.only4"
-version = "0.1.4-SNAPSHOT"
+version = "0.1.5-SNAPSHOT"
 
 repositories {
     // Use Maven Central for resolving dependencies.
