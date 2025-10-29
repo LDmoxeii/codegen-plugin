@@ -1,5 +1,8 @@
+import jdk.tools.jlink.resources.plugins
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
-    kotlin("jvm") version "2.1.0"
+    kotlin("jvm") version "2.2.20"
     `maven-publish`
 }
 
@@ -11,7 +14,7 @@ repositories {
 }
 
 dependencies {
-    // KSP API - 使用与 Kotlin 2.1.0 兼容的版本
+    // KSP API - 使用稳定可用的 API 版本（与 Kotlin 2.2 编译兼容）
     implementation("com.google.devtools.ksp:symbol-processing-api:2.1.0-1.0.29")
 
     // JSON processing
@@ -30,10 +33,10 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-// Kotlin compilation configuration
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "17"
+// Kotlin compilation configuration (Kotlin 2.2+ compilerOptions DSL)
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
