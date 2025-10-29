@@ -1,6 +1,7 @@
 package com.only4.codegen.context.design.builders
 
 import com.alibaba.fastjson.JSON
+import com.alibaba.fastjson.JSONArray
 import com.alibaba.fastjson.JSONObject
 import com.only4.codegen.context.ContextBuilder
 import com.only4.codegen.context.design.MutableDesignContext
@@ -28,37 +29,44 @@ class DesignContextBuilder : ContextBuilder<MutableDesignContext> {
     private fun loadDesignFile(file: File, context: MutableDesignContext) {
         val encoding = context.getString("designEncoding", "UTF-8")
         val content = file.readText(Charset.forName(encoding))
-        val jsonObj = JSON.parseObject(content)
+        val jsonArray = JSON.parseArray(content)
 
-        parseJsonDesign(jsonObj, context)
+        parseJsonDesignArray(jsonArray, context)
     }
 
-    private fun parseJsonDesign(jsonObj: JSONObject, context: MutableDesignContext) {
-        // 定义支持的设计类型别名映射
+    private fun parseJsonDesignArray(jsonArray: JSONArray, context: MutableDesignContext) {
+        // 定义支持的设计类型别名映射（基于条目内的 tag 字段）
         val typeAliasMap = mapOf(
+            // command
             "cmd" to "cmd",
             "command" to "cmd",
             "commands" to "cmd",
 
+            // query
             "qry" to "qry",
             "query" to "qry",
             "queries" to "qry",
 
+            // saga
             "saga" to "saga",
             "sagas" to "saga",
 
+            // client
             "cli" to "cli",
             "client" to "cli",
             "clients" to "cli",
 
+            // integration event
             "ie" to "ie",
             "integration_event" to "ie",
             "integration_events" to "ie",
 
+            // domain event
             "de" to "de",
             "domain_event" to "de",
             "domain_events" to "de",
 
+            // domain service
             "svc" to "svc",
             "service" to "svc",
             "services" to "svc",
@@ -66,18 +74,15 @@ class DesignContextBuilder : ContextBuilder<MutableDesignContext> {
             "domain_services" to "svc"
         )
 
-        jsonObj.keys.forEach { key ->
-            val normalizedType = typeAliasMap[key.lowercase()] ?: key.lowercase()
-            val elements = jsonObj.getJSONArray(key)
+        jsonArray.forEach { item ->
+            val obj = item as? JSONObject ?: return@forEach
+            val rawTag = obj.getString("tag")?.lowercase() ?: return@forEach
+            val normalizedType = typeAliasMap[rawTag] ?: rawTag
 
-            elements?.forEach { item ->
-                if (item is JSONObject) {
-                    val element = parseDesignElement(normalizedType, item)
-                    context.designElementMap
-                        .computeIfAbsent(normalizedType) { mutableListOf() }
-                        .add(element)
-                }
-            }
+            val element = parseDesignElement(normalizedType, obj)
+            context.designElementMap
+                .computeIfAbsent(normalizedType) { mutableListOf() }
+                .add(element)
         }
     }
 
@@ -90,7 +95,7 @@ class DesignContextBuilder : ContextBuilder<MutableDesignContext> {
         val metadata = mutableMapOf<String, Any?>()
         jsonObj.keys.forEach { key ->
             when (key) {
-                "package", "name", "aggregate", "aggregates", "desc" -> {} // 跳过基础字段
+                "package", "name", "aggregate", "aggregates", "desc", "tag" -> {} // 跳过基础字段
 
                 "metadata" -> {
                     // 如果有 metadata 对象,合并到 map
