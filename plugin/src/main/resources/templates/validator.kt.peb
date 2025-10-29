@@ -1,0 +1,30 @@
+package {{ basePackage }}{{ templatePackage }}{{ package }}
+
+import jakarta.validation.Constraint
+import jakarta.validation.ConstraintValidator
+import jakarta.validation.ConstraintValidatorContext
+import jakarta.validation.Payload
+import kotlin.reflect.KClass
+
+/**
+ * {{ Comment }}
+ *
+ * 说明：该校验器为代码生成的基础骨架，
+ * 请在 Validator#isValid 中补充具体校验逻辑。
+ */
+@Target(AnnotationTarget.FIELD, AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@Constraint(validatedBy = [{{ Validator }}.Validator::class])
+@MustBeDocumented
+annotation class {{ Validator }}(
+    val message: String = "校验未通过",
+    val groups: Array<KClass<*>> = [],
+    val payload: Array<KClass<out Payload>> = [],
+){
+    class Validator : ConstraintValidator<{{ Validator }}, {{ ValueType }}> {
+        override fun isValid(value: {{ ValueType }}?, context: ConstraintValidatorContext): Boolean {
+            // TODO: 实现具体的校验逻辑
+            return true
+        }
+    }
+}

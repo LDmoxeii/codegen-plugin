@@ -12,6 +12,7 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
     private val designTypeToGeneratorTags = mapOf(
         "domain_event" to listOf("domain_event", "domain_event_handler"),
         "query" to listOf("query", "query_handler"),
+        "validator" to listOf("validator"),
     )
 
     override fun build(context: MutableDesignContext) {
@@ -75,6 +76,10 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
 
             "domain_event" -> buildDomainEventDesign(
                 "domain_event", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            )
+
+            "validator" -> buildCommonDesign(
+                "validator", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
             else -> throw IllegalArgumentException("Unknown design type: $type")

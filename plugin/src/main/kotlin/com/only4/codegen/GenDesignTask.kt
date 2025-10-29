@@ -76,6 +76,12 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         "saga" to "saga",
         "sagas" to "saga",
 
+        // Validator 别名
+        "validators" to "validator",
+        "validator" to "validator",
+        "validater" to "validator",
+        "validate" to "validator",
+
         // Integration Event 别名
         "integration_events" to "integration_event",
         "integration_event" to "integration_event",
@@ -146,7 +152,8 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
             QueryGenerator(),             // order=10 - 生成查询
             DomainEventGenerator(),        // order=10 - 生成领域事件
             DomainEventHandlerGenerator(),  // order=20 - 生成领域事件处理器
-            QueryHandlerGenerator()         // order=20 - 生成查询处理器
+            QueryHandlerGenerator(),        // order=20 - 生成查询处理器
+            ValidatorGenerator()            // order=10 - 生成校验器
         )
 
         generators.sortedBy { it.order }.forEach { generator ->
