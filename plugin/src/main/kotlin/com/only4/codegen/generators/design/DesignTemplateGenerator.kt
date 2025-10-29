@@ -22,7 +22,8 @@ interface DesignTemplateGenerator {
     /**
      * 判断是否应该为此设计生成代码
      */
-    fun shouldGenerate(design: Any, context: DesignContext): Boolean
+    context(ctx: DesignContext)
+    fun shouldGenerate(design: Any): Boolean
 
     /**
      * 构建模板上下文
@@ -31,19 +32,22 @@ interface DesignTemplateGenerator {
      * @param context 设计上下文
      * @return 模板变量 Map
      */
-    fun buildContext(design: Any, context: DesignContext): Map<String, Any?>
+    context(ctx: DesignContext)
+    fun buildContext(design: Any): Map<String, Any?>
 
     /**
      * 获取生成器完全限定名
      * 例如: "com.example.application.commands.category.CreateCategoryCmd"
      */
-    fun generatorFullName(design: Any, context: DesignContext): String
+    context(ctx: DesignContext)
+    fun generatorFullName(design: Any): String
 
     /**
      * 获取生成器简单名称
      * 例如: "CreateCategoryCmd"
      */
-    fun generatorName(design: Any, context: DesignContext): String
+    context(ctx: DesignContext)
+    fun generatorName(design: Any): String
 
     /**
      * 获取默认模板节点列表
@@ -62,5 +66,6 @@ interface DesignTemplateGenerator {
      * 生成完成后的回调
      * 可用于缓存生成的类型到 typeMapping
      */
-    fun onGenerated(design: Any, context: DesignContext) {}
+    context(ctx: DesignContext)
+    fun onGenerated(design: Any) {}
 }

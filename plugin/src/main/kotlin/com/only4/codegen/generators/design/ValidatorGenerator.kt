@@ -11,22 +11,22 @@ class ValidatorGenerator : DesignTemplateGenerator {
     override val tag: String = "validator"
     override val order: Int = 10
 
-    override fun shouldGenerate(design: Any, context: DesignContext): Boolean {
-        return !context.typeMapping.containsKey(generatorName(design, context))
-    }
+    context(ctx: DesignContext)
+    override fun shouldGenerate(design: Any): Boolean = !ctx.typeMapping.containsKey(generatorName(design))
 
-    override fun buildContext(design: Any, context: DesignContext): Map<String, Any?> {
+    context(ctx: DesignContext)
+    override fun buildContext(design: Any): Map<String, Any?> {
         require(design is CommonDesign) { "Design must be CommonDesign" }
 
-        val resultContext = context.baseMap.toMutableMap()
+        val resultContext = ctx.baseMap.toMutableMap()
 
-        with(context) {
-            resultContext.putContext(tag, "modulePath", applicationPath)
+        with(ctx) {
+            resultContext.putContext(tag, "modulePath", ctx.applicationPath)
             // 将校验器固定输出到 application.validater 包下
             resultContext.putContext(tag, "templatePackage", refPackage("application"))
             resultContext.putContext(tag, "package", refPackage("validater"))
 
-            resultContext.putContext(tag, "Validator", generatorName(design, context))
+            resultContext.putContext(tag, "Validator", generatorName(design))
             resultContext.putContext(tag, "Comment", design.desc)
 
             // 值类型（默认 Long）
@@ -36,17 +36,17 @@ class ValidatorGenerator : DesignTemplateGenerator {
         return resultContext
     }
 
-    override fun generatorFullName(design: Any, context: DesignContext): String {
+    context(ctx: DesignContext)
+    override fun generatorFullName(design: Any): String {
         require(design is CommonDesign)
-        with(context) {
-            val basePackage = getString("basePackage")
-            val templatePackage = refPackage("application")
-            val `package` = refPackage("validater")
-            return "$basePackage$templatePackage$`package`${refPackage(generatorName(design, context))}"
-        }
+        val basePackage = ctx.getString("basePackage")
+        val templatePackage = refPackage("application")
+        val `package` = refPackage("validater")
+        return "$basePackage$templatePackage$`package`${refPackage(generatorName(design))}"
     }
 
-    override fun generatorName(design: Any, context: DesignContext): String {
+    context(ctx: DesignContext)
+    override fun generatorName(design: Any): String {
         require(design is CommonDesign)
         val name = design.name
         return toUpperCamelCase(name)!!
@@ -65,7 +65,8 @@ class ValidatorGenerator : DesignTemplateGenerator {
         )
     }
 
-    override fun onGenerated(design: Any, context: DesignContext) {
-        context.typeMapping[generatorName(design, context)] = generatorFullName(design, context)
+    context(ctx: DesignContext)
+    override fun onGenerated(design: Any) {
+        ctx.typeMapping[generatorName(design)] = generatorFullName(design)
     }
 }

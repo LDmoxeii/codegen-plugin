@@ -19,42 +19,44 @@ class SpecificationGenerator : AggregateTemplateGenerator {
         private const val DEFAULT_SPEC_PACKAGE = "specs"
     }
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
+    context(ctx: AggregateContext)
+    override fun shouldGenerate(table: Map<String, Any?>): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
 
         if (!SqlSchemaUtils.isAggregateRoot(table)) return false
 
-        if (!(SqlSchemaUtils.hasSpecification(table)) && context.getBoolean("generateAggregate")) return false
+        if (!(SqlSchemaUtils.hasSpecification(table)) && ctx.getBoolean("generateAggregate")) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName] ?: return false
-        val columns = context.columnsMap[tableName] ?: return false
+        val entityType = ctx.entityTypeMap[tableName] ?: return false
+        val columns = ctx.columnsMap[tableName] ?: return false
         val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
 
         val specificationType = "${entityType}Specification"
-        return ids.isNotEmpty() && !context.typeMapping.containsKey(specificationType)
+        return ids.isNotEmpty() && !ctx.typeMapping.containsKey(specificationType)
     }
 
-    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
+    context(ctx: AggregateContext)
+    override fun buildContext(table: Map<String, Any?>): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
-        val aggregate = context.resolveAggregateWithModule(tableName)
-        val entityType = context.entityTypeMap[tableName]!!
-        val fullEntityType = context.typeMapping[entityType]!!
+        val aggregate = ctx.resolveAggregateWithModule(tableName)
+        val entityType = ctx.entityTypeMap[tableName]!!
+        val fullEntityType = ctx.typeMapping[entityType]!!
 
-        val resultContext = context.baseMap.toMutableMap()
+        val resultContext = ctx.baseMap.toMutableMap()
 
         // 创建 ImportManager
         val importManager = SpecificationImportManager()
         importManager.addBaseImports()
 
-        with(context) {
+        with(ctx) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(context.templatePackage[tag] ?: ""))
+            resultContext.putContext(tag, "templatePackage", refPackage(ctx.templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
             resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
-            resultContext.putContext(tag, "Specification", generatorName(table, context))
+            resultContext.putContext(tag, "Specification", generatorName(table))
 
             resultContext.putContext(tag, "Entity", entityType)
             resultContext.putContext(tag, "fullEntityType", fullEntityType)
@@ -69,8 +71,9 @@ class SpecificationGenerator : AggregateTemplateGenerator {
         return resultContext
     }
 
-    override fun generatorFullName(table: Map<String, Any?>, context: AggregateContext): String {
-        with(context) {
+    context(ctx: AggregateContext)
+    override fun generatorFullName(table: Map<String, Any?>): String {
+        with(ctx) {
             val tableName = SqlSchemaUtils.getTableName(table)
             val aggregate = resolveAggregateWithModule(tableName)
             val entityType = entityTypeMap[tableName]!!
@@ -88,9 +91,10 @@ class SpecificationGenerator : AggregateTemplateGenerator {
         }
     }
 
-    override fun generatorName(table: Map<String, Any?>, context: AggregateContext): String {
+    context(ctx: AggregateContext)
+    override fun generatorName(table: Map<String, Any?>): String {
         val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName]!!
+        val entityType = ctx.entityTypeMap[tableName]!!
         return "${entityType}Specification"
     }
 
@@ -107,7 +111,9 @@ class SpecificationGenerator : AggregateTemplateGenerator {
         )
     }
 
-    override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
-        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
+    context(ctx: AggregateContext)
+    override fun onGenerated(table: Map<String, Any?>) {
+        ctx.typeMapping[generatorName(table)] = generatorFullName(table)
     }
 }
+

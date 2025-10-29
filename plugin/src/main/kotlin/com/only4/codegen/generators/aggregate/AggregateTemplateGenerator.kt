@@ -8,13 +8,17 @@ interface AggregateTemplateGenerator {
 
     val order: Int
 
-    fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean
+    context(ctx: AggregateContext)
+    fun shouldGenerate(table: Map<String, Any?>): Boolean
 
-    fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?>
+    context(ctx: AggregateContext)
+    fun buildContext(table: Map<String, Any?>): Map<String, Any?>
 
-    fun generatorFullName(table: Map<String, Any?>, context: AggregateContext): String
+    context(ctx: AggregateContext)
+    fun generatorFullName(table: Map<String, Any?>): String
 
-    fun generatorName(table: Map<String, Any?>, context: AggregateContext): String
+    context(ctx: AggregateContext)
+    fun generatorName(table: Map<String, Any?>): String
 
     /**
      * 获取默认模板节点列表
@@ -29,5 +33,6 @@ interface AggregateTemplateGenerator {
      */
     fun getDefaultTemplateNodes(): List<TemplateNode>
 
-    fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {}
+    context(ctx: AggregateContext)
+    fun onGenerated(table: Map<String, Any?>) {}
 }

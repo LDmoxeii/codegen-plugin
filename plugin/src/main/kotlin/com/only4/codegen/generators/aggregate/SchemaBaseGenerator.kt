@@ -13,22 +13,24 @@ class SchemaBaseGenerator : AggregateTemplateGenerator {
     override val tag = "schema_base"
     override val order = 10
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean
-        = !context.typeMapping.containsKey(generatorName(table, context))
+    context(ctx: AggregateContext)
+    override fun shouldGenerate(table: Map<String, Any?>): Boolean
+        = !ctx.typeMapping.containsKey(generatorName(table))
 
-    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
-        val resultContext = context.baseMap.toMutableMap()
+    context(ctx: AggregateContext)
+    override fun buildContext(table: Map<String, Any?>): Map<String, Any?> {
+        val resultContext = ctx.baseMap.toMutableMap()
 
         // 创建 ImportManager
         val importManager = SchemaBaseImportManager()
         importManager.addBaseImports()
 
-        with(context) {
-            resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
+        with(ctx) {
+            resultContext.putContext(tag, "modulePath", ctx.domainPath)
+            resultContext.putContext(tag, "templatePackage", refPackage(ctx.templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", "")
 
-            resultContext.putContext(tag, "SchemaBase", generatorName(table, context))
+            resultContext.putContext(tag, "SchemaBase", generatorName(table))
 
             // 添加 imports
             resultContext.putContext(tag, "imports", importManager.toImportLines())
@@ -37,22 +39,22 @@ class SchemaBaseGenerator : AggregateTemplateGenerator {
         return resultContext
     }
 
+    context(ctx: AggregateContext)
     override fun generatorFullName(
-        table: Map<String, Any?>,
-        context: AggregateContext
+        table: Map<String, Any?>
     ): String {
-        with(context) {
+        with(ctx) {
             val basePackage = getString("basePackage")
             val templatePackage = refPackage(templatePackage[tag] ?: "")
             val `package` = ""
 
-            return "$basePackage$templatePackage$`package`${refPackage(generatorName(table, context))}"
+            return "$basePackage$templatePackage$`package`${refPackage(generatorName(table))}"
         }
     }
 
+    context(ctx: AggregateContext)
     override fun generatorName(
-        table: Map<String, Any?>,
-        context: AggregateContext
+        table: Map<String, Any?>
     ): String = "Schema"
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {
@@ -68,7 +70,8 @@ class SchemaBaseGenerator : AggregateTemplateGenerator {
         )
     }
 
-    override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
-        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
+    context(ctx: AggregateContext)
+    override fun onGenerated(table: Map<String, Any?>) {
+        ctx.typeMapping[generatorName(table)] = generatorFullName(table)
     }
 }

@@ -12,17 +12,19 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
     override val tag: String = "query_handler"
     override val order: Int = 20
 
-    override fun shouldGenerate(design: Any, context: DesignContext): Boolean {
+    context(ctx: DesignContext)
+    override fun shouldGenerate(design: Any): Boolean {
         if (design !is CommonDesign) return false
-        if (context.typeMapping.containsKey(generatorName(design, context))) return false
+        if (ctx.typeMapping.containsKey(generatorName(design))) return false
         return true
     }
 
-    override fun buildContext(design: Any, context: DesignContext): Map<String, Any?> {
+    context(ctx: DesignContext)
+    override fun buildContext(design: Any): Map<String, Any?> {
         require(design is CommonDesign) { "Design must be CommonDesign" }
 
-        val resultContext = context.baseMap.toMutableMap()
-        val queryType = context.typeMapping[getQueryName(design, context)]!!
+        val resultContext = ctx.baseMap.toMutableMap()
+        val queryType = ctx.typeMapping[getQueryName(design)]!!
 
         // 根据设计名称推断查询类型
         val handlerQueryType = QueryHandlerImportManager.inferQueryType(design.name)
@@ -32,13 +34,13 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         importManager.addBaseImports()
         importManager.add(queryType)
 
-        with(context) {
-            resultContext.putContext(tag, "modulePath", adapterPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
+        with(ctx) {
+            resultContext.putContext(tag, "modulePath", ctx.adapterPath)
+            resultContext.putContext(tag, "templatePackage", refPackage(ctx.templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(design.`package`))
 
-            resultContext.putContext(tag, "QueryHandler", generatorName(design, context))
-            resultContext.putContext(tag, "Query", getQueryName(design, context))
+            resultContext.putContext(tag, "QueryHandler", generatorName(design))
+            resultContext.putContext(tag, "Query", getQueryName(design))
 
             resultContext.putContext(tag, "Comment", design.desc)
 
@@ -49,18 +51,18 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         return resultContext
     }
 
-    override fun generatorFullName(design: Any, context: DesignContext): String {
+    context(ctx: DesignContext)
+    override fun generatorFullName(design: Any): String {
         require(design is CommonDesign)
-        with(context) {
-            val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag] ?: "")
-            val `package` = refPackage(design.`package`)
+        val basePackage = ctx.getString("basePackage")
+        val templatePackage = refPackage(ctx.templatePackage[tag] ?: "")
+        val `package` = refPackage(design.`package`)
 
-            return "$basePackage$templatePackage$`package`${refPackage(generatorName(design, context))}"
-        }
+        return "$basePackage$templatePackage$`package`${refPackage(generatorName(design))}"
     }
 
-    private fun getQueryName(design: Any, context: DesignContext): String {
+    context(ctx: DesignContext)
+    private fun getQueryName(design: Any): String {
         require(design is CommonDesign)
         val name = design.name
         return if (name.endsWith("Qry")) {
@@ -70,9 +72,10 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         }
     }
 
-    override fun generatorName(design: Any, context: DesignContext): String {
+    context(ctx: DesignContext)
+    override fun generatorName(design: Any): String {
         require(design is CommonDesign)
-        val queryName = getQueryName(design, context)
+        val queryName = getQueryName(design)
         return toUpperCamelCase("${queryName}Handler")!!
     }
 
@@ -108,10 +111,11 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         )
     }
 
-    override fun onGenerated(design: Any, context: DesignContext) {
+    context(ctx: DesignContext)
+    override fun onGenerated(design: Any) {
         if (design is CommonDesign) {
-            val fullName = generatorFullName(design, context)
-            context.typeMapping[generatorName(design, context)] = fullName
+            val fullName = generatorFullName(design)
+            ctx.typeMapping[generatorName(design)] = fullName
         }
     }
 }

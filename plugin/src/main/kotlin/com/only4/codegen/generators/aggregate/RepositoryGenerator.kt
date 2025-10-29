@@ -16,24 +16,26 @@ class RepositoryGenerator : AggregateTemplateGenerator {
     override val tag = "repository"
     override val order = 30
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
+    context(ctx: AggregateContext)
+    override fun shouldGenerate(table: Map<String, Any?>): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
 
         if (!SqlSchemaUtils.isAggregateRoot(table)) return false
 
-        if (context.typeMapping.containsKey(generatorName(table, context))) return false
+        if (ctx.typeMapping.containsKey(generatorName(table))) return false
 
         return true
     }
 
-    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
+    context(ctx: AggregateContext)
+    override fun buildContext(table: Map<String, Any?>): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName]!!
+        val entityType = ctx.entityTypeMap[tableName]!!
 
-        val fullRootEntityType = context.typeMapping[entityType]!!
+        val fullRootEntityType = ctx.typeMapping[entityType]!!
 
-        val columns = context.columnsMap[tableName]!!
+        val columns = ctx.columnsMap[tableName]!!
         val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
         val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
 
@@ -41,20 +43,20 @@ class RepositoryGenerator : AggregateTemplateGenerator {
         imports.addBaseImports()
         imports.add(fullRootEntityType)
 
-        val fullIdType = context.typeMapping[identityType]
+        val fullIdType = ctx.typeMapping[identityType]
         if (fullIdType != null) {
             imports.add(fullIdType)
         }
 
-        val supportQuerydsl = context.getBoolean("repositorySupportQuerydsl")
+        val supportQuerydsl = ctx.getBoolean("repositorySupportQuerydsl")
         if (supportQuerydsl) {
             imports.add("org.springframework.data.querydsl.QuerydslPredicateExecutor")
             imports.add("com.only4.cap4k.ddd.domain.repo.querydsl.AbstractQuerydslRepository")
         }
 
-        val resultContext = context.baseMap.toMutableMap()
+        val resultContext = ctx.baseMap.toMutableMap()
 
-        with(context) {
+        with(ctx) {
             resultContext.putContext(tag, "modulePath", adapterPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", "")
@@ -64,7 +66,7 @@ class RepositoryGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "Aggregate", entityType)
             resultContext.putContext(tag, "IdentityType", identityType)
 
-            resultContext.putContext(tag, "Repository", generatorName(table, context))
+            resultContext.putContext(tag, "Repository", generatorName(table))
 
             val comment = "Repository for $entityType aggregate"
             resultContext.putContext(tag, "Comment", comment)
@@ -73,14 +75,14 @@ class RepositoryGenerator : AggregateTemplateGenerator {
         return resultContext
     }
 
+    context(ctx: AggregateContext)
     override fun generatorFullName(
-        table: Map<String, Any?>,
-        context: AggregateContext
+        table: Map<String, Any?>
     ): String {
-        with(context) {
+        with(ctx) {
             val tableName = SqlSchemaUtils.getTableName(table)
-            val entityType = context.entityTypeMap[tableName]!!
-            val repositoryNameTemplate = context.getString("repositoryNameTemplate")
+            val entityType = ctx.entityTypeMap[tableName]!!
+            val repositoryNameTemplate = ctx.getString("repositoryNameTemplate")
             val repositoryName = renderString(repositoryNameTemplate, mapOf("Aggregate" to entityType))
 
             val basePackage = getString("basePackage")
@@ -91,13 +93,13 @@ class RepositoryGenerator : AggregateTemplateGenerator {
         }
     }
 
+    context(ctx: AggregateContext)
     override fun generatorName(
-        table: Map<String, Any?>,
-        context: AggregateContext
+        table: Map<String, Any?>
     ): String {
         val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName]!!
-        val repositoryNameTemplate = context.getString("repositoryNameTemplate")
+        val entityType = ctx.entityTypeMap[tableName]!!
+        val repositoryNameTemplate = ctx.getString("repositoryNameTemplate")
 
         return renderString(repositoryNameTemplate, mapOf("Aggregate" to entityType))
     }
@@ -115,7 +117,9 @@ class RepositoryGenerator : AggregateTemplateGenerator {
         )
     }
 
-    override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
-        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
+    context(ctx: AggregateContext)
+    override fun onGenerated(table: Map<String, Any?>) {
+        ctx.typeMapping[generatorName(table)] = generatorFullName(table)
     }
 }
+

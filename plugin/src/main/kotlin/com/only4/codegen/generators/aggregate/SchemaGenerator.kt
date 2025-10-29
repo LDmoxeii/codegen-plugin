@@ -14,33 +14,35 @@ class SchemaGenerator : AggregateTemplateGenerator {
     override val tag = "schema"
     override val order = 50
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
+    context(ctx: AggregateContext)
+    override fun shouldGenerate(table: Map<String, Any?>): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
-        if (!context.getBoolean("generateSchema", false)) return false
+        if (!ctx.getBoolean("generateSchema", false)) return false
 
-        return !context.typeMapping.containsKey(generatorName(table, context))
+        return !ctx.typeMapping.containsKey(generatorName(table))
     }
 
-    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
+    context(ctx: AggregateContext)
+    override fun buildContext(table: Map<String, Any?>): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
-        val aggregate = context.resolveAggregateWithModule(tableName)
-        val columns = context.columnsMap[tableName]!!
+        val aggregate = ctx.resolveAggregateWithModule(tableName)
+        val columns = ctx.columnsMap[tableName]!!
 
-        val aggregateTypeTemplate = context.getString("aggregateTypeTemplate")
+        val aggregateTypeTemplate = ctx.getString("aggregateTypeTemplate")
 
-        val entityType = context.entityTypeMap[tableName]!!
+        val entityType = ctx.entityTypeMap[tableName]!!
         val aggregateType = renderString(aggregateTypeTemplate, mapOf("Entity" to entityType))
 
         val isAggregateRoot = SqlSchemaUtils.isAggregateRoot(table)
-        val generateAggregate = context.getBoolean("generateAggregate")
-        val repositorySupportQuerydsl = context.getBoolean("repositorySupportQuerydsl")
+        val generateAggregate = ctx.getBoolean("generateAggregate")
+        val repositorySupportQuerydsl = ctx.getBoolean("repositorySupportQuerydsl")
 
         // 创建 ImportManager
-        val importManager = SchemaImportManager(getPackageFromClassName(context.typeMapping["Schema"]!!))
+        val importManager = SchemaImportManager(getPackageFromClassName(ctx.typeMapping["Schema"]!!))
         importManager.addBaseImports()
         importManager.add(
-            context.typeMapping[entityType]!!,
+            ctx.typeMapping[entityType]!!,
         )
         importManager.addIfNeeded(
             isAggregateRoot,
@@ -52,8 +54,8 @@ class SchemaGenerator : AggregateTemplateGenerator {
             "com.only4.cap4k.ddd.core.domain.aggregate.AggregatePredicate",
             "com.only4.cap4k.ddd.domain.repo.querydsl.QuerydslPredicate"
         )
-        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl) { context.typeMapping["Q$entityType"]!! }
-        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl) { context.typeMapping[aggregateType]!! }
+        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl) { ctx.typeMapping["Q$entityType"]!! }
+        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl) { ctx.typeMapping[aggregateType]!! }
 
         // 准备列字段数据
         val fields = columns
@@ -65,8 +67,8 @@ class SchemaGenerator : AggregateTemplateGenerator {
                 val comment = SqlSchemaUtils.getComment(column)
 
                 if (SqlSchemaUtils.hasEnum(column)) {
-                    if (context.typeMapping.containsKey(columnType)) {
-                        importManager.add(context.typeMapping[columnType]!!)
+                    if (ctx.typeMapping.containsKey(columnType)) {
+                        importManager.add(ctx.typeMapping[columnType]!!)
                     }
                 }
 
@@ -80,10 +82,10 @@ class SchemaGenerator : AggregateTemplateGenerator {
 
         // 准备关系字段数据
         val relationFields = mutableListOf<Map<String, Any?>>()
-        context.relationsMap[tableName]?.forEach { (refTableName, relationInfo) ->
+        ctx.relationsMap[tableName]?.forEach { (refTableName, relationInfo) ->
             val refInfos = relationInfo.split(";")
 
-            val refEntityType = context.entityTypeMap[refTableName] ?: return@forEach
+            val refEntityType = ctx.entityTypeMap[refTableName] ?: return@forEach
             val relation = refInfos[0].replace("*", "")
             val fieldName = when (relation) {
                 "OneToMany", "ManyToMany" -> Inflector.pluralize(toLowerCamelCase(refEntityType) ?: refEntityType)
@@ -99,9 +101,9 @@ class SchemaGenerator : AggregateTemplateGenerator {
             )
         }
 
-        val resultContext = context.baseMap.toMutableMap()
+        val resultContext = ctx.baseMap.toMutableMap()
 
-        with(context) {
+        with(ctx) {
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(aggregate))
@@ -127,8 +129,9 @@ class SchemaGenerator : AggregateTemplateGenerator {
         return resultContext
     }
 
-    override fun generatorFullName(table: Map<String, Any?>, context: AggregateContext): String {
-        with(context) {
+    context(ctx: AggregateContext)
+    override fun generatorFullName(table: Map<String, Any?>): String {
+        with(ctx) {
             val tableName = SqlSchemaUtils.getTableName(table)
             val aggregate = resolveAggregateWithModule(tableName)
             val entityType = entityTypeMap[tableName]!!
@@ -142,9 +145,10 @@ class SchemaGenerator : AggregateTemplateGenerator {
         }
     }
 
-    override fun generatorName(table: Map<String, Any?>, context: AggregateContext): String {
+    context(ctx: AggregateContext)
+    override fun generatorName(table: Map<String, Any?>): String {
         val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName]!!
+        val entityType = ctx.entityTypeMap[tableName]!!
         return "S$entityType"
     }
 
@@ -161,7 +165,9 @@ class SchemaGenerator : AggregateTemplateGenerator {
         )
     }
 
-    override fun onGenerated(table: Map<String, Any?>, context: AggregateContext) {
-        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
+    context(ctx: AggregateContext)
+    override fun onGenerated(table: Map<String, Any?>) {
+        ctx.typeMapping[generatorName(table)] = generatorFullName(table)
     }
 }
+

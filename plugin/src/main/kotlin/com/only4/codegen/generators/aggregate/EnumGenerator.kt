@@ -18,8 +18,9 @@ class EnumGenerator : AggregateTemplateGenerator {
     @Volatile
     private lateinit var currentEnumType: String
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
-        with(context) {
+    context(ctx: AggregateContext)
+    override fun shouldGenerate(table: Map<String, Any?>): Boolean {
+        with(ctx) {
             if (SqlSchemaUtils.isIgnore(table)) return false
             if (SqlSchemaUtils.hasRelation(table)) return false
 
@@ -38,8 +39,9 @@ class EnumGenerator : AggregateTemplateGenerator {
         }
     }
 
-    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
-        with(context) {
+    context(ctx: AggregateContext)
+    override fun buildContext(table: Map<String, Any?>): Map<String, Any?> {
+        with(ctx) {
             val tableName = SqlSchemaUtils.getTableName(table)
             val columns = columnsMap[tableName]!!
             val aggregate = resolveAggregateWithModule(tableName)
@@ -88,8 +90,9 @@ class EnumGenerator : AggregateTemplateGenerator {
         }
     }
 
-    override fun generatorFullName(table: Map<String, Any?>, context: AggregateContext): String {
-        with(context) {
+    context(ctx: AggregateContext)
+    override fun generatorFullName(table: Map<String, Any?>): String {
+        with(ctx) {
             val defaultEnumPackage = "enums"
 
             val tableName = SqlSchemaUtils.getTableName(table)
@@ -107,7 +110,8 @@ class EnumGenerator : AggregateTemplateGenerator {
         }
     }
 
-    override fun generatorName(table: Map<String, Any?>, context: AggregateContext): String {
+    context(ctx: AggregateContext)
+    override fun generatorName(table: Map<String, Any?>): String {
         return currentEnumType
     }
 
@@ -124,10 +128,11 @@ class EnumGenerator : AggregateTemplateGenerator {
         )
     }
 
+    context(ctx: AggregateContext)
     override fun onGenerated(
         table: Map<String, Any?>,
-        context: AggregateContext,
     ) {
-        context.typeMapping[generatorName(table, context)] = generatorFullName(table, context)
+        ctx.typeMapping[generatorName(table)] = generatorFullName(table)
     }
 }
+

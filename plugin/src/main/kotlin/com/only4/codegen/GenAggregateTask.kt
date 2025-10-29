@@ -190,41 +190,43 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
     ) {
         val tables = context.tableMap.values.toMutableList()
 
-        while (tables.isNotEmpty()) {
-            val table = tables.first()
+        with(context) {
+            while (tables.isNotEmpty()) {
+                val table = tables.first()
 
-            if (!generator.shouldGenerate(table, context)) {
-                tables.removeFirst()
-                continue
-            }
-
-            val tableContext = generator.buildContext(table, context)
-
-            val templateNodes = generator.getDefaultTemplateNodes() + context.templateNodeMap.getOrDefault(
-                generator.tag,
-                emptyList()
-            )
-
-            templateNodes
-                .filter { templateNode ->
-                    templateNode.pattern.isBlank() || Pattern.compile(templateNode.pattern).asPredicate()
-                        .test(generator.generatorName(table, context))
+                if (!generator.shouldGenerate(table)) {
+                    tables.removeFirst()
+                    continue
                 }
-                .forEach { templateNode ->
-                    val pathNode = templateNode.deepCopy().resolve(tableContext)
-                    forceRender(
-                        pathNode,
-                        resolvePackageDirectory(
-                            tableContext["modulePath"].toString(),
-                            concatPackage(
-                                getString("basePackage"),
-                                tableContext["templatePackage"].toString(),
-                                tableContext["package"].toString()
+
+                val tableContext = generator.buildContext(table)
+
+                val templateNodes = generator.getDefaultTemplateNodes() + context.templateNodeMap.getOrDefault(
+                    generator.tag,
+                    emptyList()
+                )
+
+                templateNodes
+                    .filter { templateNode ->
+                        templateNode.pattern.isBlank() || Pattern.compile(templateNode.pattern).asPredicate()
+                            .test(generator.generatorName(table))
+                    }
+                    .forEach { templateNode ->
+                        val pathNode = templateNode.deepCopy().resolve(tableContext)
+                        forceRender(
+                            pathNode,
+                            resolvePackageDirectory(
+                                tableContext["modulePath"].toString(),
+                                concatPackage(
+                                    getString("basePackage"),
+                                    tableContext["templatePackage"].toString(),
+                                    tableContext["package"].toString()
+                                )
                             )
                         )
-                    )
-                }
-            generator.onGenerated(table, context)
+                    }
+                generator.onGenerated(table)
+            }
         }
     }
 }

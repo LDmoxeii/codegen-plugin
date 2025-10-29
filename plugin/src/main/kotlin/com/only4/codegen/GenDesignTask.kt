@@ -167,41 +167,43 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     ) {
         val designs = context.designMap[generator.tag]?.toMutableList() ?: mutableListOf()
 
-        while (designs.isNotEmpty()) {
-            val design = designs.first()
+        with(context) {
+            while (designs.isNotEmpty()) {
+                val design = designs.first()
 
-            if (!generator.shouldGenerate(design, context)) {
-                designs.removeFirst()
-                continue
-            }
-
-            val templateContext = generator.buildContext(design, context).toMutableMap()
-
-            val templateNodes = generator.getDefaultTemplateNodes() + context.templateNodeMap.getOrDefault(
-                generator.tag,
-                emptyList()
-            )
-
-            templateNodes
-                .filter { templateNode ->
-                    templateNode.pattern.isBlank() || Pattern.compile(templateNode.pattern).asPredicate()
-                        .test(generator.generatorName(design, context))
+                if (!generator.shouldGenerate(design)) {
+                    designs.removeFirst()
+                    continue
                 }
-                .forEach { templateNode ->
-                    val pathNode = templateNode.deepCopy().resolve(templateContext)
-                    forceRender(
-                        pathNode, resolvePackageDirectory(
-                            templateContext["modulePath"].toString(),
-                            concatPackage(
-                                getString("basePackage"),
-                                templateContext["templatePackage"].toString(),
-                                templateContext["package"].toString()
+
+                val templateContext = generator.buildContext(design).toMutableMap()
+
+                val templateNodes = generator.getDefaultTemplateNodes() + context.templateNodeMap.getOrDefault(
+                    generator.tag,
+                    emptyList()
+                )
+
+                templateNodes
+                    .filter { templateNode ->
+                        templateNode.pattern.isBlank() || Pattern.compile(templateNode.pattern).asPredicate()
+                            .test(generator.generatorName(design))
+                    }
+                    .forEach { templateNode ->
+                        val pathNode = templateNode.deepCopy().resolve(templateContext)
+                        forceRender(
+                            pathNode, resolvePackageDirectory(
+                                templateContext["modulePath"].toString(),
+                                concatPackage(
+                                    getString("basePackage"),
+                                    templateContext["templatePackage"].toString(),
+                                    templateContext["package"].toString()
+                                )
                             )
                         )
-                    )
-                }
+                    }
 
-            generator.onGenerated(design, context)
+                generator.onGenerated(design)
+            }
         }
     }
 

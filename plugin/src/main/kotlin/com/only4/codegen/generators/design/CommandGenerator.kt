@@ -12,24 +12,26 @@ class CommandGenerator : DesignTemplateGenerator {
     override val tag: String = "command"
     override val order: Int = 10
 
-    override fun shouldGenerate(design: Any, context: DesignContext): Boolean =
-        !context.typeMapping.containsKey(generatorName(design, context))
+    context(ctx: DesignContext)
+    override fun shouldGenerate(design: Any): Boolean =
+        !ctx.typeMapping.containsKey(generatorName(design))
 
-    override fun buildContext(design: Any, context: DesignContext): Map<String, Any?> {
+    context(ctx: DesignContext)
+    override fun buildContext(design: Any): Map<String, Any?> {
         require(design is CommonDesign) { "Design must be CommonDesign" }
 
-        val resultContext = context.baseMap.toMutableMap()
+        val resultContext = ctx.baseMap.toMutableMap()
 
         // 创建 ImportManager
         val importManager = CommandImportManager()
         importManager.addBaseImports()
 
-        with(context) {
-            resultContext.putContext(tag, "modulePath", applicationPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
+        with(ctx) {
+            resultContext.putContext(tag, "modulePath", ctx.applicationPath)
+            resultContext.putContext(tag, "templatePackage", refPackage(ctx.templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(design.`package`))
 
-            resultContext.putContext(tag, "Command", generatorName(design, context))
+            resultContext.putContext(tag, "Command", generatorName(design))
             resultContext.putContext(tag, "Comment", design.desc)
 
             // 添加 imports
@@ -39,18 +41,18 @@ class CommandGenerator : DesignTemplateGenerator {
         return resultContext
     }
 
-    override fun generatorFullName(design: Any, context: DesignContext): String {
+    context(ctx: DesignContext)
+    override fun generatorFullName(design: Any): String {
         require(design is CommonDesign)
-        with(context) {
-            val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag] ?: "")
-            val `package` = refPackage(design.`package`)
+        val basePackage = ctx.getString("basePackage")
+        val templatePackage = refPackage(ctx.templatePackage[tag] ?: "")
+        val `package` = refPackage(design.`package`)
 
-            return "$basePackage$templatePackage$`package`${refPackage(generatorName(design, context))}"
-        }
+        return "$basePackage$templatePackage$`package`${refPackage(generatorName(design))}"
     }
 
-    override fun generatorName(design: Any, context: DesignContext): String {
+    context(ctx: DesignContext)
+    override fun generatorName(design: Any): String {
         require(design is CommonDesign)
         val name = design.name
         return if (name.endsWith("Cmd")) {
@@ -73,7 +75,8 @@ class CommandGenerator : DesignTemplateGenerator {
         )
     }
 
-    override fun onGenerated(design: Any, context: DesignContext) {
-        context.typeMapping[generatorName(design, context)] = generatorFullName(design, context)
+    context(ctx: DesignContext)
+    override fun onGenerated(design: Any) {
+        ctx.typeMapping[generatorName(design)] = generatorFullName(design)
     }
 }

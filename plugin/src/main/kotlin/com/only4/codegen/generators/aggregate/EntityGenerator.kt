@@ -16,25 +16,27 @@ class EntityGenerator : AggregateTemplateGenerator {
     override val tag = "entity"
     override val order = 20
 
-    override fun shouldGenerate(table: Map<String, Any?>, context: AggregateContext): Boolean {
+    context(ctx: AggregateContext)
+    override fun shouldGenerate(table: Map<String, Any?>): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
         if (SqlSchemaUtils.hasRelation(table)) return false
 
         val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName] ?: return false
-        val columns = context.columnsMap[tableName] ?: return false
+        val entityType = ctx.entityTypeMap[tableName] ?: return false
+        val columns = ctx.columnsMap[tableName] ?: return false
         val ids = resolveIdColumns(columns)
 
-        return ids.isNotEmpty() && !context.typeMapping.containsKey(entityType)
+        return ids.isNotEmpty() && !ctx.typeMapping.containsKey(entityType)
     }
 
-    override fun buildContext(table: Map<String, Any?>, context: AggregateContext): Map<String, Any?> {
+    context(ctx: AggregateContext)
+    override fun buildContext(table: Map<String, Any?>): Map<String, Any?> {
         val tableName = SqlSchemaUtils.getTableName(table)
-        val columns = context.columnsMap[tableName]!!
-        val aggregate = context.resolveAggregateWithModule(tableName)
-        val fullEntityPackage = context.tablePackageMap[tableName]!!
+        val columns = ctx.columnsMap[tableName]!!
+        val aggregate = ctx.resolveAggregateWithModule(tableName)
+        val fullEntityPackage = ctx.tablePackageMap[tableName]!!
 
-        val entityType = context.entityTypeMap[tableName]!!
+        val entityType = ctx.entityTypeMap[tableName]!!
         val ids = resolveIdColumns(columns)
 
         // 创建 ImportManager
@@ -42,19 +44,19 @@ class EntityGenerator : AggregateTemplateGenerator {
         importManager.addBaseImports()
 
         val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
-        if (context.typeMapping.containsKey(identityType)) {
-            importManager.add(context.typeMapping[identityType]!!)
+        if (ctx.typeMapping.containsKey(identityType)) {
+            importManager.add(ctx.typeMapping[identityType]!!)
         }
 
         // 处理基类
         var baseClass: String? = null
         when {
-            SqlSchemaUtils.isAggregateRoot(table) && context.getString("rootEntityBaseClass").isNotBlank() -> {
-                baseClass = context.getString("rootEntityBaseClass")
+            SqlSchemaUtils.isAggregateRoot(table) && ctx.getString("rootEntityBaseClass").isNotBlank() -> {
+                baseClass = ctx.getString("rootEntityBaseClass")
             }
 
-            context.getString("entityBaseClass").isNotBlank() -> {
-                baseClass = context.getString("entityBaseClass")
+            ctx.getString("entityBaseClass").isNotBlank() -> {
+                baseClass = ctx.getString("entityBaseClass")
             }
         }
 
@@ -74,12 +76,12 @@ class EntityGenerator : AggregateTemplateGenerator {
 
         // 处理现有文件的自定义内容
         val filePath = resolveSourceFile(
-            context.getString("domainModulePath"),
+            ctx.getString("domainModulePath"),
             fullEntityPackage,
             entityType,
         )
-        processEntityCustomerSourceFile(filePath, existingImportLines, annotationLines, customerLines, context)
-        processAnnotationLines(table, columns, annotationLines, context, ids)
+        processEntityCustomerSourceFile(filePath, existingImportLines, annotationLines, customerLines)
+        processAnnotationLines(table, columns, annotationLines, ids)
 
         existingImportLines.forEach { line ->
             importManager.add(line)
@@ -89,15 +91,15 @@ class EntityGenerator : AggregateTemplateGenerator {
         val columnDataList = columns.map { column ->
             prepareColumnData(
                 table, column,
-                ids, context, importManager
+                ids, importManager
             )
         }
 
         // 准备关系数据
-        val relationDataList = prepareRelationData(table, context, importManager)
+        val relationDataList = prepareRelationData(table, importManager)
 
         // 1. 检查软删除字段
-        val deletedField = context.getString("deletedField")
+        val deletedField = ctx.getString("deletedField")
         val hasSoftDelete = deletedField.isNotBlank() && SqlSchemaUtils.hasColumn(deletedField, columns)
         importManager.addIfNeeded(
             hasSoftDelete,
@@ -108,14 +110,14 @@ class EntityGenerator : AggregateTemplateGenerator {
         // 2. 检查是否需要 ID 生成器
         val needsIdGenerator = ids.size == 1 &&
                 !SqlSchemaUtils.isValueObject(table) &&
-                resolveEntityIdGenerator(table, context).isNotEmpty()
+                resolveEntityIdGenerator(table).isNotEmpty()
         importManager.addIfNeeded(
             needsIdGenerator,
             "org.hibernate.annotations.GenericGenerator"
         )
 
         // 3. 检查是否有集合关系（OneToMany, ManyToMany）
-        val hasCollectionRelation = context.relationsMap[tableName]?.values?.any {
+        val hasCollectionRelation = ctx.relationsMap[tableName]?.values?.any {
             val relationType = it.split(";")[0]
             relationType in listOf("OneToMany", "ManyToMany", "*OneToMany", "*ManyToMany")
         } == true
@@ -135,9 +137,9 @@ class EntityGenerator : AggregateTemplateGenerator {
         val finalImports = importManager.toImportLines()
 
         // 构建上下文
-        val resultContext = context.baseMap.toMutableMap()
-        with(context) {
-            resultContext.putContext(tag, "modulePath", domainPath)
+        val resultContext = ctx.baseMap.toMutableMap()
+        with(ctx) {
+            resultContext.putContext(tag, "modulePath", ctx.domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
@@ -157,8 +159,9 @@ class EntityGenerator : AggregateTemplateGenerator {
         return resultContext
     }
 
-    override fun generatorFullName(table: Map<String, Any?>, context: AggregateContext): String {
-        with(context) {
+    context(ctx: AggregateContext)
+    override fun generatorFullName(table: Map<String, Any?>): String {
+        with(ctx) {
             val tableName = SqlSchemaUtils.getTableName(table)
             val aggregate = resolveAggregateWithModule(tableName)
             val entityType = entityTypeMap[tableName]!!
@@ -171,9 +174,10 @@ class EntityGenerator : AggregateTemplateGenerator {
         }
     }
 
-    override fun generatorName(table: Map<String, Any?>, context: AggregateContext): String {
+    context(ctx: AggregateContext)
+    override fun generatorName(table: Map<String, Any?>): String {
         val tableName = SqlSchemaUtils.getTableName(table)
-        return context.entityTypeMap[tableName]!!
+        return ctx.entityTypeMap[tableName]!!
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {
@@ -189,15 +193,15 @@ class EntityGenerator : AggregateTemplateGenerator {
         )
     }
 
+    context(ctx: AggregateContext)
     override fun onGenerated(
         table: Map<String, Any?>,
-        context: AggregateContext,
     ) {
-        with(context) {
+        with(ctx) {
             val tableName = SqlSchemaUtils.getTableName(table)
             val entityType = entityTypeMap[tableName]!!
 
-            typeMapping[generatorName(table, context)] = generatorFullName(table, context)
+            typeMapping[generatorName(table)] = generatorFullName(table)
 
             // Q类型（QueryDSL）
             val aggregate = resolveAggregateWithModule(tableName)
@@ -222,8 +226,9 @@ class EntityGenerator : AggregateTemplateGenerator {
         return "$baseDir${File.separator}src${File.separator}main${File.separator}kotlin${File.separator}$packagePath${File.separator}$className.kt"
     }
 
-    private fun resolveEntityIdGenerator(table: Map<String, Any?>, context: AggregateContext): String {
-        with(context) {
+    context(ctx: AggregateContext)
+    private fun resolveEntityIdGenerator(table: Map<String, Any?>): String {
+        with(ctx) {
             return when {
                 SqlSchemaUtils.hasIdGenerator(table) -> {
                     SqlSchemaUtils.getIdGenerator(table)
@@ -273,8 +278,9 @@ class EntityGenerator : AggregateTemplateGenerator {
         return true
     }
 
-    private fun isReadOnlyColumn(column: Map<String, Any?>, context: AggregateContext): Boolean {
-        with(context) {
+    context(ctx: AggregateContext)
+    private fun isReadOnlyColumn(column: Map<String, Any?>): Boolean {
+        with(ctx) {
             if (SqlSchemaUtils.hasReadOnly(column)) return true
 
             val columnName = SqlSchemaUtils.getColumnName(column).lowercase()
@@ -287,17 +293,19 @@ class EntityGenerator : AggregateTemplateGenerator {
         }
     }
 
-    private fun isVersionColumn(column: Map<String, Any?>, context: AggregateContext) = with(context) {
+    context(ctx: AggregateContext)
+    private fun isVersionColumn(column: Map<String, Any?>) = with(ctx) {
         SqlSchemaUtils.getColumnName(column) == getString("versionField")
     }
 
     private fun isIdColumn(column: Map<String, Any?>) = SqlSchemaUtils.isColumnPrimaryKey(column)
 
-    private fun generateFieldComment(column: Map<String, Any?>, context: AggregateContext): List<String> {
+    context(ctx: AggregateContext)
+    private fun generateFieldComment(column: Map<String, Any?>): List<String> {
         val fieldName = SqlSchemaUtils.getColumnName(column)
         val fieldType = SqlSchemaUtils.getColumnType(column)
 
-        with(context) {
+        with(ctx) {
             return buildList {
                 add("/**")
 
@@ -326,16 +334,16 @@ class EntityGenerator : AggregateTemplateGenerator {
         }
     }
 
+    context(ctx: AggregateContext)
     private fun processEntityCustomerSourceFile(
         filePath: String,
         importLines: MutableList<String>,
         annotationLines: MutableList<String>,
         customerLines: MutableList<String>,
-        context: AggregateContext,
     ): Boolean {
         val file = File(filePath)
         if (file.exists()) {
-            val content = file.readText(charset(context.getString("outputEncoding")))
+            val content = file.readText(charset(ctx.getString("outputEncoding")))
             val lines = content.replace("\r\n", "\n").split("\n")
 
             var startMapperLine = 0
@@ -409,15 +417,15 @@ class EntityGenerator : AggregateTemplateGenerator {
         return true
     }
 
+    context(ctx: AggregateContext)
     private fun processAnnotationLines(
         table: Map<String, Any?>,
         columns: List<Map<String, Any?>>,
         annotationLines: MutableList<String>,
-        context: AggregateContext,
         ids: List<Map<String, Any?>>,
     ) {
         val tableName = SqlSchemaUtils.getTableName(table)
-        val entityType = context.entityTypeMap[tableName] ?: ""
+        val entityType = ctx.entityTypeMap[tableName] ?: ""
 
         // 移除并重新添加 @Aggregate 注解
         removeText(annotationLines, """@Aggregate\(.*\)""")
@@ -430,7 +438,7 @@ class EntityGenerator : AggregateTemplateGenerator {
         addIfNone(
             annotationLines,
             """@Aggregate\(.*\)""",
-            """@Aggregate(aggregate = "${toUpperCamelCase(context.resolveAggregateWithModule(tableName))}", name = "$entityType", root = ${
+            """@Aggregate(aggregate = "${toUpperCamelCase(ctx.resolveAggregateWithModule(tableName))}", name = "$entityType", root = ${
                 SqlSchemaUtils.isAggregateRoot(
                     table
                 )
@@ -457,8 +465,8 @@ class EntityGenerator : AggregateTemplateGenerator {
         addIfNone(annotationLines, """@DynamicUpdate(\(.*\))?""", "@DynamicUpdate")
 
         // 处理软删除相关注解
-        val deletedField = context.getString("deletedField")
-        val versionField = context.getString("versionField")
+        val deletedField = ctx.getString("deletedField")
+        val versionField = ctx.getString("versionField")
 
         if (deletedField.isNotBlank() && SqlSchemaUtils.hasColumn(deletedField, columns)) {
             if (ids.isEmpty()) {
@@ -502,19 +510,18 @@ class EntityGenerator : AggregateTemplateGenerator {
 
 
     }
-
+    context(ctx: AggregateContext)
     private fun prepareColumnData(
         table: Map<String, Any?>,
         column: Map<String, Any?>,
         ids: List<Map<String, Any?>>,
-        context: AggregateContext,
         importManager: EntityImportManager,
     ): Map<String, Any?> {
         val columnName = SqlSchemaUtils.getColumnName(column)
         val columnType = SqlSchemaUtils.getColumnType(column)
 
-        val needGenerate = isColumnNeedGenerate(table, column, context.relationsMap) ||
-                columnName == context.getString("versionField")
+        val needGenerate = isColumnNeedGenerate(table, column, ctx.relationsMap) ||
+                columnName == ctx.getString("versionField")
 
         if (!needGenerate) {
             return mapOf("needGenerate" to false)
@@ -528,7 +535,7 @@ class EntityGenerator : AggregateTemplateGenerator {
             insertable = !SqlSchemaUtils.isAutoInsertDateColumn(column)
         }
 
-        if (isReadOnlyColumn(column, context)) {
+        if (isReadOnlyColumn(column)) {
             insertable = false
             updatable = false
         }
@@ -541,7 +548,7 @@ class EntityGenerator : AggregateTemplateGenerator {
             updatable = false
         }
 
-        val comments = generateFieldComment(column, context)
+        val comments = generateFieldComment(column)
         val comment = comments.joinToString("\n") { "    $it" }
 
         val annotations = mutableListOf<String>()
@@ -549,7 +556,7 @@ class EntityGenerator : AggregateTemplateGenerator {
         if (isIdColumn(column)) {
             annotations.add("@Id")
             if (ids.size == 1) {
-                val entityIdGenerator = resolveEntityIdGenerator(table, context)
+                val entityIdGenerator = resolveEntityIdGenerator(table)
                 when {
                     SqlSchemaUtils.isValueObject(table) -> {
                         // 不使用ID生成器
@@ -567,13 +574,13 @@ class EntityGenerator : AggregateTemplateGenerator {
             }
         }
 
-        if (isVersionColumn(column, context)) {
+        if (isVersionColumn(column)) {
             annotations.add("@Version")
         }
 
         if (SqlSchemaUtils.hasEnum(column)) {
-            if (context.typeMapping.containsKey(columnType)) {
-                importManager.add(context.typeMapping[columnType]!!)
+            if (ctx.typeMapping.containsKey(columnType)) {
+                importManager.add(ctx.typeMapping[columnType]!!)
             }
             annotations.add("@Convert(converter = $columnType.Converter::class)")
         }
@@ -602,9 +609,9 @@ class EntityGenerator : AggregateTemplateGenerator {
         )
     }
 
+    context(context: AggregateContext)
     private fun prepareRelationData(
         table: Map<String, Any?>,
-        context: AggregateContext,
         importManager: EntityImportManager,
     ): List<Map<String, Any?>> {
         return with(context) {
@@ -740,3 +747,4 @@ class EntityGenerator : AggregateTemplateGenerator {
         }
     }
 }
+
