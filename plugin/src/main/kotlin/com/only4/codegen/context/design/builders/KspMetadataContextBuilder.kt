@@ -1,7 +1,6 @@
 package com.only4.codegen.context.design.builders
 
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.only4.codegen.context.ContextBuilder
 import com.only4.codegen.context.design.MutableDesignContext
 import com.only4.codegen.context.design.models.AggregateInfo
@@ -17,18 +16,28 @@ class KspMetadataContextBuilder(
     private val gson = Gson()
 
     override fun build(context: MutableDesignContext) {
-        val aggregatesFile = File(metadataPath, "aggregates.json")
-        if (!aggregatesFile.exists()) {
+        val dir = File(metadataPath)
+        if (!dir.exists() || !dir.isDirectory) {
             return
         }
 
-        val aggregates = parseAggregatesMetadata(aggregatesFile)
+        val perAggregateFiles =
+            dir.listFiles { f -> f.isFile && f.name.startsWith("aggregate-") && f.name.endsWith(".json") }
+                ?.toList()
+                ?: emptyList()
+
+        if (perAggregateFiles.isEmpty()) return
+
+        val aggregates = perAggregateFiles.mapNotNull { parseSingleAggregateMetadata(it) }
         processAggregates(aggregates, context)
     }
 
-    private fun parseAggregatesMetadata(file: File): List<AggregateMetadata> {
-        val type = object : TypeToken<List<AggregateMetadata>>() {}.type
-        return gson.fromJson(file.readText(), type)
+    private fun parseSingleAggregateMetadata(file: File): AggregateMetadata? {
+        return try {
+            gson.fromJson(file.readText(), AggregateMetadata::class.java)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     private fun processAggregates(

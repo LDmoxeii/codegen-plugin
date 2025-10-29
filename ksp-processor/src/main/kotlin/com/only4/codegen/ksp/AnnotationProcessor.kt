@@ -167,54 +167,13 @@ class AnnotationProcessor(
                 it.type == ElementType.ENUM
             }
 
-            val repositoryCandidates = elements.filter {
-                it.type == ElementType.REPOSITORY
-            }
-            if (repositoryCandidates.size > 1) {
-                logger.warn("Aggregate '$aggregateName' has multiple repositories: ${repositoryCandidates.map { it.className }}, using first")
-            }
-            val repository = repositoryCandidates.firstOrNull()
-
-            val factoryCandidates = elements.filter {
-                it.type == ElementType.FACTORY
-            }
-            if (factoryCandidates.size > 1) {
-                logger.warn("Aggregate '$aggregateName' has multiple factories: ${factoryCandidates.map { it.className }}, using first")
-            }
-            val factory = factoryCandidates.firstOrNull()
-
-            val factoryPayloadCandidates = elements.filter {
-                it.type == ElementType.FACTORY_PAYLOAD
-            }
-            if (factoryPayloadCandidates.size > 1) {
-                logger.warn("Aggregate '$aggregateName' has multiple factory payloads: ${factoryPayloadCandidates.map { it.className }}, using first")
-            }
-            val factoryPayload = factoryPayloadCandidates.firstOrNull()
-
-            val specificationCandidates = elements.filter {
-                it.type == ElementType.SPECIFICATION
-            }
-            if (specificationCandidates.size > 1) {
-                logger.warn("Aggregate '$aggregateName' has multiple specifications: ${specificationCandidates.map { it.className }}, using first")
-            }
-            val specification = specificationCandidates.firstOrNull()
-
-            val domainEvents = elements.filter {
-                it.type == ElementType.DOMAIN_EVENT
-            }
-
             // 构建 AggregateMetadata
             val aggregateMetadata = AggregateMetadata(
                 aggregateName = aggregateName,
                 aggregateRoot = aggregateRoot,
                 entities = entities,
                 valueObjects = valueObjects,
-                enums = enums,
-                repository = repository,
-                factory = factory,
-                factoryPayload = factoryPayload,
-                specification = specification,
-                domainEvents = domainEvents
+                enums = enums
             )
 
             aggregates.add(aggregateMetadata)
@@ -224,10 +183,7 @@ class AnnotationProcessor(
                         "(root=${aggregateRoot.className}, " +
                         "entities=${entities.size}, " +
                         "valueObjects=${valueObjects.size}, " +
-                        "enums=${enums.size}, " +
-                        "repository=${repository?.className}, " +
-                        "factory=${factory?.className}, " +
-                        "domainEvents=${domainEvents.size})"
+                        "enums=${enums.size})"
             )
         }
     }
@@ -304,19 +260,27 @@ class AnnotationProcessor(
     private fun generateMetadata() {
         val gson = GsonBuilder().setPrettyPrinting().create()
 
-        if (aggregates.isNotEmpty()) {
-            val aggregatesFile = codeGenerator.createNewFile(
+        if (aggregates.isEmpty()) {
+            logger.warn("No aggregates found, skipping JSON generation")
+            return
+        }
+
+        aggregates.forEach { agg ->
+            val safeName = sanitizeFileName(agg.aggregateName)
+            val file = codeGenerator.createNewFile(
                 Dependencies(false),
                 "metadata",
-                "aggregates",
+                "aggregate-$safeName",
                 "json"
             )
-            aggregatesFile.write(gson.toJson(aggregates).toByteArray())
-            aggregatesFile.close()
-
-            logger.info("Generated aggregates.json with ${aggregates.size} aggregates")
-        } else {
-            logger.warn("No aggregates found, skipping JSON generation")
+            file.write(gson.toJson(agg).toByteArray())
+            file.close()
+            logger.info("Generated aggregate metadata file: aggregate-$safeName.json")
         }
+    }
+
+    private fun sanitizeFileName(name: String): String {
+        // 仅保留字母、数字、下划线和短横线，其他替换为下划线
+        return name.replace(Regex("[^A-Za-z0-9_-]"), "_")
     }
 }

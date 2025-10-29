@@ -26,25 +26,7 @@ class TypeMappingBuilder : ContextBuilder<MutableDesignContext> {
                 registerElement(enum, context)
             }
 
-            aggregateInfo.repository?.let { repo ->
-                registerElement(repo, context)
-            }
-
-            aggregateInfo.factory?.let { factory ->
-                registerElement(factory, context)
-            }
-
-            aggregateInfo.factoryPayload?.let { payload ->
-                registerElement(payload, context)
-            }
-
-            aggregateInfo.specification?.let { spec ->
-                registerElement(spec, context)
-            }
-
-            aggregateInfo.domainEvents.forEach { event ->
-                registerElement(event, context)
-            }
+            // 精简后的元信息不再包含 repository/factory/specification/domainEvents
         }
     }
 
