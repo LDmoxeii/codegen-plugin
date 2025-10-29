@@ -82,7 +82,6 @@ class SchemaGenerator : AggregateTemplateGenerator {
         val relationFields = mutableListOf<Map<String, Any?>>()
         context.relationsMap[tableName]?.forEach { (refTableName, relationInfo) ->
             val refInfos = relationInfo.split(";")
-            if (refInfos[0] == "PLACEHOLDER") return@forEach
 
             val refEntityType = context.entityTypeMap[refTableName] ?: return@forEach
             val relation = refInfos[0].replace("*", "")

@@ -79,12 +79,10 @@ class RelationContextBuilder : ContextBuilder<MutableAggregateContext> {
                     )
 
                     result.putIfAbsent(tableName, mutableMapOf())
-                    val parentRelation = if (context.getBoolean("generateParent")) {
-                        "*ManyToOne;$columnName${if (lazy) ";LAZY" else ""}"
-                    } else {
-                        "PLACEHOLDER;$columnName"
+                    if (context.getBoolean("generateParent")) {
+                        val parentRelation = "*ManyToOne;$columnName${if (lazy) ";LAZY" else ""}"
+                        result[tableName]!!.putIfAbsent(parent, parentRelation)
                     }
-                    result[tableName]!!.putIfAbsent(parent, parentRelation)
 
                     rewrited = true
                 }
@@ -108,12 +106,10 @@ class RelationContextBuilder : ContextBuilder<MutableAggregateContext> {
                 )
 
                 result.putIfAbsent(tableName, mutableMapOf())
-                val parentRelation = if (context.getBoolean("generateParent")) {
-                    "*ManyToOne;$columnName${if (lazy) ";LAZY" else ""}"
-                } else {
-                    "PLACEHOLDER;$columnName"
+                if (context.getBoolean("generateParent")) {
+                    val parentRelation = "*ManyToOne;$columnName${if (lazy) ";LAZY" else ""}"
+                    result[tableName]!!.putIfAbsent(parent, parentRelation)
                 }
-                result[tableName]!!.putIfAbsent(parent, parentRelation)
             }
         }
     }
@@ -167,6 +163,10 @@ class RelationContextBuilder : ContextBuilder<MutableAggregateContext> {
         tableName: String,
         context: MutableAggregateContext
     ) {
+        val tableMeta = context.tableMap[tableName]!!
+        val isChild = !SqlSchemaUtils.isAggregateRoot(tableMeta)
+        val parent = if (isChild) SqlSchemaUtils.getParent(tableMeta) else ""
+
         columns.forEach { column ->
             val colRel = SqlSchemaUtils.getRelation(column)
             val colName = SqlSchemaUtils.getColumnName(column)
@@ -177,6 +177,13 @@ class RelationContextBuilder : ContextBuilder<MutableAggregateContext> {
 
             if (colRel.isNotBlank() || SqlSchemaUtils.hasReference(column)) {
                 val refTableName = SqlSchemaUtils.getReference(column)
+
+                // 若为子表，且不生成父侧导航，则避免在此处回填子侧 ManyToOne/OneToOne
+                if (isChild && !context.getBoolean("generateParent") &&
+                    parent.equals(refTableName, ignoreCase = true)
+                ) {
+                    return@forEach
+                }
                 when (colRel) {
                     "OneToOne", "1:1" -> {
                         result.putIfAbsent(tableName, mutableMapOf())

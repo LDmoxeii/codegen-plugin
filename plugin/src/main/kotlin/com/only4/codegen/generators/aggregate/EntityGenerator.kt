@@ -267,10 +267,6 @@ class EntityGenerator : AggregateTemplateGenerator {
                     "ManyToOne", "OneToOne" -> if (columnName.equals(refInfos[1], ignoreCase = true)) {
                         return false
                     }
-
-                    "PLACEHOLDER" -> if (columnName.equals(refInfos[1], ignoreCase = true)) {
-                        return false
-                    }
                 }
             }
         }
@@ -623,9 +619,7 @@ class EntityGenerator : AggregateTemplateGenerator {
                 val refInfos = relationInfo.split(";")
                 val navTable = context.tableMap[refTableName]!!
 
-                if (refInfos[0] == "PLACEHOLDER") {
-                    continue
-                }
+                // 子侧不再写入占位关系，故无需跳过
 
                 val fetchType = when {
                     relationInfo.endsWith(";LAZY") -> "LAZY"
