@@ -22,9 +22,8 @@ class ValidatorGenerator : DesignTemplateGenerator {
 
         with(ctx) {
             resultContext.putContext(tag, "modulePath", ctx.applicationPath)
-            // 将校验器固定输出到 application.validater 包下
-            resultContext.putContext(tag, "templatePackage", refPackage("application"))
-            resultContext.putContext(tag, "package", refPackage("validater"))
+            resultContext.putContext(tag, "templatePackage", refPackage(ctx.templatePackage[tag]!!))
+            resultContext.putContext(tag, "package", refPackage(design.`package`))
 
             resultContext.putContext(tag, "Validator", generatorName(design))
             resultContext.putContext(tag, "Comment", design.desc)
