@@ -14,19 +14,9 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
 {%- for line in annotationLines %}
 {{ line }}
 {%- endfor %}
-class {{ entityType }}{{ extendsClause }}{{ implementsClause }} (
+class {{ entityType }}{{ extendsClause }}{{ implementsClause }} {
     // 【字段映射开始】本段落由[cap4k-ddd-codegen-gradle-plugin]维护，请不要手工改动
-{%- for column in columns %}
-{%- if column.needGenerate %}
 
-{{ column.comment }}
-{%- for annotation in column.annotations %}
-    {{ annotation }}
-{%- endfor %}
-    var {{ column.fieldName }}: {{ column.fieldType }}{{ column.defaultValue }},
-{%- endif %}
-{%- endfor %}
-) {
 {%- if relations is not empty %}
 {%- for relation in relations %}
 
@@ -43,16 +33,25 @@ class {{ entityType }}{{ extendsClause }}{{ implementsClause }} (
 {%- endfor %}
 {%- endif %}
 
+{%- for column in columns %}
+{%- if column.needGenerate %}
+
+{{ column.comment }}
+{%- for annotation in column.annotations %}
+    {{ annotation }}
+{%- endfor %}
+    var {{ column.fieldName }}: {{ column.fieldType }}{{ column.defaultValue }}
+        private set
+{%- endif %}
+{%- endfor %}
+
     // 【字段映射结束】本段落由[cap4k-ddd-codegen-gradle-plugin]维护，请不要手工改动
+
 {%- if customerLines is not empty %}
 {%- for line in customerLines %}
 {{ line }}
 {%- endfor %}
 {%- else %}
-
-    // 【行为方法开始】
-
-    // 【行为方法结束】
 
 {%- endif %}
 }

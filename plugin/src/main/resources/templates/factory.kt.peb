@@ -20,9 +20,9 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
 class {{ Factory }} : AggregateFactory<{{ Factory }}.Payload, {{ Entity }}> {
 
     override fun create(payload: Payload): {{ Entity }} {
-        return {{ Entity }}(
+        return {{ Entity }}().apply {
 
-        )
+        }
     }
 
      @Aggregate(
