@@ -22,11 +22,7 @@ class {{ EnumTranslation }} :
             is String -> key.toIntOrNull()
             else -> null
         } ?: return null
-        return try {
-            {{ Enum }}.valueOf(code).{{ EnumNameField }}
-        } catch (_: Exception) {
-            null
-        }
+        return {{ Enum }}.valueOfOrNull(code)?.{{ EnumNameField }}
     }
 
     override fun translationBatch(keys: Collection<Any>, other: String): Map<Any, String?> {
@@ -43,11 +39,7 @@ class {{ EnumTranslation }} :
         val codes: Set<Int> = keyToCode.values.filterNotNull().toSet()
 
         val codeToDesc: Map<Int, String?> = codes.associateWith { c ->
-            try {
-                {{ Enum }}.valueOf(c).{{ EnumNameField }}
-            } catch (_: Exception) {
-                null
-            }
+            {{ Enum }}.valueOfOrNull(c)?.{{ EnumNameField }}
         }
 
         return keyToCode.mapValues { (_, c) -> c?.let { codeToDesc[it] } }
