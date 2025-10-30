@@ -3,6 +3,7 @@ package com.only4.codegen.ksp
 import com.google.devtools.ksp.processing.*
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
+import com.google.devtools.ksp.symbol.KSFile
 import com.google.gson.GsonBuilder
 import com.only4.codegen.ksp.models.AggregateMetadata
 import com.only4.codegen.ksp.models.ElementMetadata
@@ -26,11 +27,15 @@ class AnnotationProcessor(
      */
     private data class AnnotatedElement(
         val aggregateName: String,
-        val element: ElementMetadata
+        val element: ElementMetadata,
+        val source: KSFile?
     )
 
     // Phase 1: 扁平的元素列表（带 aggregateName）
     private val annotatedElements = mutableListOf<AnnotatedElement>()
+
+    // 聚合 -> 源文件集合（用于增量编译依赖关联）
+    private val aggregateSources: MutableMap<String, MutableSet<KSFile>> = mutableMapOf()
 
     // Phase 2: 以聚合为单位的元数据
     private val aggregates = mutableListOf<AggregateMetadata>()
@@ -101,7 +106,11 @@ class AnnotationProcessor(
             )
 
             // 存储为 AnnotatedElement
-            annotatedElements.add(AnnotatedElement(aggregateName, element))
+            val src = classDecl.containingFile
+            annotatedElements.add(AnnotatedElement(aggregateName, element, src))
+            if (src != null) {
+                aggregateSources.computeIfAbsent(aggregateName) { mutableSetOf() }.add(src)
+            }
 
             logger.info("Scanned element: aggregate=$aggregateName, class=${element.className}, type=$type, root=$isRoot")
         }
@@ -265,10 +274,13 @@ class AnnotationProcessor(
             return
         }
 
+        // 1) 为每个聚合生成独立的元数据文件，并将其与对应源文件进行关联
         aggregates.forEach { agg ->
             val safeName = sanitizeFileName(agg.aggregateName)
+            val depsSources = aggregateSources[agg.aggregateName]?.toTypedArray() ?: emptyArray()
             val file = codeGenerator.createNewFile(
-                Dependencies(false),
+                // 声明为 isolating（依赖于该聚合相关的源文件集合）
+                Dependencies(false, *depsSources),
                 "metadata",
                 "aggregate-$safeName",
                 "json"
@@ -276,6 +288,29 @@ class AnnotationProcessor(
             file.write(gson.toJson(agg).toByteArray())
             file.close()
             logger.info("Generated aggregate metadata file: aggregate-$safeName.json")
+        }
+
+        // 2) 生成一个聚合索引文件（aggregating output），关联到所有已扫描到的源文件
+        //    这样任意一个输入变更都会让 KSP 重新处理所有已关联文件，确保本处理器能看到完整的符号集。
+        val allSources: Array<KSFile> = aggregateSources.values
+            .flatten()
+            .toSet()
+            .toTypedArray()
+
+        if (allSources.isNotEmpty()) {
+            val indexOut = codeGenerator.createNewFile(
+                Dependencies(true, *allSources),
+                "metadata",
+                "aggregates-index",
+                "json"
+            )
+            val indexPayload = mapOf(
+                "aggregates" to aggregates.map { it.aggregateName }.sorted(),
+                "count" to aggregates.size
+            )
+            indexOut.write(gson.toJson(indexPayload).toByteArray())
+            indexOut.close()
+            logger.info("Generated aggregates-index.json (aggregating)")
         }
     }
 
