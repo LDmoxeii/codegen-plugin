@@ -82,6 +82,7 @@ class EnumTranslationGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "EnumNameField", getString("enumNameField"))
 
             // imports
+            importManager.add("${generatorFullName(table)}.Companion.${typeConst}")
             resultContext.putContext(tag, "imports", importManager.toImportLines())
 
             return resultContext
@@ -91,9 +92,12 @@ class EnumTranslationGenerator : AggregateTemplateGenerator {
     context(ctx: AggregateContext)
     override fun generatorFullName(table: Map<String, Any?>): String {
         with(ctx) {
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = resolveAggregateWithModule(tableName)
+
             val basePackage = getString("basePackage")
-            val templatePackage = refPackage(templatePackage[tag] ?: "")
-            val `package` = refPackage("")
+            val templatePackage = refPackage(templatePackage[tag] ?: refPackage("domain.translation"))
+            val `package` = refPackage(aggregate)
             return "$basePackage${templatePackage}${`package`}${refPackage(generatorName(table))}"
         }
     }
@@ -111,7 +115,7 @@ class EnumTranslationGenerator : AggregateTemplateGenerator {
                 name = "{{ EnumTranslation }}.kt"
                 format = "resource"
                 data = "templates/enum_translation.kt.peb"
-                conflict = "skip"
+                conflict = "overwrite"
             }
         )
     }
