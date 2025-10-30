@@ -178,10 +178,10 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
                 val templateContext = generator.buildContext(design).toMutableMap()
 
-                val templateNodes = generator.getDefaultTemplateNodes() + context.templateNodeMap.getOrDefault(
+                val templateNodes = context.templateNodeMap.getOrDefault(
                     generator.tag,
                     emptyList()
-                )
+                ) + generator.getDefaultTemplateNodes()
 
                 templateNodes
                     .filter { templateNode ->
