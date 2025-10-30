@@ -167,6 +167,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
         val generators = listOf(
             SchemaBaseGenerator(),           // order=10 - Schema 基类
             EnumGenerator(),                 // order=10 - 枚举类
+            EnumTranslationGenerator(),      // order=20 - 枚举翻译器
             EntityGenerator(),               // order=20 - 实体类
             SpecificationGenerator(),        // order=30 - 规约类
             FactoryGenerator(),              // order=30 - 工厂类
