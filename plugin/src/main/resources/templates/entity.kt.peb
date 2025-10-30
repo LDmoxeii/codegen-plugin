@@ -14,7 +14,13 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
 {%- for line in annotationLines %}
 {{ line }}
 {%- endfor %}
-class {{ entityType }}{{ extendsClause }}{{ implementsClause }} {
+class {{ entityType }}(
+{%- for column in columns %}
+{%- if column.needGenerate %}
+    {{ column.fieldName }}: {{ column.fieldType }}{{ column.defaultValue }}{% if not loop.last %},{% endif %}
+{%- endif %}
+{%- endfor %}
+){{ extendsClause }}{{ implementsClause }} {
     // 【字段映射开始】本段落由[cap4k-ddd-codegen-gradle-plugin]维护，请不要手工改动
 
 {%- if relations is not empty %}
@@ -40,8 +46,8 @@ class {{ entityType }}{{ extendsClause }}{{ implementsClause }} {
 {%- for annotation in column.annotations %}
     {{ annotation }}
 {%- endfor %}
-    var {{ column.fieldName }}: {{ column.fieldType }}{{ column.defaultValue }}
-        private set
+    var {{ column.fieldName }}: {{ column.fieldType }} = {{ column.fieldName }}
+        internal set
 {%- endif %}
 {%- endfor %}
 
