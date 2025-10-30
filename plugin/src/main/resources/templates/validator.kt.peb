@@ -9,9 +9,9 @@ import kotlin.reflect.KClass
 /**
  * {{ Comment }}
  *
- * 说明：该校验器为代码生成的基础骨架，
- * 请在 Validator#isValid 中补充具体校验逻辑。
- */
+ * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
+ * @author cap4k-ddd-codegen
+ * @date {{ date }}
 @Target(AnnotationTarget.FIELD, AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @Constraint(validatedBy = [{{ Validator }}.Validator::class])
