@@ -15,6 +15,7 @@ import com.only4.codegen.misc.resolvePackageDirectory
 import com.only4.codegen.template.TemplateNode
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
+import org.gradle.internal.extensions.core.directoryChildrenNamesHash
 import java.io.File
 import java.util.regex.Pattern
 
@@ -178,29 +179,66 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
                 val templateContext = generator.buildContext(design).toMutableMap()
 
-                val templateNodes = context.templateNodeMap.getOrDefault(
-                    generator.tag,
-                    emptyList()
-                ) + generator.getDefaultTemplateNodes()
+                // 合并模板节点（先收集再组合成多套，再根据 pattern 选择）：
+                // - 多个 dir/file 顶层节点可共存；每个唯一键(name+pattern)代表一套模板节点
+                // - context 优先于 defaults（在文件和目录两侧都遵循此优先级）
+                val genName = generator.generatorName(design)
 
-                templateNodes
-                    .filter { templateNode ->
-                        templateNode.pattern.isBlank() || Pattern.compile(templateNode.pattern).asPredicate()
-                            .test(generator.generatorName(design))
+                val ctxTop = context.templateNodeMap.getOrDefault(generator.tag, emptyList())
+                val defTop = generator.getDefaultTemplateNodes()
+
+                // 收集文件（来自顶层 file 以及 顶层 dir 的子项 file）
+                fun collectFiles(nodes: List<TemplateNode>): List<TemplateNode> =
+                    nodes.flatMap { it.collectFiles() }
+
+                val ctxFiles = linkedMapOf<String, TemplateNode>()
+                collectFiles(ctxTop).forEach { ctxFiles[it.uniqueKey()] = it }
+                val defFiles = linkedMapOf<String, TemplateNode>()
+                collectFiles(defTop).forEach { defFiles[it.uniqueKey()] = it }
+
+                // pattern -> dir 的快速映射（context 优先）
+                fun dirsByPattern(nodes: List<TemplateNode>): Map<String, TemplateNode> =
+                    buildMap {
+                        nodes.filter { it.isDirNode() }.forEach { d ->
+                            if (!this.containsKey(d.pattern)) this[d.pattern] = d
+                        }
                     }
-                    .forEach { templateNode ->
-                        val pathNode = templateNode.deepCopy().resolve(templateContext)
-                        forceRender(
-                            pathNode, resolvePackageDirectory(
-                                templateContext["modulePath"].toString(),
-                                concatPackage(
-                                    getString("basePackage"),
-                                    templateContext["templatePackage"].toString(),
-                                    templateContext["package"].toString()
-                                )
+                val ctxDirs = dirsByPattern(ctxTop)
+                val defDirs = dirsByPattern(defTop)
+
+                // 不同唯一键 → 一套模板
+                val allKeys: Set<String> = (ctxFiles.keys + defFiles.keys).toSet()
+                val groups: List<TemplateNode> = allKeys.map { key ->
+                    val fileTpl = (ctxFiles[key] ?: defFiles[key])!!.deepCopy()
+                    val pattern = fileTpl.pattern
+                    val dirTpl = (ctxDirs[pattern] ?: defDirs[pattern])
+                    if (dirTpl != null) {
+                        val d = dirTpl.deepCopy()
+                        // 每套模板节点只挂载本唯一键对应的文件
+                        d.children = mutableListOf(fileTpl.toPathNode())
+                        d
+                    } else {
+                        // 顶层为 file 的模板套
+                        fileTpl
+                    }
+                }
+
+                // 最后根据 pattern 选定最终的模板节点（只匹配顶层 TemplateNode）
+                val selected = groups.filter { it.matches(genName) }
+
+                selected.forEach { templateNode ->
+                    val pathNode = templateNode.resolve(templateContext)
+                    forceRender(
+                        pathNode, resolvePackageDirectory(
+                            templateContext["modulePath"].toString(),
+                            concatPackage(
+                                getString("basePackage"),
+                                templateContext["templatePackage"].toString(),
+                                templateContext["package"].toString()
                             )
                         )
-                    }
+                    )
+                }
 
                 generator.onGenerated(design)
             }
