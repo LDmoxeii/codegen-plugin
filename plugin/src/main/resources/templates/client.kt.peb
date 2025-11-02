@@ -10,20 +10,11 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
  * @author cap4k-ddd-codegen
  * @date {{ date }}
  */
-class {{ Client }} {
+object {{ Client }} {
 
-    /**
-     * {{ Client }}客户端请求参数
-     */
-    data class Request(
-        val param: String? = null,
+    class Request(
     ) : RequestParam<Response>
 
-    /**
-     * {{ Client }}客户端响应
-     */
-    data class Response(
-        val result: String? = null,
-        val success: Boolean = false,
+    class Response(
     )
 }

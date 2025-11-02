@@ -5,8 +5,7 @@ package com.only4.codegen.manager
  */
 class ClientHandlerImportManager : BaseImportManager() {
     override fun addBaseImports() {
-        requiredImports.add("org.slf4j.LoggerFactory")
         requiredImports.add("org.springframework.stereotype.Service")
-        requiredImports.add("com.only4.cap4k.ddd.application.distributed.client.DistributedClient")
+        requiredImports.add("com.only4.cap4k.ddd.core.application.RequestHandler")
     }
 }

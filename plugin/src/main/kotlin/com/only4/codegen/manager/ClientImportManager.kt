@@ -5,6 +5,6 @@ package com.only4.codegen.manager
  */
 class ClientImportManager : BaseImportManager() {
     override fun addBaseImports() {
-        requiredImports.add("com.only4.cap4k.ddd.application.RequestParam")
+        requiredImports.add("com.only4.cap4k.ddd.core.application.RequestParam")
     }
 }

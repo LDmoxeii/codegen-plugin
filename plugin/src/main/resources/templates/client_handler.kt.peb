@@ -11,19 +11,10 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
  * @date {{ date }}
  */
 @Service
-class {{ Client }}Handler : DistributedClient<ClientContract.Request, ClientContract.Response> {
-
-    companion object {
-        private val log = LoggerFactory.getLogger({{ Client }}Handler::class.java)
-    }
-
-    override fun exec(request: ClientContract.Request): ClientContract.Response {
-        // TODO: 实现分布式客户端调用逻辑
-        log.info("执行{{ Client }}远程调用: {}", request)
-
-        return ClientContract.Response(
-            result = "调用成功",
-            success = true
+class {{ Client }}Handler : RequestHandler<{{ Client }}.Request, {{ Client }}.Response> {
+    override fun exec(request: {{ Client }}.Request): {{ Client }}.Response {
+        // TODO: 实现远程调用逻辑或适配调用
+        return {{ Client }}.Response(
         )
     }
 }

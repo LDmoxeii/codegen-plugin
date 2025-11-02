@@ -149,11 +149,13 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
     private fun generateDesignFiles(context: DesignContext) {
         val generators = listOf(
-            CommandGenerator(),           // order=10 - 生成命令
-            QueryGenerator(),             // order=10 - 生成查询
-            DomainEventGenerator(),        // order=10 - 生成领域事件
+            CommandGenerator(),             // order=10 - 生成命令
+            QueryGenerator(),               // order=10 - 生成查询
+            ClientGenerator(),              // order=10 - 生成分布式客户端（防腐层）
+            DomainEventGenerator(),         // order=10 - 生成领域事件
             DomainEventHandlerGenerator(),  // order=20 - 生成领域事件处理器
             QueryHandlerGenerator(),        // order=20 - 生成查询处理器
+            ClientHandlerGenerator(),       // order=20 - 生成分布式客户端处理器
             ValidatorGenerator()            // order=10 - 生成校验器
         )
 
