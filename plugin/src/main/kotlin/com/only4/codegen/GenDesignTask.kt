@@ -269,15 +269,15 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 val templatePkgRaw = context.templatePackage["query"] ?: "application.query"
                 val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkgRaw, design.`package`)
                 val qImports = com.only4.codegen.manager.QueryImportManager().apply { addBaseImports() }.toImportLines()
-                val model = buildMap<String, Any?> {
-                    putAll(context.baseMap)
-                    put("templatePackage", com.only4.codegen.misc.refPackage(templatePkgRaw))
-                    put("package", com.only4.codegen.misc.refPackage(design.`package`))
-                    put("Query", base)
-                    put("Comment", design.desc)
-                    put("imports", qImports)
-                    put("templateBaseDir", templateBaseDir)
-                }
+                val model = com.only4.codegen.engine.generation.common.V2ModelBuilder.model(
+                    context = context,
+                    templateBaseDir = templateBaseDir,
+                    templatePackageRaw = templatePkgRaw,
+                    packageRaw = design.`package`,
+                    comment = design.desc,
+                    vars = mapOf("Query" to base),
+                    imports = qImports,
+                )
                 val ctxTop = context.templateNodeMap.getOrDefault("query", emptyList())
                 val defTop = QueryGenerator().getDefaultTemplateNodes()
                 val ctx = com.only4.codegen.engine.generation.design.TemplateNodeV2Context(
@@ -357,16 +357,18 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                     }
                     context.typeMapping[base]?.let { add(it) }
                 }
-                val model = buildMap<String, Any?> {
-                    putAll(context.baseMap)
-                    put("templatePackage", com.only4.codegen.misc.refPackage(templatePkgRaw))
-                    put("package", com.only4.codegen.misc.refPackage(design.`package`))
-                    put("QueryHandler", handlerName)
-                    put("Query", base)
-                    put("Comment", design.desc)
-                    put("imports", imports)
-                    put("templateBaseDir", templateBaseDir)
-                }
+                val model = com.only4.codegen.engine.generation.common.V2ModelBuilder.model(
+                    context = context,
+                    templateBaseDir = templateBaseDir,
+                    templatePackageRaw = templatePkgRaw,
+                    packageRaw = design.`package`,
+                    comment = design.desc,
+                    vars = mapOf(
+                        "QueryHandler" to handlerName,
+                        "Query" to base,
+                    ),
+                    imports = imports,
+                )
                 val ctxTop = context.templateNodeMap.getOrDefault("query_handler", emptyList())
                 val defTop = QueryHandlerGenerator().getDefaultTemplateNodes()
                 val ctx = com.only4.codegen.engine.generation.design.TemplateNodeV2Context(
