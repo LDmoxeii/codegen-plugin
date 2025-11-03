@@ -62,9 +62,36 @@ class EntityGenerator : AggregateTemplateGenerator {
         }
 
         baseClass?.let {
-            baseClass = it
+            // 1) 占位符替换
+            var resolved = it
                 .replace("\${Entity}", entityType)
                 .replace("\${IdentityType}", identityType)
+
+            // 2) 解析基类的简单名与全限定名
+            //    - 用户可能提供简单类名（如 AuditedFieldsEntity）
+            //    - 或全限定名（如 com.example.AuditedFieldsEntity）
+            //    - 或包含泛型（如 Base<${IdentityType}>）
+            val head = resolved
+                .substringBefore("<")
+                .substringBefore("(")
+                .trim()
+
+            val simpleName = head.substringAfterLast('.')
+            val fullName = when {
+                // 已经是全限定名
+                head.contains('.') -> head
+                // 在 typeMapping 中查找简单名对应的全限定名
+                ctx.typeMapping.containsKey(simpleName) -> ctx.typeMapping[simpleName]
+                else -> null
+            }
+
+            // 3) import 基类的全限定名；同时在 extends 使用简单名
+            if (!fullName.isNullOrBlank()) {
+                importManager.add(fullName)
+                resolved = resolved.replaceFirst(head, simpleName)
+            }
+
+            baseClass = resolved
         }
 
         val extendsClause = if (baseClass?.isNotBlank() == true) " : $baseClass()" else ""
