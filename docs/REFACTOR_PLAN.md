@@ -24,8 +24,9 @@
     - [x] 替换 `PathNode` 的 `ThreadLocal` 目录依赖为上下文 `templateBaseDir`，并移除调用点的 `setDirectory`。
   - [ ] Gradle 任务可缓存化：
     - [x] 标注关键输入：`genArch` 的 `@InputFile`（模板），`genDesign` 的 `@InputFiles`（设计文件）。
+    - [x] 标注输出目录（模块根目录）。
     - [x] 清理内部 API 依赖。
-    - [ ] 标注输出目录并评估 `@CacheableTask` 与 Worker API。
+    - [ ] 评估 `@CacheableTask` 与 Worker API。
   - [x] 清理 `org.gradle.internal.*` 直接导入（已移除未使用/可替代用法）。
 - 模板系统
   - [x] 抽取通用“模板选择与合并”组件（`TemplateMerger`），替换 `GenAggregateTask`/`GenDesignTask` 内重复逻辑。

@@ -22,6 +22,7 @@ import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.io.File
 import java.util.regex.Pattern
+import org.gradle.api.tasks.OutputDirectory
 
 open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
@@ -44,6 +45,8 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     override fun generate() {
         renderFileSwitch = false
         super.generate()
+        val engine = extension.get().generationEngine.get()
+        logger.lifecycle("Codegen engine: $engine (using legacy pipeline)")
 
         genDesign()
     }

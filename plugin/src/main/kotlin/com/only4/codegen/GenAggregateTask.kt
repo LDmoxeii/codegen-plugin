@@ -10,8 +10,10 @@ import com.only4.codegen.misc.resolvePackageDirectory
 import com.only4.codegen.template.TemplateNode
 import com.only4.codegen.misc.AliasResolver
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 import java.util.regex.Pattern
+import java.io.File
 
 /**
  * 生成实体类任务
@@ -116,6 +118,9 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
         renderFileSwitch = false
         super.generate()
         SqlSchemaUtils.context = this
+
+        val engine = extension.get().generationEngine.get()
+        logger.lifecycle("Codegen engine: $engine (using legacy pipeline)")
 
         genEntity()
     }
@@ -222,4 +227,5 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             }
         }
     }
+
 }

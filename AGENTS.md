@@ -15,6 +15,9 @@
 - Remote publish (Aliyun): `./gradlew publish -Paliyun.maven.username=xxxx -Paliyun.maven.password=xxxx`.
 - Plugin tasks exposed to consumers: `genArch`, `genAggregate`, `genDesign` (list with `gradle tasks`).
 
+### Engine Flag
+- Configure engine via extension: `codegen { generationEngine.set("legacy") }` or `"v2"` (scaffolding in place; default `legacy`).
+
 ## Coding Style & Naming
 - Language: Kotlin (JVM 17). Use idiomatic Kotlin, 4-space indent.
 - Packages: lowercase; Classes/Interfaces: PascalCase; methods/fields: camelCase; constants: UPPER_SNAKE_CASE.

@@ -11,6 +11,8 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
+import org.gradle.api.tasks.OutputDirectory
+import java.io.File
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.TaskAction
 
@@ -36,6 +38,19 @@ open class GenArchTask : AbstractCodegenTask() {
     @get:PathSensitive(PathSensitivity.RELATIVE)
     val archTemplateFile
         get() = project.file(extension.get().archTemplate.get())
+
+    // Outputs (module roots) – actual files are under src/main/... based on templates
+    @get:OutputDirectory
+    val outputAdapterModuleDir: File
+        get() = File(adapterPath)
+
+    @get:OutputDirectory
+    val outputApplicationModuleDir: File
+        get() = File(applicationPath)
+
+    @get:OutputDirectory
+    val outputDomainModuleDir: File
+        get() = File(domainPath)
 
     @TaskAction
     open fun generate() = genArch()
