@@ -11,6 +11,7 @@
   - 定义并落地接口层：`IMetadataExtractor`/`IGenerationStrategy`/`IOutputManager`/`IConfigurationManager`/`IMetadataValidator`。（已创建接口骨架）
   - 加入开关：`codegen.generation.engine=legacy|v2`，默认 `legacy`。（已在 `CodegenExtension` 中新增属性）
   - [x] 最小闭环：在 Design 流水线中，当 engine=`v2` 时，使用 `V2ValidatorStrategy` + `FileOutputManager` 生成 `validator` 类（其余保持 legacy）。
+  - [x] Aggregate v2：实现 `V2EnumStrategy`，当 engine=`v2` 时从表枚举元数据生成枚举类，输出至 `domain.aggregates.<aggregate>.enums`。
 - M3 渐进迁移与增强测试（0.3.x）
   - 在“枚举/DTO”等有限域试点 KotlinPoet 生成策略；完善单元/集成测试与基准用例。
 - M4 文档与发布（0.3.x）

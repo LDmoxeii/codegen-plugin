@@ -176,30 +176,52 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
         val context = buildDesignContext(metadataPath.absolutePath)
 
-        val validators = context.designMap["validator"] ?: emptyList()
-        if (validators.isEmpty()) return
-
         val basePackage = getString("basePackage")
         val outputEncoding = getString("outputEncoding", "UTF-8")
+        val out = com.only4.codegen.engine.output.FileOutputManager(applicationPath, outputEncoding)
 
-        val strategy = com.only4.codegen.engine.generation.design.V2ValidatorStrategy()
+        // Validator
+        run {
+            val list = context.designMap["validator"] ?: emptyList()
+            val strategy = com.only4.codegen.engine.generation.design.V2ValidatorStrategy()
+            list.forEach { design ->
+                if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+                val className = com.only4.codegen.misc.toUpperCamelCase(design.name) ?: design.name
+                val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+                    basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
+                )
+                strategy.generate(v2ctx).forEach { out.write(it) }
+            }
+        }
 
-        validators.forEach { design ->
-            if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+        // Command
+        run {
+            val list = context.designMap["command"] ?: emptyList()
+            val strategy = com.only4.codegen.engine.generation.design.V2CommandStrategy()
+            list.forEach { design ->
+                if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+                val raw = if (design.name.endsWith("Cmd")) design.name else "${design.name}Cmd"
+                val className = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+                val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+                    basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
+                )
+                strategy.generate(v2ctx).forEach { out.write(it) }
+            }
+        }
 
-            val className = com.only4.codegen.misc.toUpperCamelCase(design.name) ?: design.name
-            val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
-                basePackage = basePackage,
-                modulePath = applicationPath,
-                packageName = design.`package`,
-                className = className,
-                description = design.desc,
-                outputEncoding = outputEncoding,
-            )
-
-            val results = strategy.generate(v2ctx)
-            val out = com.only4.codegen.engine.output.FileOutputManager(applicationPath, outputEncoding)
-            results.forEach { r -> out.write(r) }
+        // Query
+        run {
+            val list = context.designMap["query"] ?: emptyList()
+            val strategy = com.only4.codegen.engine.generation.design.V2QueryStrategy()
+            list.forEach { design ->
+                if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+                val raw = if (design.name.endsWith("Qry")) design.name else "${design.name}Qry"
+                val className = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+                val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+                    basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
+                )
+                strategy.generate(v2ctx).forEach { out.write(it) }
+            }
         }
     }
     @get:InputFiles

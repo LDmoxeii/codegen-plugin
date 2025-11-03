@@ -123,9 +123,12 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
         SqlSchemaUtils.context = this
 
         val engine = extension.get().generationEngine.get()
-        logger.lifecycle("Codegen engine: $engine (using legacy pipeline)")
-
-        genEntity()
+        logger.lifecycle("Codegen engine: $engine")
+        if (engine.equals("v2", ignoreCase = true)) {
+            genAggregateV2()
+        } else {
+            genEntity()
+        }
     }
 
     private fun genEntity() {
@@ -160,6 +163,56 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             }
 
         return this
+    }
+
+    private fun genAggregateV2() {
+        val context = buildGenerationContext()
+
+        if (context.tableMap.isEmpty()) {
+            logger.warn("No tables found in database")
+            return
+        }
+
+        val basePackage = getString("basePackage")
+        val outputEncoding = getString("outputEncoding", "UTF-8")
+        val out = com.only4.codegen.engine.output.FileOutputManager(domainPath, outputEncoding)
+        val enumStrategy = com.only4.codegen.engine.generation.aggregate.V2EnumStrategy()
+
+        val generatedEnums = mutableSetOf<String>()
+
+        context.tableMap.values.forEach { table ->
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val columns = context.columnsMap[tableName] ?: return@forEach
+
+            columns.forEach { column ->
+                if (!SqlSchemaUtils.hasEnum(column) || SqlSchemaUtils.isIgnore(column)) return@forEach
+                val enumType = SqlSchemaUtils.getType(column)
+                if (generatedEnums.contains(enumType)) return@forEach
+
+                val config = context.enumConfigMap[enumType] ?: return@forEach
+                val items = config.toSortedMap().map { (value, arr) ->
+                    com.only4.codegen.engine.generation.aggregate.EnumItem(value, arr[0], arr[1])
+                }
+
+                val aggregate = context.resolveAggregateWithModule(tableName)
+                val v2ctx = com.only4.codegen.engine.generation.aggregate.EnumV2Context(
+                    basePackage = basePackage,
+                    aggregate = aggregate,
+                    enumName = enumType,
+                    items = items,
+                    enumValueField = getString("enumValueField"),
+                    enumNameField = getString("enumNameField"),
+                )
+
+                enumStrategy.generate(v2ctx).forEach { out.write(it) }
+
+                val fullName = com.only4.codegen.misc.concatPackage(
+                    basePackage, "domain.aggregates", aggregate, "enums", enumType
+                )
+                context.typeMapping[enumType] = fullName
+                generatedEnums.add(enumType)
+            }
+        }
     }
 
     private fun generateFiles(context: AggregateContext) {
