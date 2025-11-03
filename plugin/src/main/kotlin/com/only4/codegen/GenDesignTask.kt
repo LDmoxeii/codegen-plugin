@@ -178,7 +178,8 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
         val basePackage = getString("basePackage")
         val outputEncoding = getString("outputEncoding", "UTF-8")
-        val out = com.only4.codegen.engine.output.FileOutputManager(applicationPath, outputEncoding)
+        val outApp = com.only4.codegen.engine.output.FileOutputManager(applicationPath, outputEncoding)
+        val outAdapter = com.only4.codegen.engine.output.FileOutputManager(adapterPath, outputEncoding)
 
         // Validator
         run {
@@ -190,7 +191,7 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
                     basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
                 )
-                strategy.generate(v2ctx).forEach { out.write(it) }
+                strategy.generate(v2ctx).forEach { outApp.write(it) }
             }
         }
 
@@ -205,7 +206,7 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
                     basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
                 )
-                strategy.generate(v2ctx).forEach { out.write(it) }
+                strategy.generate(v2ctx).forEach { outApp.write(it) }
             }
         }
 
@@ -220,7 +221,56 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
                     basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
                 )
-                strategy.generate(v2ctx).forEach { out.write(it) }
+                strategy.generate(v2ctx).forEach { outApp.write(it) }
+            }
+        }
+
+        // Query Handler (adapter)
+        run {
+            val list = context.designMap["query_handler"] ?: emptyList()
+            val strategy = com.only4.codegen.engine.generation.design.V2QueryHandlerStrategy()
+            list.forEach { design ->
+                if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+                val raw = if (design.name.endsWith("Qry")) design.name else "${design.name}Qry"
+                val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+                val className = "${base}Handler"
+                val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+                    basePackage, adapterPath, design.`package`, className, design.desc, outputEncoding
+                )
+                strategy.generate(v2ctx).forEach { outAdapter.write(it) }
+            }
+        }
+
+        // Client Handler (adapter)
+        run {
+            val list = context.designMap["client_handler"] ?: emptyList()
+            val strategy = com.only4.codegen.engine.generation.design.V2ClientHandlerStrategy()
+            list.forEach { design ->
+                if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+                val raw = if (design.name.endsWith("Cli")) design.name else "${design.name}Cli"
+                val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+                val className = "${base}Handler"
+                val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+                    basePackage, adapterPath, design.`package`, className, design.desc, outputEncoding
+                )
+                strategy.generate(v2ctx).forEach { outAdapter.write(it) }
+            }
+        }
+
+        // Domain Event Handler (application)
+        run {
+            val list = context.designMap["domain_event_handler"] ?: emptyList()
+            val strategy = com.only4.codegen.engine.generation.design.V2DomainEventHandlerStrategy()
+            list.forEach { design ->
+                if (design !is com.only4.codegen.context.design.models.DomainEventDesign) return@forEach
+                var raw = design.name
+                if (!raw.endsWith("Evt") && !raw.endsWith("Event")) raw += "DomainEvent"
+                val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+                val className = "${base}Subscriber"
+                val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+                    basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
+                )
+                strategy.generate(v2ctx).forEach { outApp.write(it) }
             }
         }
     }
