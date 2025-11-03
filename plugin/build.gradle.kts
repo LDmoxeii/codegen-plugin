@@ -96,9 +96,13 @@ publishing {
         maven {
             name = "AliYunMaven"
             url = uri("https://packages.aliyun.com/67053c6149e9309ce56b9e9e/maven/code-gen")
-            credentials {
-                username = providers.gradleProperty("aliyun.maven.username").get()
-                password = providers.gradleProperty("aliyun.maven.password").get()
+            val aliyunUser = providers.gradleProperty("aliyun.maven.username").orNull
+            val aliyunPass = providers.gradleProperty("aliyun.maven.password").orNull
+            if (!aliyunUser.isNullOrBlank() && !aliyunPass.isNullOrBlank()) {
+                credentials {
+                    username = aliyunUser
+                    password = aliyunPass
+                }
             }
         }
     }

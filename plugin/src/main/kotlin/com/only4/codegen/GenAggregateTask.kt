@@ -191,7 +191,9 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
                     continue
                 }
 
-                val tableContext = generator.buildContext(table)
+                val tableContext = generator.buildContext(table).toMutableMap().apply {
+                    this["templateBaseDir"] = templateBaseDir
+                }
 
                 // 合并模板节点（先收集再组合成多套，再根据 pattern 选择）：
                 // - 多个 dir/file 顶层节点可共存；每个唯一键(name+pattern)代表一套模板节点

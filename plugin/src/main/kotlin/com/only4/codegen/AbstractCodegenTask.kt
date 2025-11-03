@@ -58,6 +58,9 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     @Internal
     protected var renderFileSwitch = true
 
+    @Internal
+    protected var templateBaseDir: String = ""
+
     private val CodegenExtension.adapterPath: String
         get() = modulePath(moduleNameSuffix4Adapter.get())
 

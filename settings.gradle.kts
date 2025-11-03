@@ -9,12 +9,17 @@ dependencyResolutionManagement {
     @Suppress("UnstableApiUsage")
     repositories {
         mavenLocal()
-        maven {
-            credentials {
-                username = providers.gradleProperty("aliyun.maven.username").get()
-                password = providers.gradleProperty("aliyun.maven.password").get()
+        // Optional private repository (enabled when credentials exist)
+        val aliyunUser = providers.gradleProperty("aliyun.maven.username").orNull
+        val aliyunPass = providers.gradleProperty("aliyun.maven.password").orNull
+        if (!aliyunUser.isNullOrBlank() && !aliyunPass.isNullOrBlank()) {
+            maven {
+                credentials {
+                    username = aliyunUser
+                    password = aliyunPass
+                }
+                url = uri("https://packages.aliyun.com/67053c6149e9309ce56b9e9e/maven/code-gen")
             }
-            url = uri("https://packages.aliyun.com/67053c6149e9309ce56b9e9e/maven/code-gen")
         }
         maven {
             url = uri("https://maven.aliyun.com/repository/public")

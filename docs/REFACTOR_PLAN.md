@@ -21,8 +21,11 @@
   - [x] 数据库驱动改为可选：将 `mysql`/`postgresql` 从实现依赖调整为可选/由使用方提供（或 `runtimeOnly`）。
   - [ ] 全局状态收敛：
     - [ ] 将 `PebbleInitializer` 使用限制在渲染入口，避免测试干扰。
-    - [ ] 替换 `PathNode` 的 `ThreadLocal` 目录依赖为显式参数传递。
-- [ ] Gradle 任务可缓存化：为 `genArch`/`genAggregate`/`genDesign` 标注 `@Input/@OutputDirectory/@InputFiles`，移除 `org.gradle.internal.*` 依赖，必要时使用 Worker API。
+    - [x] 替换 `PathNode` 的 `ThreadLocal` 目录依赖为上下文 `templateBaseDir`，并移除调用点的 `setDirectory`。
+  - [ ] Gradle 任务可缓存化：
+    - [x] 标注关键输入：`genArch` 的 `@InputFile`（模板），`genDesign` 的 `@InputFiles`（设计文件）。
+    - [x] 清理内部 API 依赖。
+    - [ ] 标注输出目录并评估 `@CacheableTask` 与 Worker API。
   - [x] 清理 `org.gradle.internal.*` 直接导入（已移除未使用/可替代用法）。
 - 模板系统
   - [x] 抽取通用“模板选择与合并”组件（`TemplateMerger`），替换 `GenAggregateTask`/`GenDesignTask` 内重复逻辑。
@@ -41,7 +44,7 @@
   - [ ] 基准与快照：关键模板输出加入快照对比。
 - 文档与样例
   - [ ] 增补 `docs/`：抽象层架构、接口示例、迁移指南；
-  - [ ] 在 `AGENTS.md` 增加开发者提示与常用命令片段。
+  - [x] 在 `AGENTS.md` 增加开发者提示与常用命令片段（别名配置）。
 
 ## 风险与回滚
 - 风险：

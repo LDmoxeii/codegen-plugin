@@ -12,6 +12,10 @@ import com.only4.codegen.context.design.models.DesignElement
 import com.only4.codegen.generators.design.*
 import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.AliasResolver
+import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.InputFiles
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import com.only4.codegen.misc.resolvePackageDirectory
 import com.only4.codegen.template.TemplateNode
 import org.gradle.api.tasks.Internal
@@ -115,7 +119,9 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                     continue
                 }
 
-                val templateContext = generator.buildContext(design).toMutableMap()
+                val templateContext = generator.buildContext(design).toMutableMap().apply {
+                    this["templateBaseDir"] = templateBaseDir
+                }
 
                 // 合并模板节点（先收集再组合成多套，再根据 pattern 选择）：
                 // - 多个 dir/file 顶层节点可共存；每个唯一键(name+pattern)代表一套模板节点
@@ -153,4 +159,8 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
             templateNodeMap.computeIfAbsent(tag) { mutableListOf() }.add(templateNode)
         }
     }
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    val designInputFiles: FileCollection
+        get() = extension.get().designFiles
 }

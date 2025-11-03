@@ -53,10 +53,11 @@ open class PathNode {
     var children: MutableList<PathNode>? = null
 
     companion object {
-        private val directory = ThreadLocal<String>()
+        // Deprecated fallback; prefer passing base dir via context["templateBaseDir"].
+        private val directory = ThreadLocal<String?>()
         fun setDirectory(dir: String) = directory.set(dir)
         fun clearDirectory() = directory.remove()
-        fun getDirectory(): String = directory.get()
+        private fun fallbackDirectory(): String = directory.get() ?: ""
     }
 
     open fun resolve(context: Map<String, Any?>): PathNode {
@@ -66,6 +67,7 @@ open class PathNode {
             ?.let { renderString(it, context) }
 
         // 根据 format 处理模板数据
+        val baseDirFromCtx = context["templateBaseDir"]?.toString()?.takeIf { it.isNotBlank() }
         val rawData = when (format.lowercase()) {
             "url" -> {
                 // data 存储的是模板路径/URL，需要加载文件内容
@@ -73,7 +75,8 @@ open class PathNode {
                     val absolutePath = if (isAbsolutePathOrHttpUri(src)) {
                         src
                     } else {
-                        concatPathOrHttpUri(directory.get(), src)
+                        val baseDir = baseDirFromCtx ?: fallbackDirectory()
+                        concatPathOrHttpUri(baseDir, src)
                     }
                     // 使用 loadFileContent 加载文件内容（支持文件系统和 HTTP）
                     loadFileContent(absolutePath, context["archTemplateEncoding"]?.toString() ?: "UTF-8")
