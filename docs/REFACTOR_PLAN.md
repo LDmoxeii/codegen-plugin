@@ -8,8 +8,8 @@
 - M1 基础卫生与兼容层（0.2.x）
   - 统一 JSON 库；外置别名；抽取模板合并器；最小化全局状态；构建配置与缓存输入/输出标注。
 - M2 引入抽象引擎（0.3.0-SNAPSHOT）
-  - 定义并落地接口层：`IMetadataExtractor`/`IGenerationStrategy`/`IOutputManager`/`IConfigurationManager`/`IMetadataValidator`。
-  - 加入开关：`codegen.generation.engine=legacy|v2`，默认 `legacy`。
+  - 定义并落地接口层：`IMetadataExtractor`/`IGenerationStrategy`/`IOutputManager`/`IConfigurationManager`/`IMetadataValidator`。（已创建接口骨架）
+  - 加入开关：`codegen.generation.engine=legacy|v2`，默认 `legacy`。（已在 `CodegenExtension` 中新增属性）
 - M3 渐进迁移与增强测试（0.3.x）
   - 在“枚举/DTO”等有限域试点 KotlinPoet 生成策略；完善单元/集成测试与基准用例。
 - M4 文档与发布（0.3.x）

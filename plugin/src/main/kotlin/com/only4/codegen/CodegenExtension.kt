@@ -80,6 +80,11 @@ open class CodegenExtension @Inject constructor(objects: ObjectFactory) {
     val generation: GenerationConfig = objects.newInstance(GenerationConfig::class.java, objects)
 
     /**
+     * 生成引擎：legacy | v2
+     */
+    val generationEngine: Property<String> = objects.property(String::class.java).convention("legacy")
+
+    /**
      * 配置数据库连接
      */
     fun database(action: Action<DatabaseConfig>) {
