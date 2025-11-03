@@ -188,10 +188,13 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
             list.forEach { design ->
                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
                 val className = com.only4.codegen.misc.toUpperCamelCase(design.name) ?: design.name
+                val templatePkg = context.templatePackage["validator"] ?: "application.validater"
+                val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`)
                 val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
-                    basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
+                    finalPkg, className, design.desc, outputEncoding
                 )
                 strategy.generate(v2ctx).forEach { outApp.write(it) }
+                context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
             }
         }
 
@@ -203,41 +206,112 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
                 val raw = if (design.name.endsWith("Cmd")) design.name else "${design.name}Cmd"
                 val className = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+                val templatePkg = context.templatePackage["command"] ?: "application.command"
+                val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`)
                 val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
-                    basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
+                    finalPkg, className, design.desc, outputEncoding
                 )
                 strategy.generate(v2ctx).forEach { outApp.write(it) }
+                context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
             }
         }
 
-        // Query
+        // Query (v2 via new abstraction + Pebble templates)
         run {
             val list = context.designMap["query"] ?: emptyList()
-            val strategy = com.only4.codegen.engine.generation.design.V2QueryStrategy()
+            val strategy = com.only4.codegen.engine.generation.design.QueryPebbleV2Strategy()
             list.forEach { design ->
                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
-                val raw = if (design.name.endsWith("Qry")) design.name else "${design.name}Qry"
-                val className = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
-                val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
-                    basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
+                val base = com.only4.codegen.misc.toUpperCamelCase(
+                    if (design.name.endsWith("Qry")) design.name else "${design.name}Qry"
+                ) ?: design.name
+                val templatePkgRaw = context.templatePackage["query"] ?: "application.query"
+                val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkgRaw, design.`package`)
+                val qImports = com.only4.codegen.manager.QueryImportManager().apply { addBaseImports() }.toImportLines()
+                val inferred = com.only4.codegen.manager.QueryHandlerImportManager.inferQueryType(design.name)
+                val resource = when (inferred) {
+                    com.only4.codegen.manager.QueryHandlerImportManager.QueryType.PAGE -> "templates/query_page.kt.peb"
+                    com.only4.codegen.manager.QueryHandlerImportManager.QueryType.LIST -> "templates/query_list.kt.peb"
+                    else -> "templates/query.kt.peb"
+                }
+                val ctx = com.only4.codegen.engine.generation.design.QueryPebbleV2Context(
+                    finalPackage = finalPkg,
+                    basePackage = basePackage,
+                    templatePackageRef = com.only4.codegen.misc.refPackage(templatePkgRaw),
+                    packageRef = com.only4.codegen.misc.refPackage(design.`package`),
+                    queryName = base,
+                    comment = design.desc,
+                    date = getString("date"),
+                    imports = qImports,
+                    templateResource = resource,
                 )
-                strategy.generate(v2ctx).forEach { outApp.write(it) }
+                strategy.generate(ctx).forEach { outApp.write(it) }
+                context.typeMapping[base] = com.only4.codegen.misc.concatPackage(finalPkg, base)
             }
         }
 
-        // Query Handler (adapter)
+        // Client (for client_handler dependency)
         run {
-            val list = context.designMap["query_handler"] ?: emptyList()
-            val strategy = com.only4.codegen.engine.generation.design.V2QueryHandlerStrategy()
+            val list = context.designMap["client"] ?: emptyList()
+            val strategy = com.only4.codegen.engine.generation.design.V2ClientStrategy()
             list.forEach { design ->
                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
-                val raw = if (design.name.endsWith("Qry")) design.name else "${design.name}Qry"
-                val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
-                val className = "${base}Handler"
+                val raw = if (design.name.endsWith("Cli")) design.name else "${design.name}Cli"
+                val className = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+                val templatePkg = context.templatePackage["client"] ?: "application.client"
+                val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`)
                 val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
-                    basePackage, adapterPath, design.`package`, className, design.desc, outputEncoding
+                    finalPkg, className, design.desc, outputEncoding
                 )
-                strategy.generate(v2ctx).forEach { outAdapter.write(it) }
+                strategy.generate(v2ctx).forEach { outApp.write(it) }
+                context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
+            }
+        }
+
+        // Query Handler (adapter) — v2 abstraction + Pebble templates + ImportManager
+        run {
+            val list = context.designMap["query_handler"] ?: emptyList()
+            val strategy = com.only4.codegen.engine.generation.design.QueryHandlerPebbleV2Strategy()
+            list.forEach { design ->
+                if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+                val base = com.only4.codegen.misc.toUpperCamelCase(
+                    if (design.name.endsWith("Qry")) design.name else "${design.name}Qry"
+                ) ?: design.name
+                val handlerName = "${base}Handler"
+                val templatePkgRaw = context.templatePackage["query_handler"] ?: "adapter"
+                val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkgRaw, design.`package`)
+                val inferred = com.only4.codegen.manager.QueryHandlerImportManager.inferQueryType(design.name)
+                val imports = mutableListOf<String>().apply {
+                    add("org.springframework.stereotype.Service")
+                    when (inferred) {
+                        com.only4.codegen.manager.QueryHandlerImportManager.QueryType.SINGLE -> add("com.only4.cap4k.ddd.core.application.query.Query")
+                        com.only4.codegen.manager.QueryHandlerImportManager.QueryType.LIST -> add("com.only4.cap4k.ddd.core.application.query.ListQuery")
+                        com.only4.codegen.manager.QueryHandlerImportManager.QueryType.PAGE -> {
+                            add("com.only4.cap4k.ddd.core.application.query.PageQuery")
+                            add("com.only4.cap4k.ddd.core.share.PageData")
+                        }
+                    }
+                    context.typeMapping[base]?.let { add(it) }
+                }
+                val resource = when (inferred) {
+                    com.only4.codegen.manager.QueryHandlerImportManager.QueryType.PAGE -> "templates/query_page_handler.kt.peb"
+                    com.only4.codegen.manager.QueryHandlerImportManager.QueryType.LIST -> "templates/query_list_handler.kt.peb"
+                    else -> "templates/query_handler.kt.peb"
+                }
+                val ctx = com.only4.codegen.engine.generation.design.QueryHandlerPebbleV2Context(
+                    finalPackage = finalPkg,
+                    basePackage = basePackage,
+                    templatePackageRef = com.only4.codegen.misc.refPackage(templatePkgRaw),
+                    packageRef = com.only4.codegen.misc.refPackage(design.`package`),
+                    handlerName = handlerName,
+                    queryName = base,
+                    comment = design.desc,
+                    date = getString("date"),
+                    imports = imports,
+                    templateResource = resource,
+                )
+                strategy.generate(ctx).forEach { outAdapter.write(it) }
+                context.typeMapping[handlerName] = com.only4.codegen.misc.concatPackage(finalPkg, handlerName)
             }
         }
 
@@ -250,10 +324,25 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 val raw = if (design.name.endsWith("Cli")) design.name else "${design.name}Cli"
                 val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
                 val className = "${base}Handler"
-                val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
-                    basePackage, adapterPath, design.`package`, className, design.desc, outputEncoding
+                val templatePkg = context.templatePackage["client_handler"] ?: "adapter"
+                val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`)
+                val clientFull = context.typeMapping[base]
+                val imports = mutableListOf(
+                    "org.springframework.stereotype.Service",
+                    "com.only4.cap4k.ddd.core.application.RequestHandler",
                 )
-                strategy.generate(v2ctx).forEach { outAdapter.write(it) }
+                if (clientFull != null) imports.add(clientFull)
+                val hctx = com.only4.codegen.engine.generation.design.HandlerV2Context(
+                    finalPackage = finalPkg,
+                    className = className,
+                    description = design.desc,
+                    imports = imports,
+                    implements = ": RequestHandler<${base}.Request, ${base}.Response>",
+                    methodSignature = "override fun exec(request: ${base}.Request): ${base}.Response",
+                    methodBody = "return ${base}.Response()"
+                )
+                strategy.generate(hctx).forEach { outAdapter.write(it) }
+                context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
             }
         }
 
@@ -267,10 +356,25 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 if (!raw.endsWith("Evt") && !raw.endsWith("Event")) raw += "DomainEvent"
                 val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
                 val className = "${base}Subscriber"
-                val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
-                    basePackage, applicationPath, design.`package`, className, design.desc, outputEncoding
+                val templatePkg = context.templatePackage["domain_event_handler"] ?: "application"
+                val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`, "events")
+                val eventFull = context.typeMapping[base]
+                val imports = mutableListOf(
+                    "org.springframework.context.event.EventListener",
+                    "org.springframework.stereotype.Service",
                 )
-                strategy.generate(v2ctx).forEach { outApp.write(it) }
+                if (eventFull != null) imports.add(eventFull)
+                val hctx = com.only4.codegen.engine.generation.design.HandlerV2Context(
+                    finalPackage = finalPkg,
+                    className = className,
+                    description = design.desc,
+                    imports = imports,
+                    implements = "",
+                    methodSignature = "@EventListener(${base}::class) fun on(event: ${base})",
+                    methodBody = "// TODO"
+                )
+                strategy.generate(hctx).forEach { outApp.write(it) }
+                context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
             }
         }
     }

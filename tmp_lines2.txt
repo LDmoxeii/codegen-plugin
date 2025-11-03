@@ -1,0 +1,368 @@
+   1: package com.only4.codegen
+   2: 
+   3: import com.only4.codegen.context.design.DesignContext
+   4: import com.only4.codegen.context.design.MutableDesignContext
+   5: import com.only4.codegen.context.design.builders.DesignContextBuilder
+   6: import com.only4.codegen.context.design.builders.KspMetadataContextBuilder
+   7: import com.only4.codegen.context.design.builders.TypeMappingBuilder
+   8: import com.only4.codegen.context.design.builders.UnifiedDesignBuilder
+   9: import com.only4.codegen.context.design.models.AggregateInfo
+  10: import com.only4.codegen.context.design.models.BaseDesign
+  11: import com.only4.codegen.context.design.models.DesignElement
+  12: import com.only4.codegen.generators.design.*
+  13: import com.only4.codegen.misc.concatPackage
+  14: import com.only4.codegen.misc.AliasResolver
+  15: import org.gradle.api.file.FileCollection
+  16: import org.gradle.api.tasks.InputFiles
+  17: import org.gradle.api.tasks.PathSensitive
+  18: import org.gradle.api.tasks.PathSensitivity
+  19: import com.only4.codegen.misc.resolvePackageDirectory
+  20: import com.only4.codegen.template.TemplateNode
+  21: import org.gradle.api.tasks.Internal
+  22: import org.gradle.api.tasks.TaskAction
+  23: import java.io.File
+  24: import java.util.regex.Pattern
+  25: import org.gradle.api.tasks.OutputDirectory
+  26: 
+  27: import org.gradle.api.tasks.CacheableTask
+  28: 
+  29: @CacheableTask
+  30: open class GenDesignTask : GenArchTask(), MutableDesignContext {
+  31: 
+  32:     @Internal
+  33:     override val designElementMap = mutableMapOf<String, MutableList<DesignElement>>()
+  34: 
+  35:     @Internal
+  36:     override val aggregateMap: MutableMap<String, AggregateInfo> = mutableMapOf()
+  37: 
+  38:     @Internal
+  39:     override val designMap = mutableMapOf<String, MutableList<BaseDesign>>()
+  40: 
+  41: 
+  42:     @get:Internal
+  43:     override val designTagAliasMap: Map<String, String>
+  44:         get() = AliasResolver.designAliases(extension.get())
+  45: 
+  46: 
+  47:     @TaskAction
+  48:     override fun generate() {
+  49:         renderFileSwitch = false
+  50:         super.generate()
+  51:         val engine = extension.get().generationEngine.get()
+  52:         logger.lifecycle("Codegen engine: $engine")
+  53: 
+  54:         if (engine.equals("v2", ignoreCase = true)) {
+  55:             genDesignV2()
+  56:         } else {
+  57:             genDesign()
+  58:         }
+  59:     }
+  60: 
+  61:     private fun genDesign() {
+  62:         val metadataPath = resolveMetadataPath()
+  63: 
+  64:         if (!metadataPath.exists()) {
+  65:             return
+  66:         }
+  67: 
+  68:         val context = buildDesignContext(metadataPath.absolutePath)
+  69: 
+  70:         val totalDesigns = context.designMap.values.sumOf { it.size }
+  71: 
+  72:         if (totalDesigns == 0) {
+  73:             return
+  74:         }
+  75: 
+  76:         generateDesignFiles(context)
+  77:     }
+  78: 
+  79:     private fun resolveMetadataPath(): File {
+  80:         val domainModulePath = File(getString("domainModulePath"))
+  81:         val domainKspPath = File(domainModulePath, "build/generated/ksp/main/resources/metadata")
+  82:         return domainKspPath
+  83:     }
+  84: 
+  85:     private fun buildDesignContext(metadataPath: String): DesignContext {
+  86:         val builders = listOf(
+  87:             DesignContextBuilder(),                            // order=10  - 加载 JSON 设计文件
+  88:             KspMetadataContextBuilder(metadataPath),           // order=15  - 加载 KSP 聚合元数据
+  89:             TypeMappingBuilder(),                       // order=18  - 构建类型映射 typeMapping
+  90:             UnifiedDesignBuilder()                      // order=20  - 统一解析所有设计类型
+  91:         )
+  92: 
+  93:         builders.sortedBy { it.order }.forEach { builder ->
+  94:             builder.build(this)
+  95:         }
+  96: 
+  97:         return this
+  98:     }
+  99: 
+ 100:     private fun generateDesignFiles(context: DesignContext) {
+ 101:         val generators = listOf(
+ 102:             CommandGenerator(),             // order=10 - 生成命令
+ 103:             QueryGenerator(),               // order=10 - 生成查询
+ 104:             ClientGenerator(),              // order=10 - 生成分布式客户端（防腐层）
+ 105:             DomainEventGenerator(),         // order=10 - 生成领域事件
+ 106:             DomainEventHandlerGenerator(),  // order=20 - 生成领域事件处理器
+ 107:             QueryHandlerGenerator(),        // order=20 - 生成查询处理器
+ 108:             ClientHandlerGenerator(),       // order=20 - 生成分布式客户端处理器
+ 109:             ValidatorGenerator()            // order=10 - 生成校验器
+ 110:         )
+ 111: 
+ 112:         generators.sortedBy { it.order }.forEach { generator ->
+ 113:             generateForDesigns(generator, context)
+ 114:         }
+ 115:     }
+ 116: 
+ 117:     private fun generateForDesigns(
+ 118:         generator: DesignTemplateGenerator,
+ 119:         context: DesignContext
+ 120:     ) {
+ 121:         val designs = context.designMap[generator.tag]?.toMutableList() ?: mutableListOf()
+ 122: 
+ 123:         with(context) {
+ 124:             while (designs.isNotEmpty()) {
+ 125:                 val design = designs.first()
+ 126: 
+ 127:                 if (!generator.shouldGenerate(design)) {
+ 128:                     designs.removeFirst()
+ 129:                     continue
+ 130:                 }
+ 131: 
+ 132:                 val templateContext = generator.buildContext(design).toMutableMap().apply {
+ 133:                     this["templateBaseDir"] = templateBaseDir
+ 134:                 }
+ 135: 
+ 136:                 // 合并模板节点（先收集再组合成多套，再根据 pattern 选择）：
+ 137:                 // - 多个 dir/file 顶层节点可共存；每个唯一键(name+pattern)代表一套模板节点
+ 138:                 // - context 优先于 defaults（在文件和目录两侧都遵循此优先级）
+ 139:                 val genName = generator.generatorName(design)
+ 140: 
+ 141:                 val ctxTop = context.templateNodeMap.getOrDefault(generator.tag, emptyList())
+ 142:                 val defTop = generator.getDefaultTemplateNodes()
+ 143: 
+ 144:                 val selected = com.only4.codegen.template.TemplateMerger.mergeAndSelect(ctxTop, defTop, genName)
+ 145: 
+ 146:                 selected.forEach { templateNode ->
+ 147:                     val pathNode = templateNode.resolve(templateContext)
+ 148:                     forceRender(
+ 149:                         pathNode, resolvePackageDirectory(
+ 150:                             templateContext["modulePath"].toString(),
+ 151:                             concatPackage(
+ 152:                                 getString("basePackage"),
+ 153:                                 templateContext["templatePackage"].toString(),
+ 154:                                 templateContext["package"].toString()
+ 155:                             )
+ 156:                         )
+ 157:                     )
+ 158:                 }
+ 159: 
+ 160:                 generator.onGenerated(design)
+ 161:             }
+ 162:         }
+ 163:     }
+ 164: 
+ 165:     override fun renderTemplate(templateNodes: List<TemplateNode>, parentPath: String) {
+ 166:         super.renderTemplate(templateNodes, parentPath)
+ 167:         templateNodes.forEach { templateNode ->
+ 168:             val tag = templateNode.tag?.lowercase()?.let { designTagAliasMap[it] ?: it } ?: return@forEach
+ 169:             templateNodeMap.computeIfAbsent(tag) { mutableListOf() }.add(templateNode)
+ 170:         }
+ 171:     }
+ 172: 
+ 173:     private fun genDesignV2() {
+ 174:         val metadataPath = resolveMetadataPath()
+ 175:         if (!metadataPath.exists()) return
+ 176: 
+ 177:         val context = buildDesignContext(metadataPath.absolutePath)
+ 178: 
+ 179:         val basePackage = getString("basePackage")
+ 180:         val outputEncoding = getString("outputEncoding", "UTF-8")
+ 181:         val outApp = com.only4.codegen.engine.output.FileOutputManager(applicationPath, outputEncoding)
+ 182:         val outAdapter = com.only4.codegen.engine.output.FileOutputManager(adapterPath, outputEncoding)
+ 183: 
+ 184:         // Validator
+ 185:         run {
+ 186:             val list = context.designMap["validator"] ?: emptyList()
+ 187:             val strategy = com.only4.codegen.engine.generation.design.V2ValidatorStrategy()
+ 188:             list.forEach { design ->
+ 189:                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+ 190:                 val className = com.only4.codegen.misc.toUpperCamelCase(design.name) ?: design.name
+ 191:                 val templatePkg = context.templatePackage["validator"] ?: "application.validater"
+ 192:                 val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`)
+ 193:                 val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+ 194:                     finalPkg, className, design.desc, outputEncoding
+ 195:                 )
+ 196:                 strategy.generate(v2ctx).forEach { outApp.write(it) }
+ 197:                 context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
+ 198:             }
+ 199:         }
+ 200: 
+ 201:         // Command
+ 202:         run {
+ 203:             val list = context.designMap["command"] ?: emptyList()
+ 204:             val strategy = com.only4.codegen.engine.generation.design.V2CommandStrategy()
+ 205:             list.forEach { design ->
+ 206:                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+ 207:                 val raw = if (design.name.endsWith("Cmd")) design.name else "${design.name}Cmd"
+ 208:                 val className = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+ 209:                 val templatePkg = context.templatePackage["command"] ?: "application.command"
+ 210:                 val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`)
+ 211:                 val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+ 212:                     finalPkg, className, design.desc, outputEncoding
+ 213:                 )
+ 214:                 strategy.generate(v2ctx).forEach { outApp.write(it) }
+ 215:                 context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
+ 216:             }
+ 217:         }
+ 218: 
+ 219:         // Query (use Pebble templates to fully align legacy)
+ 220:         run {
+ 221:             val generator = QueryGenerator()
+ 222:             val designs = context.designMap[generator.tag] ?: emptyList()
+ 223:             with(context) {
+ 224:                 designs.forEach { design ->
+ 225:                     if (!generator.shouldGenerate(design)) return@forEach
+ 226:                     val templateContext = generator.buildContext(design).toMutableMap().apply {
+ 227:                         this["templateBaseDir"] = templateBaseDir
+ 228:                     }
+ 229:                     val genName = generator.generatorName(design)
+ 230:                     val ctxTop = templateNodeMap.getOrDefault(generator.tag, emptyList())
+ 231:                     val defTop = generator.getDefaultTemplateNodes()
+ 232:                     val selected = com.only4.codegen.template.TemplateMerger.mergeAndSelect(ctxTop, defTop, genName)
+ 233:                     selected.forEach { templateNode ->
+ 234:                         val pathNode = templateNode.resolve(templateContext)
+ 235:                         forceRender(
+ 236:                             pathNode, resolvePackageDirectory(
+ 237:                                 templateContext["modulePath"].toString(),
+ 238:                                 concatPackage(
+ 239:                                     getString("basePackage"),
+ 240:                                     templateContext["templatePackage"].toString(),
+ 241:                                     templateContext["package"].toString()
+ 242:                                 )
+ 243:                             )
+ 244:                         )
+ 245:                     }
+ 246:                     generator.onGenerated(design)
+ 247:                 }
+ 248:             }
+ 249:         }
+ 250: 
+ 251:         // Client (for client_handler dependency)
+ 252:         run {
+ 253:             val list = context.designMap["client"] ?: emptyList()
+ 254:             val strategy = com.only4.codegen.engine.generation.design.V2ClientStrategy()
+ 255:             list.forEach { design ->
+ 256:                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+ 257:                 val raw = if (design.name.endsWith("Cli")) design.name else "${design.name}Cli"
+ 258:                 val className = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+ 259:                 val templatePkg = context.templatePackage["client"] ?: "application.client"
+ 260:                 val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`)
+ 261:                 val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+ 262:                     finalPkg, className, design.desc, outputEncoding
+ 263:                 )
+ 264:                 strategy.generate(v2ctx).forEach { outApp.write(it) }
+ 265:                 context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
+ 266:             }
+ 267:         }
+ 268: 
+ 269:         // Query Handler (adapter) — use Pebble templates and ImportManager
+ 270:         run {
+ 271:             val generator = QueryHandlerGenerator()
+ 272:             val designs = context.designMap[generator.tag] ?: emptyList()
+ 273:             with(context) {
+ 274:                 designs.forEach { design ->
+ 275:                     if (!generator.shouldGenerate(design)) return@forEach
+ 276:                     val templateContext = generator.buildContext(design).toMutableMap().apply {
+ 277:                         this["templateBaseDir"] = templateBaseDir
+ 278:                     }
+ 279:                     val genName = generator.generatorName(design)
+ 280:                     val ctxTop = templateNodeMap.getOrDefault(generator.tag, emptyList())
+ 281:                     val defTop = generator.getDefaultTemplateNodes()
+ 282:                     val selected = com.only4.codegen.template.TemplateMerger.mergeAndSelect(ctxTop, defTop, genName)
+ 283:                     selected.forEach { templateNode ->
+ 284:                         val pathNode = templateNode.resolve(templateContext)
+ 285:                         forceRender(
+ 286:                             pathNode, resolvePackageDirectory(
+ 287:                                 templateContext["modulePath"].toString(),
+ 288:                                 concatPackage(
+ 289:                                     getString("basePackage"),
+ 290:                                     templateContext["templatePackage"].toString(),
+ 291:                                     templateContext["package"].toString()
+ 292:                                 )
+ 293:                             )
+ 294:                         )
+ 295:                     }
+ 296:                     generator.onGenerated(design)
+ 297:                 }
+ 298:             }
+ 299:         }
+ 300: 
+ 301:         // Client Handler (adapter)
+ 302:         run {
+ 303:             val list = context.designMap["client_handler"] ?: emptyList()
+ 304:             val strategy = com.only4.codegen.engine.generation.design.V2ClientHandlerStrategy()
+ 305:             list.forEach { design ->
+ 306:                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+ 307:                 val raw = if (design.name.endsWith("Cli")) design.name else "${design.name}Cli"
+ 308:                 val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+ 309:                 val className = "${base}Handler"
+ 310:                 val templatePkg = context.templatePackage["client_handler"] ?: "adapter"
+ 311:                 val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`)
+ 312:                 val clientFull = context.typeMapping[base]
+ 313:                 val imports = mutableListOf(
+ 314:                     "org.springframework.stereotype.Service",
+ 315:                     "com.only4.cap4k.ddd.core.application.RequestHandler",
+ 316:                 )
+ 317:                 if (clientFull != null) imports.add(clientFull)
+ 318:                 val hctx = com.only4.codegen.engine.generation.design.HandlerV2Context(
+ 319:                     finalPackage = finalPkg,
+ 320:                     className = className,
+ 321:                     description = design.desc,
+ 322:                     imports = imports,
+ 323:                     implements = ": RequestHandler<${base}.Request, ${base}.Response>",
+ 324:                     methodSignature = "override fun exec(request: ${base}.Request): ${base}.Response",
+ 325:                     methodBody = "return ${base}.Response()"
+ 326:                 )
+ 327:                 strategy.generate(hctx).forEach { outAdapter.write(it) }
+ 328:                 context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
+ 329:             }
+ 330:         }
+ 331: 
+ 332:         // Domain Event Handler (application)
+ 333:         run {
+ 334:             val list = context.designMap["domain_event_handler"] ?: emptyList()
+ 335:             val strategy = com.only4.codegen.engine.generation.design.V2DomainEventHandlerStrategy()
+ 336:             list.forEach { design ->
+ 337:                 if (design !is com.only4.codegen.context.design.models.DomainEventDesign) return@forEach
+ 338:                 var raw = design.name
+ 339:                 if (!raw.endsWith("Evt") && !raw.endsWith("Event")) raw += "DomainEvent"
+ 340:                 val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
+ 341:                 val className = "${base}Subscriber"
+ 342:                 val templatePkg = context.templatePackage["domain_event_handler"] ?: "application"
+ 343:                 val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`, "events")
+ 344:                 val eventFull = context.typeMapping[base]
+ 345:                 val imports = mutableListOf(
+ 346:                     "org.springframework.context.event.EventListener",
+ 347:                     "org.springframework.stereotype.Service",
+ 348:                 )
+ 349:                 if (eventFull != null) imports.add(eventFull)
+ 350:                 val hctx = com.only4.codegen.engine.generation.design.HandlerV2Context(
+ 351:                     finalPackage = finalPkg,
+ 352:                     className = className,
+ 353:                     description = design.desc,
+ 354:                     imports = imports,
+ 355:                     implements = "",
+ 356:                     methodSignature = "@EventListener(${base}::class) fun on(event: ${base})",
+ 357:                     methodBody = "// TODO"
+ 358:                 )
+ 359:                 strategy.generate(hctx).forEach { outApp.write(it) }
+ 360:                 context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
+ 361:             }
+ 362:         }
+ 363:     }
+ 364:     @get:InputFiles
+ 365:     @get:PathSensitive(PathSensitivity.RELATIVE)
+ 366:     val designInputFiles: FileCollection
+ 367:         get() = extension.get().designFiles
+ 368: }

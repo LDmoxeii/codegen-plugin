@@ -3,18 +3,12 @@ package com.only4.codegen.engine.generation.design
 import com.only4.codegen.engine.generation.IGenerationStrategy
 import com.only4.codegen.engine.output.GenerationResult
 import com.only4.codegen.engine.output.OutputType
-import com.only4.codegen.misc.concatPackage
 
-/**
- * Minimal V2 strategy to generate a simple Validator class.
- */
 class V2ValidatorStrategy : IGenerationStrategy<DesignV2Context> {
     override fun generate(context: DesignV2Context): List<GenerationResult> {
-        val pkg = concatPackage(context.basePackage, "application", "validater", context.packageName)
         val fileName = "${context.className}.kt"
-
         val content = buildString {
-            appendLine("package $pkg")
+            appendLine("package ${context.finalPackage}")
             appendLine()
             appendLine("/**")
             appendLine(" * ${context.description}")
@@ -24,15 +18,13 @@ class V2ValidatorStrategy : IGenerationStrategy<DesignV2Context> {
             appendLine("    fun validate() : Boolean = true")
             appendLine("}")
         }
-
         return listOf(
             GenerationResult(
                 fileName = fileName,
                 content = content,
-                packageName = pkg,
+                packageName = context.finalPackage,
                 type = OutputType.CONFIGURATION,
             )
         )
     }
 }
-
