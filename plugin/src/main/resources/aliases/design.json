@@ -1,0 +1,55 @@
+{
+  "repositories": "repository",
+  "repository": "repository",
+  "repos": "repository",
+  "repo": "repository",
+
+  "factories": "factory",
+  "factory": "factory",
+  "fac": "factory",
+
+  "specifications": "specification",
+  "specification": "specification",
+  "specs": "specification",
+  "spec": "specification",
+  "spe": "specification",
+
+  "domain_events": "domain_event",
+  "domain_event": "domain_event",
+  "d_e": "domain_event",
+  "de": "domain_event",
+
+  "commands": "command",
+  "command": "command",
+  "cmd": "command",
+
+  "queries": "query",
+  "query": "query",
+  "qry": "query",
+
+  "clients": "client",
+  "client": "client",
+  "cli": "client",
+
+  "saga": "saga",
+  "sagas": "saga",
+
+  "validators": "validator",
+  "validator": "validator",
+  "validater": "validator",
+  "validate": "validator",
+
+  "integration_events": "integration_event",
+  "integration_event": "integration_event",
+  "events": "integration_event",
+  "event": "integration_event",
+  "evt": "integration_event",
+  "i_e": "integration_event",
+  "ie": "integration_event",
+
+  "domain_service": "domain_service",
+  "domain_services": "domain_service",
+  "service": "domain_service",
+  "svc": "domain_service"
+}
+

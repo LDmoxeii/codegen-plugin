@@ -8,6 +8,7 @@ import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.resolvePackageDirectory
 import com.only4.codegen.template.TemplateNode
+import com.only4.codegen.misc.AliasResolver
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import java.util.regex.Pattern
@@ -104,21 +105,11 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
     }
 
 
-    private fun alias4Design(name: String): String = when (name.lowercase()) {
-        "entity", "aggregate", "entities", "aggregates" -> "aggregate"
-        "schema", "schemas" -> "schema"
-        "enum", "enums" -> "enum"
-        "enumitem", "enum_item" -> "enum_item"
-        "factories", "factory", "fac" -> "factory"
-        "specifications", "specification", "specs", "spec", "spe" -> "specification"
-        "domain_events", "domain_event", "d_e", "de" -> "domain_event"
-        "domain_event_handlers", "domain_event_handler", "d_e_h", "deh",
-        "domain_event_subscribers", "domain_event_subscriber", "d_e_s", "des",
-            -> "domain_event_handler"
-
-        "domain_service", "service", "svc" -> "domain_service"
-        else -> name
+    private val aggregateAliases: Map<String, String> by lazy {
+        AliasResolver.aggregateAliases(extension.get())
     }
+
+    private fun alias4Design(name: String): String = aggregateAliases[name.lowercase()] ?: name
 
     @TaskAction
     override fun generate() {

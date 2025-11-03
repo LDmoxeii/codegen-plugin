@@ -39,3 +39,7 @@
 - When adjusting templates, keep `templates/*.kt.peb` names stable and update generators if tags change.
 - Prefer minimal, module-scoped changes; run module builds before pushing.
 
+## Alias Configuration
+- Default tag aliases live in `plugin/src/main/resources/aliases/{aggregate,design}.json`.
+- Override via extension in a consuming build:
+  - `codegen { aggregateTagAliases.put("entities", "aggregate"); designTagAliases.put("repos", "repository") }`.

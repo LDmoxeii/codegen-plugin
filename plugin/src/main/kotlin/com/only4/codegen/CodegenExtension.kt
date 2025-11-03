@@ -58,6 +58,18 @@ open class CodegenExtension @Inject constructor(objects: ObjectFactory) {
     val designFiles: ConfigurableFileCollection = objects.fileCollection()
 
     /**
+     * 模板标签别名（聚合/实体等）
+     */
+    val aggregateTagAliases: MapProperty<String, String> =
+        objects.mapProperty(String::class.java, String::class.java).convention(mutableMapOf())
+
+    /**
+     * 模板标签别名（设计元素：repo/spec/command/query/...）
+     */
+    val designTagAliases: MapProperty<String, String> =
+        objects.mapProperty(String::class.java, String::class.java).convention(mutableMapOf())
+
+    /**
      * 数据库连接配置
      */
     val database: DatabaseConfig = objects.newInstance(DatabaseConfig::class.java, objects)

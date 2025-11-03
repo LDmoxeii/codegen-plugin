@@ -25,8 +25,8 @@
 - [ ] Gradle 任务可缓存化：为 `genArch`/`genAggregate`/`genDesign` 标注 `@Input/@OutputDirectory/@InputFiles`，移除 `org.gradle.internal.*` 依赖，必要时使用 Worker API。
   - [x] 清理 `org.gradle.internal.*` 直接导入（已移除未使用/可替代用法）。
 - 模板系统
-  - [ ] 抽取通用“模板选择与合并”组件（`TemplateMerger`），替换 `GenAggregateTask`/`GenDesignTask` 内重复逻辑。
-  - [ ] 别名外置：引入 `resources/aliases/{aggregate,design}.json`，并提供 `CodegenExtension` 覆盖入口。
+  - [x] 抽取通用“模板选择与合并”组件（`TemplateMerger`），替换 `GenAggregateTask`/`GenDesignTask` 内重复逻辑。
+  - [x] 别名外置：引入 `resources/aliases/{aggregate,design}.json`，并提供 `CodegenExtension` 覆盖入口。
 - 抽象引擎
   - [ ] 定义接口：
     - [ ] `IMetadataExtractor`（DB/KSP 两实现）；

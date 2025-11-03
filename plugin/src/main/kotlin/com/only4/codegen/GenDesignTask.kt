@@ -11,6 +11,7 @@ import com.only4.codegen.context.design.models.BaseDesign
 import com.only4.codegen.context.design.models.DesignElement
 import com.only4.codegen.generators.design.*
 import com.only4.codegen.misc.concatPackage
+import com.only4.codegen.misc.AliasResolver
 import com.only4.codegen.misc.resolvePackageDirectory
 import com.only4.codegen.template.TemplateNode
 import org.gradle.api.tasks.Internal
@@ -30,73 +31,9 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     override val designMap = mutableMapOf<String, MutableList<BaseDesign>>()
 
 
-    @Internal
-    override val designTagAliasMap: Map<String, String> = mapOf(
-
-        // Repository 别名
-        "repositories" to "repository",
-        "repository" to "repository",
-        "repos" to "repository",
-        "repo" to "repository",
-
-        // Factory 别名
-        "factories" to "factory",
-        "factory" to "factory",
-        "fac" to "factory",
-
-        // Specification 别名
-        "specifications" to "specification",
-        "specification" to "specification",
-        "specs" to "specification",
-        "spec" to "specification",
-        "spe" to "specification",
-
-        // Domain Event 别名
-        "domain_events" to "domain_event",
-        "domain_event" to "domain_event",
-        "d_e" to "domain_event",
-        "de" to "domain_event",
-
-        // Command 别名
-        "commands" to "command",
-        "command" to "command",
-        "cmd" to "command",
-
-        // Query 别名
-        "queries" to "query",
-        "query" to "query",
-        "qry" to "query",
-
-        // Client 别名（防腐层）
-        "clients" to "client",
-        "client" to "client",
-        "cli" to "client",
-
-        // Saga 别名
-        "saga" to "saga",
-        "sagas" to "saga",
-
-        // Validator 别名
-        "validators" to "validator",
-        "validator" to "validator",
-        "validater" to "validator",
-        "validate" to "validator",
-
-        // Integration Event 别名
-        "integration_events" to "integration_event",
-        "integration_event" to "integration_event",
-        "events" to "integration_event",
-        "event" to "integration_event",
-        "evt" to "integration_event",
-        "i_e" to "integration_event",
-        "ie" to "integration_event",
-
-        // Domain Service 别名
-        "domain_service" to "domain_service",
-        "domain_services" to "domain_service",
-        "service" to "domain_service",
-        "svc" to "domain_service"
-    )
+    @get:Internal
+    override val designTagAliasMap: Map<String, String>
+        get() = AliasResolver.designAliases(extension.get())
 
 
     @TaskAction
