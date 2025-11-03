@@ -22,7 +22,7 @@
   - [x] 统一 JSON：移除 `fastjson`，全量改用 `gson`（影响：`GenArchTask` 的 `JSON.parseObject` → `Gson`）。
   - [x] 数据库驱动改为可选：将 `mysql`/`postgresql` 从实现依赖调整为可选/由使用方提供（或 `runtimeOnly`）。
   - [ ] 全局状态收敛：
-    - [ ] 将 `PebbleInitializer` 使用限制在渲染入口，避免测试干扰。
+    - [x] 取消全局 PebbleInitializer 依赖：渲染改为短生命周期引擎，避免隐式状态。
     - [x] 替换 `PathNode` 的 `ThreadLocal` 目录依赖为上下文 `templateBaseDir`，并移除调用点的 `setDirectory`。
   - [ ] Gradle 任务可缓存化：
     - [x] 标注关键输入：`genArch` 的 `@InputFile`（模板），`genDesign` 的 `@InputFiles`（设计文件）。

@@ -3,8 +3,6 @@ package com.only4.codegen
 import com.google.gson.Gson
 import com.only4.codegen.misc.loadFileContent
 import com.only4.codegen.misc.resolveDirectory
-import com.only4.codegen.pebble.PebbleConfig
-import com.only4.codegen.pebble.PebbleInitializer
 import com.only4.codegen.template.PathNode
 import com.only4.codegen.template.Template
 import org.gradle.api.provider.Property
@@ -61,11 +59,6 @@ open class GenArchTask : AbstractCodegenTask() {
 
     private fun genArch() {
         val ext = extension.get()
-        val config = PebbleConfig(
-            encoding = ext.archTemplateEncoding.get()
-        )
-        PebbleInitializer.initPebble(config)
-
         val archTemplate = validateAndGetArchTemplate(ext) ?: return
 
         template = loadTemplate(archTemplate, ext)
