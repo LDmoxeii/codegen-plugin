@@ -24,6 +24,9 @@ import java.io.File
 import java.util.regex.Pattern
 import org.gradle.api.tasks.OutputDirectory
 
+import org.gradle.api.tasks.CacheableTask
+
+@CacheableTask
 open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
     @Internal

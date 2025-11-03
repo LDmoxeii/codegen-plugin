@@ -18,6 +18,9 @@ import java.io.File
 /**
  * 生成实体类任务
  */
+import org.gradle.api.tasks.CacheableTask
+
+@CacheableTask
 open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
     companion object {

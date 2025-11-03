@@ -9,6 +9,7 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import com.google.gson.Gson
 import java.io.File
 import java.nio.charset.Charset
 import java.time.LocalDateTime
@@ -60,6 +61,64 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
 
     @Internal
     protected var templateBaseDir: String = ""
+
+    @get:Input
+    val configFingerprint: String
+        get() {
+            val ext = extension.get()
+            val gen = ext.generation
+            val db = ext.database
+            val payload = linkedMapOf<String, Any?>(
+                // Core
+                "basePackage" to ext.basePackage.orNull,
+                "multiModule" to ext.multiModule.orNull,
+                "archTemplateEncoding" to ext.archTemplateEncoding.orNull,
+                "outputEncoding" to ext.outputEncoding.orNull,
+                // Module suffixes
+                "suffix.adapter" to ext.moduleNameSuffix4Adapter.orNull,
+                "suffix.application" to ext.moduleNameSuffix4Application.orNull,
+                "suffix.domain" to ext.moduleNameSuffix4Domain.orNull,
+                // Engine flag
+                "generationEngine" to ext.generationEngine.orNull,
+                // Database (non-secret subset)
+                "db.url" to db.url.orNull,
+                "db.schema" to db.schema.orNull,
+                "db.tables" to db.tables.orNull,
+                "db.ignoreTables" to db.ignoreTables.orNull,
+                // Generation options
+                "gen.versionField" to gen.versionField.orNull,
+                "gen.deletedField" to gen.deletedField.orNull,
+                "gen.readonlyFields" to gen.readonlyFields.orNull,
+                "gen.ignoreFields" to gen.ignoreFields.orNull,
+                "gen.entityBaseClass" to gen.entityBaseClass.orNull,
+                "gen.rootEntityBaseClass" to gen.rootEntityBaseClass.orNull,
+                "gen.entityClassExtraImports" to gen.entityClassExtraImports.orNull,
+                "gen.entitySchemaOutputMode" to gen.entitySchemaOutputMode.orNull,
+                "gen.entitySchemaOutputPackage" to gen.entitySchemaOutputPackage.orNull,
+                "gen.entitySchemaNameTemplate" to gen.entitySchemaNameTemplate.orNull,
+                "gen.aggregateTypeTemplate" to gen.aggregateTypeTemplate.orNull,
+                "gen.repositoryNameTemplate" to gen.repositoryNameTemplate.orNull,
+                "gen.idGenerator" to gen.idGenerator.orNull,
+                "gen.idGenerator4ValueObject" to gen.idGenerator4ValueObject.orNull,
+                "gen.hashMethod4ValueObject" to gen.hashMethod4ValueObject.orNull,
+                "gen.fetchType" to gen.fetchType.orNull,
+                "gen.enumValueField" to gen.enumValueField.orNull,
+                "gen.enumNameField" to gen.enumNameField.orNull,
+                "gen.enumUnmatchedThrowException" to gen.enumUnmatchedThrowException.orNull,
+                "gen.datePackage" to gen.datePackage.orNull,
+                "gen.generateDbType" to gen.generateDbType.orNull,
+                "gen.generateSchema" to gen.generateSchema.orNull,
+                "gen.generateAggregate" to gen.generateAggregate.orNull,
+                "gen.generateParent" to gen.generateParent.orNull,
+                "gen.repositorySupportQuerydsl" to gen.repositorySupportQuerydsl.orNull,
+                // Aliases (counts to reflect overrides)
+                "aliases.aggregate.count" to ext.aggregateTagAliases.getOrElse(emptyMap()).size,
+                "aliases.design.count" to ext.designTagAliases.getOrElse(emptyMap()).size,
+                // Type mapping size
+                "gen.typeMapping.count" to gen.typeMapping.getOrElse(emptyMap()).size,
+            )
+            return Gson().toJson(payload)
+        }
 
     private val CodegenExtension.adapterPath: String
         get() = modulePath(moduleNameSuffix4Adapter.get())
