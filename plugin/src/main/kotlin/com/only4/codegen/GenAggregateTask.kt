@@ -175,42 +175,50 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
         val basePackage = getString("basePackage")
         val outputEncoding = getString("outputEncoding", "UTF-8")
-        val out = com.only4.codegen.engine.output.FileOutputManager(domainPath, outputEncoding)
-        val enumStrategy = com.only4.codegen.engine.generation.aggregate.V2EnumStrategy()
+        val outDomain = com.only4.codegen.engine.output.FileOutputManager(domainPath, outputEncoding)
 
         val generatedEnums = mutableSetOf<String>()
 
+        // Enum generation via V2Render + TemplateMerger
         context.tableMap.values.forEach { table ->
             val tableName = SqlSchemaUtils.getTableName(table)
             val columns = context.columnsMap[tableName] ?: return@forEach
+            val aggregate = context.resolveAggregateWithModule(tableName)
 
             columns.forEach { column ->
                 if (!SqlSchemaUtils.hasEnum(column) || SqlSchemaUtils.isIgnore(column)) return@forEach
                 val enumType = SqlSchemaUtils.getType(column)
-                if (generatedEnums.contains(enumType)) return@forEach
+                if (!generatedEnums.add(enumType)) return@forEach
 
                 val config = context.enumConfigMap[enumType] ?: return@forEach
-                val items = config.toSortedMap().map { (value, arr) ->
-                    com.only4.codegen.engine.generation.aggregate.EnumItem(value, arr[0], arr[1])
+                val enumItems = config.toSortedMap().map { (value, arr) ->
+                    mapOf("value" to value, "name" to arr[0], "desc" to arr[1])
                 }
 
-                val aggregate = context.resolveAggregateWithModule(tableName)
-                val v2ctx = com.only4.codegen.engine.generation.aggregate.EnumV2Context(
+                val defTop = com.only4.codegen.generators.aggregate.EnumGenerator().getDefaultTemplateNodes()
+                val enumVars = buildMap<String, Any?> {
+                    put("Enum", enumType)
+                    put("Aggregate", com.only4.codegen.misc.toUpperCamelCase(aggregate) ?: aggregate)
+                    put("EnumValueField", getString("enumValueField"))
+                    put("EnumNameField", getString("enumNameField"))
+                    put("EnumItems", enumItems)
+                }
+                val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                    context = context,
+                    templateBaseDir = templateBaseDir,
                     basePackage = basePackage,
-                    aggregate = aggregate,
-                    enumName = enumType,
-                    items = items,
-                    enumValueField = getString("enumValueField"),
-                    enumNameField = getString("enumNameField"),
+                    out = outDomain,
+                    tag = "enum",
+                    genName = enumType,
+                    designPackage = com.only4.codegen.misc.concatPackage(aggregate, "enums"),
+                    comment = "",
+                    defaultNodes = defTop,
+                    templatePackageFallback = "domain.aggregates",
+                    outputType = com.only4.codegen.engine.output.OutputType.ENUM,
+                    vars = enumVars,
+                    imports = com.only4.codegen.engine.generation.common.V2Imports.enumImports(),
                 )
-
-                enumStrategy.generate(v2ctx).forEach { out.write(it) }
-
-                val fullName = com.only4.codegen.misc.concatPackage(
-                    basePackage, "domain.aggregates", aggregate, "enums", enumType
-                )
-                context.typeMapping[enumType] = fullName
-                generatedEnums.add(enumType)
+                context.typeMapping[enumType] = full
             }
         }
     }

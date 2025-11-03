@@ -1,6 +1,6 @@
 package com.only4.codegen.engine.generation.common
 
-import com.only4.codegen.context.design.DesignContext
+import com.only4.codegen.context.BaseContext
 import com.only4.codegen.engine.generation.design.TemplateNodeV2Context
 import com.only4.codegen.engine.generation.design.TemplateNodeV2Strategy
 import com.only4.codegen.engine.output.IOutputManager
@@ -11,7 +11,7 @@ import com.only4.codegen.template.TemplateNode
 object V2Render {
 
     fun render(
-        context: DesignContext,
+        context: BaseContext,
         templateBaseDir: String,
         basePackage: String,
         out: IOutputManager,
@@ -55,4 +55,3 @@ object V2Render {
         return concatPackage(finalPkg, genName)
     }
 }
-

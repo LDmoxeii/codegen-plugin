@@ -4,7 +4,10 @@ import com.only4.codegen.manager.ClientImportManager
 import com.only4.codegen.manager.CommandImportManager
 import com.only4.codegen.manager.QueryHandlerImportManager
 import com.only4.codegen.manager.DomainEventImportManager
+import com.only4.codegen.manager.ClientHandlerImportManager
+import com.only4.codegen.manager.DomainEventHandlerImportManager
 import com.only4.codegen.manager.QueryImportManager
+import com.only4.codegen.manager.EnumImportManager
 
 object V2Imports {
 
@@ -35,4 +38,22 @@ object V2Imports {
         }
         return mgr.toImportLines()
     }
+
+    fun clientHandler(clientFullName: String?): List<String> {
+        val mgr = ClientHandlerImportManager().apply {
+            addBaseImports()
+            if (clientFullName != null) add(clientFullName)
+        }
+        return mgr.toImportLines()
+    }
+
+    fun domainEventHandler(eventFullName: String?): List<String> {
+        val mgr = DomainEventHandlerImportManager().apply {
+            addBaseImports()
+            if (eventFullName != null) add(eventFullName)
+        }
+        return mgr.toImportLines()
+    }
+
+    fun enumImports(): List<String> = EnumImportManager().apply { addBaseImports() }.toImportLines()
 }

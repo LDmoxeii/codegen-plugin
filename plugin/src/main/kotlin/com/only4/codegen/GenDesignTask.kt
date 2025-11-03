@@ -357,66 +357,63 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
             }
         }
 
-        // Client Handler (adapter)
+        // Client Handler (adapter) — v2 via V2Render + ImportManager
         run {
             val list = context.designMap["client_handler"] ?: emptyList()
-            val strategy = com.only4.codegen.engine.generation.design.V2ClientHandlerStrategy()
             list.forEach { design ->
                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
                 val raw = if (design.name.endsWith("Cli")) design.name else "${design.name}Cli"
                 val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
                 val className = "${base}Handler"
-                val templatePkg = context.templatePackage["client_handler"] ?: "adapter"
-                val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`)
-                val clientFull = context.typeMapping[base]
-                val imports = mutableListOf(
-                    "org.springframework.stereotype.Service",
-                    "com.only4.cap4k.ddd.core.application.RequestHandler",
+                val defTop = ClientHandlerGenerator().getDefaultTemplateNodes()
+                val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                    context = context,
+                    templateBaseDir = templateBaseDir,
+                    basePackage = basePackage,
+                    out = outAdapter,
+                    tag = "client_handler",
+                    genName = className,
+                    designPackage = design.`package`,
+                    comment = design.desc,
+                    defaultNodes = defTop,
+                    templatePackageFallback = "adapter",
+                    outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
+                    vars = mapOf("Client" to base),
+                    imports = com.only4.codegen.engine.generation.common.V2Imports.clientHandler(context.typeMapping[base]),
                 )
-                if (clientFull != null) imports.add(clientFull)
-                val hctx = com.only4.codegen.engine.generation.design.HandlerV2Context(
-                    finalPackage = finalPkg,
-                    className = className,
-                    description = design.desc,
-                    imports = imports,
-                    implements = ": RequestHandler<${base}.Request, ${base}.Response>",
-                    methodSignature = "override fun exec(request: ${base}.Request): ${base}.Response",
-                    methodBody = "return ${base}.Response()"
-                )
-                strategy.generate(hctx).forEach { outAdapter.write(it) }
-                context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
+                context.typeMapping[className] = full
             }
         }
 
-        // Domain Event Handler (application)
+        // Domain Event Handler (application) — v2 via V2Render + ImportManager
         run {
             val list = context.designMap["domain_event_handler"] ?: emptyList()
-            val strategy = com.only4.codegen.engine.generation.design.V2DomainEventHandlerStrategy()
             list.forEach { design ->
                 if (design !is com.only4.codegen.context.design.models.DomainEventDesign) return@forEach
                 var raw = design.name
                 if (!raw.endsWith("Evt") && !raw.endsWith("Event")) raw += "DomainEvent"
                 val base = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
                 val className = "${base}Subscriber"
-                val templatePkg = context.templatePackage["domain_event_handler"] ?: "application"
-                val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkg, design.`package`, "events")
-                val eventFull = context.typeMapping[base]
-                val imports = mutableListOf(
-                    "org.springframework.context.event.EventListener",
-                    "org.springframework.stereotype.Service",
+                val defTop = DomainEventHandlerGenerator().getDefaultTemplateNodes()
+                val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                    context = context,
+                    templateBaseDir = templateBaseDir,
+                    basePackage = basePackage,
+                    out = outApp,
+                    tag = "domain_event_handler",
+                    genName = className,
+                    designPackage = com.only4.codegen.misc.concatPackage(design.`package`, "events"),
+                    comment = design.desc,
+                    defaultNodes = defTop,
+                    templatePackageFallback = "application",
+                    outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
+                    vars = mapOf(
+                        "DomainEventHandler" to className,
+                        "DomainEvent" to base,
+                    ),
+                    imports = com.only4.codegen.engine.generation.common.V2Imports.domainEventHandler(context.typeMapping[base]),
                 )
-                if (eventFull != null) imports.add(eventFull)
-                val hctx = com.only4.codegen.engine.generation.design.HandlerV2Context(
-                    finalPackage = finalPkg,
-                    className = className,
-                    description = design.desc,
-                    imports = imports,
-                    implements = "",
-                    methodSignature = "@EventListener(${base}::class) fun on(event: ${base})",
-                    methodBody = "// TODO"
-                )
-                strategy.generate(hctx).forEach { outApp.write(it) }
-                context.typeMapping[className] = com.only4.codegen.misc.concatPackage(finalPkg, className)
+                context.typeMapping[className] = full
             }
         }
     }

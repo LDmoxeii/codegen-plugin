@@ -1,6 +1,6 @@
 package com.only4.codegen.engine.generation.common
 
-import com.only4.codegen.context.design.DesignContext
+import com.only4.codegen.context.BaseContext
 import com.only4.codegen.misc.refPackage
 
 object V2ModelBuilder {
@@ -13,7 +13,7 @@ object V2ModelBuilder {
      * - Adds arbitrary variables in vars (e.g., "Query" -> "FindUserQry")
      */
     fun model(
-        context: DesignContext,
+        context: BaseContext,
         templateBaseDir: String,
         templatePackageRaw: String,
         packageRaw: String,
@@ -33,4 +33,3 @@ object V2ModelBuilder {
         return model
     }
 }
-
