@@ -192,15 +192,17 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 val className = com.only4.codegen.misc.toUpperCamelCase(design.name) ?: design.name
                 val templatePkgRaw = context.templatePackage["validator"] ?: "application.validater"
                 val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkgRaw, design.`package`)
-                val model = buildMap<String, Any?> {
-                    putAll(context.baseMap)
-                    put("templatePackage", com.only4.codegen.misc.refPackage(templatePkgRaw))
-                    put("package", com.only4.codegen.misc.refPackage(design.`package`))
-                    put("Validator", className)
-                    put("Comment", design.desc)
-                    put("ValueType", "Long")
-                    put("templateBaseDir", templateBaseDir)
-                }
+                val model = com.only4.codegen.engine.generation.common.V2ModelBuilder.model(
+                    context = context,
+                    templateBaseDir = templateBaseDir,
+                    templatePackageRaw = templatePkgRaw,
+                    packageRaw = design.`package`,
+                    comment = design.desc,
+                    vars = mapOf(
+                        "Validator" to className,
+                        "ValueType" to "Long",
+                    )
+                )
                 val ctxTop = context.templateNodeMap.getOrDefault("validator", emptyList())
                 val defTop = ValidatorGenerator().getDefaultTemplateNodes()
                 val tctx = com.only4.codegen.engine.generation.design.TemplateNodeV2Context(
@@ -229,15 +231,15 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 val templatePkgRaw = context.templatePackage["command"] ?: "application.command"
                 val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkgRaw, design.`package`)
                 val imports = com.only4.codegen.manager.CommandImportManager().apply { addBaseImports() }.toImportLines()
-                val model = buildMap<String, Any?> {
-                    putAll(context.baseMap)
-                    put("templatePackage", com.only4.codegen.misc.refPackage(templatePkgRaw))
-                    put("package", com.only4.codegen.misc.refPackage(design.`package`))
-                    put("Command", className)
-                    put("Comment", design.desc)
-                    put("imports", imports)
-                    put("templateBaseDir", templateBaseDir)
-                }
+                val model = com.only4.codegen.engine.generation.common.V2ModelBuilder.model(
+                    context = context,
+                    templateBaseDir = templateBaseDir,
+                    templatePackageRaw = templatePkgRaw,
+                    packageRaw = design.`package`,
+                    comment = design.desc,
+                    vars = mapOf("Command" to className),
+                    imports = imports,
+                )
                 val ctxTop = context.templateNodeMap.getOrDefault("command", emptyList())
                 val defTop = CommandGenerator().getDefaultTemplateNodes()
                 val tctx = com.only4.codegen.engine.generation.design.TemplateNodeV2Context(
@@ -304,15 +306,15 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                 val templatePkgRaw = context.templatePackage["client"] ?: "application.client"
                 val finalPkg = com.only4.codegen.misc.concatPackage(basePackage, templatePkgRaw, design.`package`)
                 val imports = com.only4.codegen.manager.ClientImportManager().apply { addBaseImports() }.toImportLines()
-                val model = buildMap<String, Any?> {
-                    putAll(context.baseMap)
-                    put("templatePackage", com.only4.codegen.misc.refPackage(templatePkgRaw))
-                    put("package", com.only4.codegen.misc.refPackage(design.`package`))
-                    put("Client", className)
-                    put("Comment", design.desc)
-                    put("imports", imports)
-                    put("templateBaseDir", templateBaseDir)
-                }
+                val model = com.only4.codegen.engine.generation.common.V2ModelBuilder.model(
+                    context = context,
+                    templateBaseDir = templateBaseDir,
+                    templatePackageRaw = templatePkgRaw,
+                    packageRaw = design.`package`,
+                    comment = design.desc,
+                    vars = mapOf("Client" to className),
+                    imports = imports,
+                )
                 val ctxTop = context.templateNodeMap.getOrDefault("client", emptyList())
                 val defTop = ClientGenerator().getDefaultTemplateNodes()
                 val tctx = com.only4.codegen.engine.generation.design.TemplateNodeV2Context(
