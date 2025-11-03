@@ -63,13 +63,12 @@ class SchemaGenerator : AggregateTemplateGenerator {
             .map { column ->
                 val columnName = SqlSchemaUtils.getColumnName(column)
                 val columnType = SqlSchemaUtils.getColumnType(column)
+                val simpleType = columnType.removeSuffix("?")
                 val fieldName = toLowerCamelCase(columnName) ?: columnName
                 val comment = SqlSchemaUtils.getComment(column)
 
-                if (SqlSchemaUtils.hasEnum(column)) {
-                    if (ctx.typeMapping.containsKey(columnType)) {
-                        importManager.add(ctx.typeMapping[columnType]!!)
-                    }
+                if (SqlSchemaUtils.hasType(column)) {
+                    importManager.add(ctx.typeMapping[simpleType]!!)
                 }
 
                 mapOf(

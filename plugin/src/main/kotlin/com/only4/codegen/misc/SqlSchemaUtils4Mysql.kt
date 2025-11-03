@@ -110,7 +110,8 @@ object SqlSchemaUtils4Mysql : SqlSchemaUtils.SqlSchemaDialect {
                     "$customType.valueOf($columnDefault)"
                 }
             }
-            return customType
+            // For custom (e.g., JSON) types: nullable -> null, non-nullable -> empty object
+            return if (columnType.endsWith("?")) "null" else "$customType()"
         }
 
         return when (columnType) {
@@ -132,7 +133,7 @@ object SqlSchemaUtils4Mysql : SqlSchemaUtils.SqlSchemaDialect {
             "java.math.BigDecimal?" ->
                 if (columnDefault.isNullOrEmpty()) "null" else """java.math.BigDecimal("$columnDefault")"""
 
-            else -> "null"
+            else -> ""
         }
     }
 

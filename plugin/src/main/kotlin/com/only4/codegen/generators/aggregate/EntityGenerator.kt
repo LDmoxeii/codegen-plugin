@@ -7,6 +7,7 @@ import com.only4.codegen.misc.*
 import com.only4.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_ID_ALIAS
 import com.only4.codegen.misc.SqlSchemaUtils.RIGHT_QUOTES_4_ID_ALIAS
 import com.only4.codegen.template.TemplateNode
+import org.gradle.internal.extensions.stdlib.toDefaultLowerCase
 import java.io.File
 
 /**
@@ -247,6 +248,7 @@ class EntityGenerator : AggregateTemplateGenerator {
         }
     }
 
+    context(ctx: AggregateContext)
     private fun isColumnNeedGenerate(
         table: Map<String, Any?>,
         column: Map<String, Any?>,
@@ -256,6 +258,11 @@ class EntityGenerator : AggregateTemplateGenerator {
         val columnName = SqlSchemaUtils.getColumnName(column)
 
         if (SqlSchemaUtils.isIgnore(column)) return false
+
+        val ignoreFields = ctx.getString("ignoreFields")
+        if (ignoreFields.isNotBlank() && ignoreFields.toDefaultLowerCase().split(Regex("[,;]")).any {
+            columnName.matches(Regex(it.replace("%", ".*", true)))
+        }) return false
 
         if (!SqlSchemaUtils.isAggregateRoot(table)) {
             val parent = SqlSchemaUtils.getParent(table)
@@ -578,11 +585,11 @@ class EntityGenerator : AggregateTemplateGenerator {
             annotations.add("@Version")
         }
 
-        if (SqlSchemaUtils.hasEnum(column)) {
-            if (ctx.typeMapping.containsKey(columnType)) {
-                importManager.add(ctx.typeMapping[columnType]!!)
-            }
-            annotations.add("@Convert(converter = $columnType.Converter::class)")
+        if (SqlSchemaUtils.hasType(column)) {
+            val customType = SqlSchemaUtils.getType(column)
+            val simpleType = customType.removeSuffix("?")
+            importManager.add(ctx.typeMapping[simpleType]!!)
+            annotations.add("@Convert(converter = $simpleType.Converter::class)")
         }
 
         val leftQuote = LEFT_QUOTES_4_ID_ALIAS.replace("\"", "\\\"")
@@ -596,7 +603,7 @@ class EntityGenerator : AggregateTemplateGenerator {
 
         val fieldName = toLowerCamelCase(columnName) ?: columnName
         val defaultJavaLiteral = SqlSchemaUtils.getColumnDefaultLiteral(column)
-        val defaultValue = " = $defaultJavaLiteral"
+        val defaultValue = if (defaultJavaLiteral.isBlank()) "" else " = $defaultJavaLiteral"
 
         return mapOf(
             "needGenerate" to true,
