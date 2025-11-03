@@ -38,7 +38,7 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
         const val DEFAULT_MUL_PRI_KEY_NAME = "Key"
     }
 
-    @get:Input
+    @get:Internal
     abstract val extension: Property<CodegenExtension>
 
     @get:Input
