@@ -1,6 +1,6 @@
 package com.only4.codegen.template
 
-import com.alibaba.fastjson.JSON
+import com.google.gson.Gson
 
 /**
  * 脚手架模板模板节点
@@ -97,7 +97,8 @@ class TemplateNode : PathNode() {
     }
 
     fun deepCopy(): TemplateNode {
-        return JSON.parseObject(JSON.toJSONString(this), TemplateNode::class.java)
+        val gson = Gson()
+        return gson.fromJson(gson.toJson(this), TemplateNode::class.java)
     }
 
     override fun resolve(context: Map<String, Any?>): PathNode {

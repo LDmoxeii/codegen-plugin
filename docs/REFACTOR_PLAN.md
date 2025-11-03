@@ -17,12 +17,13 @@
 
 ## 技术方案与任务清单
 - 基础卫生
-  - [ ] 统一 JSON：移除 `fastjson`，全量改用 `gson`（影响：`GenArchTask` 的 `JSON.parseObject` → `Gson`）。
-  - [ ] 数据库驱动改为可选：将 `mysql`/`postgresql` 从实现依赖调整为可选/由使用方提供（或 `runtimeOnly`）。
+  - [x] 统一 JSON：移除 `fastjson`，全量改用 `gson`（影响：`GenArchTask` 的 `JSON.parseObject` → `Gson`）。
+  - [x] 数据库驱动改为可选：将 `mysql`/`postgresql` 从实现依赖调整为可选/由使用方提供（或 `runtimeOnly`）。
   - [ ] 全局状态收敛：
     - [ ] 将 `PebbleInitializer` 使用限制在渲染入口，避免测试干扰。
     - [ ] 替换 `PathNode` 的 `ThreadLocal` 目录依赖为显式参数传递。
-  - [ ] Gradle 任务可缓存化：为 `genArch`/`genAggregate`/`genDesign` 标注 `@Input/@OutputDirectory/@InputFiles`，移除 `org.gradle.internal.*` 依赖，必要时使用 Worker API。
+- [ ] Gradle 任务可缓存化：为 `genArch`/`genAggregate`/`genDesign` 标注 `@Input/@OutputDirectory/@InputFiles`，移除 `org.gradle.internal.*` 依赖，必要时使用 Worker API。
+  - [x] 清理 `org.gradle.internal.*` 直接导入（已移除未使用/可替代用法）。
 - 模板系统
   - [ ] 抽取通用“模板选择与合并”组件（`TemplateMerger`），替换 `GenAggregateTask`/`GenDesignTask` 内重复逻辑。
   - [ ] 别名外置：引入 `resources/aliases/{aggregate,design}.json`，并提供 `CodegenExtension` 覆盖入口。
@@ -62,4 +63,3 @@
   - 构建：`plugin/build.gradle.kts`、`ksp-processor/build.gradle.kts`
 
 > 注：当前已在新分支进行重构，请以小步提交与可回滚 PR 合并，优先完成 M1 以降低后续风险。
-

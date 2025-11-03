@@ -7,7 +7,6 @@ import com.only4.codegen.misc.*
 import com.only4.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_ID_ALIAS
 import com.only4.codegen.misc.SqlSchemaUtils.RIGHT_QUOTES_4_ID_ALIAS
 import com.only4.codegen.template.TemplateNode
-import org.gradle.internal.extensions.stdlib.toDefaultLowerCase
 import java.io.File
 
 /**
@@ -287,7 +286,7 @@ class EntityGenerator : AggregateTemplateGenerator {
         if (SqlSchemaUtils.isIgnore(column)) return false
 
         val ignoreFields = ctx.getString("ignoreFields")
-        if (ignoreFields.isNotBlank() && ignoreFields.toDefaultLowerCase().split(Regex("[,;]")).any {
+        if (ignoreFields.isNotBlank() && ignoreFields.lowercase().split(Regex("[,;]")).any {
             columnName.matches(Regex(it.replace("%", ".*", true)))
         }) return false
 
