@@ -49,9 +49,13 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         renderFileSwitch = false
         super.generate()
         val engine = extension.get().generationEngine.get()
-        logger.lifecycle("Codegen engine: $engine (using legacy pipeline)")
+        logger.lifecycle("Codegen engine: $engine")
 
-        genDesign()
+        if (engine.equals("v2", ignoreCase = true)) {
+            genDesignV2()
+        } else {
+            genDesign()
+        }
     }
 
     private fun genDesign() {
@@ -163,6 +167,39 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         templateNodes.forEach { templateNode ->
             val tag = templateNode.tag?.lowercase()?.let { designTagAliasMap[it] ?: it } ?: return@forEach
             templateNodeMap.computeIfAbsent(tag) { mutableListOf() }.add(templateNode)
+        }
+    }
+
+    private fun genDesignV2() {
+        val metadataPath = resolveMetadataPath()
+        if (!metadataPath.exists()) return
+
+        val context = buildDesignContext(metadataPath.absolutePath)
+
+        val validators = context.designMap["validator"] ?: emptyList()
+        if (validators.isEmpty()) return
+
+        val basePackage = getString("basePackage")
+        val outputEncoding = getString("outputEncoding", "UTF-8")
+
+        val strategy = com.only4.codegen.engine.generation.design.V2ValidatorStrategy()
+
+        validators.forEach { design ->
+            if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
+
+            val className = com.only4.codegen.misc.toUpperCamelCase(design.name) ?: design.name
+            val v2ctx = com.only4.codegen.engine.generation.design.DesignV2Context(
+                basePackage = basePackage,
+                modulePath = applicationPath,
+                packageName = design.`package`,
+                className = className,
+                description = design.desc,
+                outputEncoding = outputEncoding,
+            )
+
+            val results = strategy.generate(v2ctx)
+            val out = com.only4.codegen.engine.output.FileOutputManager(applicationPath, outputEncoding)
+            results.forEach { r -> out.write(r) }
         }
     }
     @get:InputFiles

@@ -5,8 +5,7 @@ package com.only4.codegen.engine.output
  */
 interface IOutputManager {
     fun write(result: GenerationResult)
-    fun createDirectoryStructure(packageName: String)
+    fun createDirectoryStructure(packageName: String): String
     fun cleanOutput()
     fun getGeneratedFiles(): List<String>
 }
-
