@@ -182,14 +182,13 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         val outAdapter = com.only4.codegen.engine.output.FileOutputManager(adapterPath, outputEncoding)
         val outDomain = com.only4.codegen.engine.output.FileOutputManager(domainPath, outputEncoding)
 
-        // Validator (v2 via V2Render)
+        // Validator (v2 via V2Facade)
         run {
             val list = context.designMap["validator"] ?: emptyList()
             list.forEach { design ->
                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
                 val className = com.only4.codegen.misc.toUpperCamelCase(design.name) ?: design.name
-                val defTop = ValidatorGenerator().getDefaultTemplateNodes()
-                val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                val full = com.only4.codegen.engine.generation.common.V2Facade.render(
                     context = context,
                     templateBaseDir = templateBaseDir,
                     basePackage = basePackage,
@@ -198,27 +197,26 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                     genName = className,
                     designPackage = design.`package`,
                     comment = design.desc,
-                    defaultNodes = defTop,
-                    templatePackageFallback = "application.validater",
-                    outputType = com.only4.codegen.engine.output.OutputType.CONFIGURATION,
-                    vars = mapOf(
+                    defNodesProvider = { ValidatorGenerator().getDefaultTemplateNodes() },
+                    varsProvider = { mapOf(
                         "Validator" to className,
                         "ValueType" to "Long",
-                    ),
+                    ) },
+                    templatePackageFallback = "application.validater",
+                    outputType = com.only4.codegen.engine.output.OutputType.CONFIGURATION,
                 )
                 context.typeMapping[className] = full
             }
         }
 
-        // Command (v2 via V2Render + ImportManager)
+        // Command (v2 via V2Facade + ImportManager)
         run {
             val list = context.designMap["command"] ?: emptyList()
             list.forEach { design ->
                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
                 val raw = if (design.name.endsWith("Cmd")) design.name else "${design.name}Cmd"
                 val className = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
-                val defTop = CommandGenerator().getDefaultTemplateNodes()
-                val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                val full = com.only4.codegen.engine.generation.common.V2Facade.render(
                     context = context,
                     templateBaseDir = templateBaseDir,
                     basePackage = basePackage,
@@ -227,11 +225,11 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                     genName = className,
                     designPackage = design.`package`,
                     comment = design.desc,
-                    defaultNodes = defTop,
+                    defNodesProvider = { CommandGenerator().getDefaultTemplateNodes() },
+                    importsProvider = { com.only4.codegen.engine.generation.common.V2Imports.command() },
+                    varsProvider = { mapOf("Command" to className) },
                     templatePackageFallback = "application.command",
                     outputType = com.only4.codegen.engine.output.OutputType.CONFIGURATION,
-                    vars = mapOf("Command" to className),
-                    imports = com.only4.codegen.engine.generation.common.V2Imports.command(),
                 )
                 context.typeMapping[className] = full
             }
@@ -265,15 +263,14 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
             }
         }
 
-        // Client (v2 via V2Render + ImportManager) — used by client_handler dependency
+        // Client (v2 via V2Facade + ImportManager) — used by client_handler dependency
         run {
             val list = context.designMap["client"] ?: emptyList()
             list.forEach { design ->
                 if (design !is com.only4.codegen.context.design.models.CommonDesign) return@forEach
                 val raw = if (design.name.endsWith("Cli")) design.name else "${design.name}Cli"
                 val className = com.only4.codegen.misc.toUpperCamelCase(raw) ?: raw
-                val defTop = ClientGenerator().getDefaultTemplateNodes()
-                val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                val full = com.only4.codegen.engine.generation.common.V2Facade.render(
                     context = context,
                     templateBaseDir = templateBaseDir,
                     basePackage = basePackage,
@@ -282,11 +279,11 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
                     genName = className,
                     designPackage = design.`package`,
                     comment = design.desc,
-                    defaultNodes = defTop,
+                    defNodesProvider = { ClientGenerator().getDefaultTemplateNodes() },
+                    importsProvider = { com.only4.codegen.engine.generation.common.V2Imports.client() },
+                    varsProvider = { mapOf("Client" to className) },
                     templatePackageFallback = "application.client",
                     outputType = com.only4.codegen.engine.output.OutputType.DTO,
-                    vars = mapOf("Client" to className),
-                    imports = com.only4.codegen.engine.generation.common.V2Imports.client(),
                 )
                 context.typeMapping[className] = full
             }

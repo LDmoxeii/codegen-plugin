@@ -232,6 +232,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             if (SqlSchemaUtils.isIgnore(table) || SqlSchemaUtils.hasRelation(table)) return@forEach
             if (!SqlSchemaUtils.isAggregateRoot(table)) return@forEach
             val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = context.resolveAggregateWithModule(tableName)
             val entityType = context.entityTypeMap[tableName] ?: return@forEach
             val factoryType = "${entityType}Factory"
             if (context.typeMapping.containsKey(factoryType)) return@forEach
@@ -240,6 +241,12 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             if (ids.isEmpty()) return@forEach
             val fullEntityType = context.typeMapping[entityType] ?: return@forEach
             val defTop = FactoryGenerator().getDefaultTemplateNodes()
+            val factoryVars = buildMap<String, Any?> {
+                put("Factory", factoryType)
+                put("Payload", "${entityType}Payload")
+                put("Entity", entityType)
+                put("Aggregate", com.only4.codegen.misc.toUpperCamelCase(aggregate) ?: aggregate)
+            }
             val full = com.only4.codegen.engine.generation.common.V2Render.render(
                 context = context,
                 templateBaseDir = templateBaseDir,
@@ -252,12 +259,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
                 defaultNodes = defTop,
                 templatePackageFallback = "domain.aggregates",
                 outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
-                vars = mapOf(
-                    "Factory" to factoryType,
-                    "Payload" to "${entityType}Payload",
-                    "Entity" to entityType,
-                    "Aggregate" to com.only4.codegen.misc.toUpperCamelCase(aggregate) ?: aggregate,
-                ),
+                vars = factoryVars,
                 imports = com.only4.codegen.engine.generation.common.V2Imports.factory(fullEntityType),
             )
             context.typeMapping[factoryType] = full
@@ -268,6 +270,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             if (SqlSchemaUtils.isIgnore(table) || SqlSchemaUtils.hasRelation(table)) return@forEach
             if (!SqlSchemaUtils.isAggregateRoot(table)) return@forEach
             val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = context.resolveAggregateWithModule(tableName)
             val entityType = context.entityTypeMap[tableName] ?: return@forEach
             val specType = "${entityType}Specification"
             if (context.typeMapping.containsKey(specType)) return@forEach
@@ -275,6 +278,12 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
             if (ids.isEmpty()) return@forEach
             val defTop = SpecificationGenerator().getDefaultTemplateNodes()
+            val specVars = buildMap<String, Any?> {
+                put("DEFAULT_SPEC_PACKAGE", "specs")
+                put("Specification", specType)
+                put("Entity", entityType)
+                put("Aggregate", com.only4.codegen.misc.toUpperCamelCase(aggregate) ?: aggregate)
+            }
             val full = com.only4.codegen.engine.generation.common.V2Render.render(
                 context = context,
                 templateBaseDir = templateBaseDir,
@@ -287,12 +296,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
                 defaultNodes = defTop,
                 templatePackageFallback = "domain.aggregates",
                 outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
-                vars = mapOf(
-                    "DEFAULT_SPEC_PACKAGE" to "specs",
-                    "Specification" to specType,
-                    "Entity" to entityType,
-                    "Aggregate" to com.only4.codegen.misc.toUpperCamelCase(aggregate) ?: aggregate,
-                ),
+                vars = specVars,
                 imports = com.only4.codegen.engine.generation.common.V2Imports.specification(),
             )
             context.typeMapping[specType] = full
@@ -304,6 +308,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             if (!context.getBoolean("generateAggregate", false)) return@forEach
             if (!SqlSchemaUtils.isAggregateRoot(table)) return@forEach
             val tableName = SqlSchemaUtils.getTableName(table)
+            val aggregate = context.resolveAggregateWithModule(tableName)
             val columns = context.columnsMap[tableName] ?: return@forEach
             val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
             val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
@@ -316,6 +321,12 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             )
             if (context.typeMapping.containsKey(aggregateName)) return@forEach
             val defTop = AggregateGenerator().getDefaultTemplateNodes()
+            val aggVars = buildMap<String, Any?> {
+                put("Entity", entityType)
+                put("IdentityType", identityType)
+                put("AggregateName", aggregateName)
+                put("Factory", factoryType)
+            }
             val full = com.only4.codegen.engine.generation.common.V2Render.render(
                 context = context,
                 templateBaseDir = templateBaseDir,
@@ -328,12 +339,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
                 defaultNodes = defTop,
                 templatePackageFallback = "domain.aggregates",
                 outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
-                vars = mapOf(
-                    "Entity" to entityType,
-                    "IdentityType" to identityType,
-                    "AggregateName" to aggregateName,
-                    "Factory" to factoryType,
-                ),
+                vars = aggVars,
                 imports = com.only4.codegen.engine.generation.common.V2Imports.aggregate(fullFactoryType),
             )
             context.typeMapping[aggregateName] = full
