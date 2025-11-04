@@ -32,6 +32,21 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
         val deletedField = ctx.getString("deletedField")
         val allColumns = ctx.columnsMap[tableName]!!
 
+        val extraImports = mutableSetOf<String>()
+
+        fun addTypeImportIfNeeded(colMeta: Map<String, Any?>, typeName: String) {
+            val simple = typeName.removeSuffix("?")
+            if (SqlSchemaUtils.hasType(colMeta)) {
+                val mapped = ctx.typeMapping[simple]
+                if (!mapped.isNullOrBlank()) {
+                    extraImports += mapped
+                } else {
+                    val enumPkg = ctx.enumPackageMap[simple]
+                    if (!enumPkg.isNullOrBlank()) extraImports += "$enumPkg.$simple"
+                }
+            }
+        }
+
         val requestProps = selected?.get("columns")
             .let { it as? List<Map<String, Any?>> ?: emptyList() }
             .map { it["columnName"].toString() }
@@ -39,6 +54,7 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
             .map { colName ->
                 val colMeta = allColumns.first { SqlSchemaUtils.getColumnName(it).equals(colName, ignoreCase = true) }
                 val type = SqlSchemaUtils.getColumnType(colMeta)
+                addTypeImportIfNeeded(colMeta, type)
                 val camel = toLowerCamelCase(colName) ?: colName
                 mapOf(
                     "name" to camel,
@@ -77,6 +93,7 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "Validator", generatorName(table))
             resultContext.putContext(tag, "Comment", SqlSchemaUtils.getComment(table))
 
+            extraImports.forEach { importManager.add(it) }
             resultContext.putContext(tag, "imports", importManager.toImportLines())
 
             resultContext.putContext(tag, "FieldParams", requestProps.map {

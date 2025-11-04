@@ -32,6 +32,23 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
         val deletedField = ctx.getString("deletedField")
         val allColumns = ctx.columnsMap[tableName]!!
 
+        val extraImports = mutableSetOf<String>()
+
+        fun addTypeImportIfNeeded(colMeta: Map<String, Any?>, typeName: String) {
+            val simple = typeName.removeSuffix("?")
+            if (SqlSchemaUtils.hasType(colMeta)) {
+                // Prefer typeMapping (enums and custom types registered earlier)
+                val mapped = ctx.typeMapping[simple]
+                if (!mapped.isNullOrBlank()) {
+                    extraImports += mapped
+                } else {
+                    // Fallback to enumPackageMap if available
+                    val enumPkg = ctx.enumPackageMap[simple]
+                    if (!enumPkg.isNullOrBlank()) extraImports += "$enumPkg.$simple"
+                }
+            }
+        }
+
         val requestParams = selected?.get("columns")
             .let { it as? List<Map<String, Any?>> ?: emptyList() }
             .map { it["columnName"].toString() }
@@ -39,6 +56,7 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
             .map { colName ->
                 val colMeta = allColumns.first { SqlSchemaUtils.getColumnName(it).equals(colName, ignoreCase = true) }
                 val type = SqlSchemaUtils.getColumnType(colMeta)
+                addTypeImportIfNeeded(colMeta, type)
                 mapOf(
                     "name" to (toLowerCamelCase(colName) ?: colName),
                     "type" to type,
@@ -64,6 +82,8 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "Aggregate", toUpperCamelCase(aggregate) ?: aggregate)
             resultContext.putContext(tag, "Comment", SqlSchemaUtils.getComment(table))
 
+            // merge imports: base + extra type imports
+            extraImports.forEach { importManager.add(it) }
             resultContext.putContext(tag, "imports", importManager.toImportLines())
 
             resultContext.putContext(tag, "RequestParams", requestParams)
