@@ -16,12 +16,9 @@ class UniqueQueryHandlerGenerator : AggregateTemplateGenerator {
     context(ctx: AggregateContext)
     override fun shouldGenerate(table: Map<String, Any?>): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
-        val name = generatorName(table)
-        if (name.isBlank() || ctx.typeMapping.containsKey(name)) return false
-
-        // 依赖 Query 已生成
-        val queryName = getQueryName(table)
-        return ctx.typeMapping.containsKey(queryName)
+        // 仅依据当前生成名是否可用（生成名内部已确保前置条件满足）
+        val handlerName = generatorName(table)
+        return handlerName.isNotBlank()
     }
 
     context(ctx: AggregateContext)
@@ -100,14 +97,29 @@ class UniqueQueryHandlerGenerator : AggregateTemplateGenerator {
 
     context(ctx: AggregateContext)
     private fun getQueryName(table: Map<String, Any?>): String {
-        val q = UniqueQueryGenerator().generatorName(table)
-        return q
+        val handlerName = generatorName(table)
+        return handlerName.removeSuffix("Handler")
     }
 
     context(ctx: AggregateContext)
     override fun generatorName(table: Map<String, Any?>): String {
-        val q = getQueryName(table)
-        return if (q.isNotBlank()) toUpperCamelCase("${q}Handler")!! else ""
+        val tableName = SqlSchemaUtils.getTableName(table)
+        val entityType = ctx.entityTypeMap[tableName] ?: return ""
+        val constraints = ctx.uniqueConstraintsMap[tableName].orEmpty()
+        val deletedField = ctx.getString("deletedField")
+        constraints.forEach { cons ->
+            val cols = (cons["columns"] as? List<Map<String, Any?>>).orEmpty()
+            val filtered = cols.filter { c ->
+                !c["columnName"].toString().equals(deletedField, ignoreCase = true)
+            }
+            if (filtered.isEmpty()) return@forEach
+            val suffix = filtered.sortedBy { (it["ordinal"] as Number).toInt() }
+                .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
+            val q = "Unique${entityType}${suffix}Qry"
+            val h = toUpperCamelCase("${q}Handler")!!
+            if (ctx.typeMapping.containsKey(q) && !ctx.typeMapping.containsKey(h)) return h
+        }
+        return ""
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {
@@ -134,14 +146,19 @@ class UniqueQueryHandlerGenerator : AggregateTemplateGenerator {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = ctx.entityTypeMap[tableName] ?: return null
         val constraints = ctx.uniqueConstraintsMap[tableName].orEmpty()
-        val targetQry = getQueryName(table)
+        val deletedField = ctx.getString("deletedField")
+        val targetHandler = generatorName(table)
         return constraints.firstOrNull { cons ->
             val cols = (cons["columns"] as? List<Map<String, Any?>>).orEmpty()
-            val suffix = cols.sortedBy { (it["ordinal"] as Number).toInt() }
+            val filtered = cols.filter { c ->
+                !c["columnName"].toString().equals(deletedField, ignoreCase = true)
+            }
+            if (filtered.isEmpty()) return@firstOrNull false
+            val suffix = filtered.sortedBy { (it["ordinal"] as Number).toInt() }
                 .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
             val q = "Unique${entityType}${suffix}Qry"
-            q == targetQry
+            val h = toUpperCamelCase("${q}Handler")!!
+            h == targetHandler
         }
     }
 }
-

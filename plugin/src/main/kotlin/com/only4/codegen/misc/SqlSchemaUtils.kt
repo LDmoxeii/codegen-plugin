@@ -59,6 +59,7 @@ object SqlSchemaUtils {
     interface SqlSchemaDialect {
         fun resolveTables(connectionString: String, user: String, pwd: String): List<Map<String, Any?>>
         fun resolveColumns(connectionString: String, user: String, pwd: String): List<Map<String, Any?>>
+        fun resolveUniqueConstraints(connectionString: String, user: String, pwd: String): List<Map<String, Any?>>
         fun getColumnType(column: Map<String, Any?>): String
         fun getColumnDefaultLiteral(column: Map<String, Any?>): String
         fun isAutoUpdateDateColumn(column: Map<String, Any?>): Boolean
@@ -117,6 +118,9 @@ object SqlSchemaUtils {
 
     fun resolveColumns(connectionString: String, user: String, pwd: String) =
         pickByConnectionString(connectionString).resolveColumns(connectionString, user, pwd)
+
+    fun resolveUniqueConstraints(connectionString: String, user: String, pwd: String) =
+        pickByConnectionString(connectionString).resolveUniqueConstraints(connectionString, user, pwd)
 
     // 方言驱动的列/表属性访问
     fun getColumnType(column: Map<String, Any?>): String =

@@ -53,6 +53,33 @@ object SqlSchemaUtils4Mysql : SqlSchemaUtils.SqlSchemaDialect {
         return executeQuery(columnSql, connectionString, user, pwd)
     }
 
+    override fun resolveUniqueConstraints(connectionString: String, user: String, pwd: String): List<Map<String, Any?>> {
+        val schema = context.getString("dbSchema")
+        val conditions = mutableListOf(
+            "tc.table_schema = ${LEFT_QUOTES_4_LITERAL_STRING}$schema${RIGHT_QUOTES_4_LITERAL_STRING}",
+            "tc.constraint_type = ${LEFT_QUOTES_4_LITERAL_STRING}UNIQUE${RIGHT_QUOTES_4_LITERAL_STRING}"
+        )
+        buildTableNameCondition(context.getString("dbTables"), true)?.let { conditions += it.replace("table_name", "tc.table_name") }
+        buildTableNameCondition(context.getString("dbIgnoreTables"), false)?.let { conditions += it.replace("table_name", "tc.table_name") }
+
+        val sql = buildString {
+            appendLine("select ")
+            appendLine("  tc.table_name   as TABLE_NAME,")
+            appendLine("  tc.constraint_name as CONSTRAINT_NAME,")
+            appendLine("  kcu.column_name as COLUMN_NAME,")
+            appendLine("  kcu.ordinal_position as ORDINAL_POSITION")
+            appendLine("from ${LEFT_QUOTES_4_ID_ALIAS}information_schema${RIGHT_QUOTES_4_ID_ALIAS}.${LEFT_QUOTES_4_ID_ALIAS}table_constraints${RIGHT_QUOTES_4_ID_ALIAS} tc")
+            appendLine("join ${LEFT_QUOTES_4_ID_ALIAS}information_schema${RIGHT_QUOTES_4_ID_ALIAS}.${LEFT_QUOTES_4_ID_ALIAS}key_column_usage${RIGHT_QUOTES_4_ID_ALIAS} kcu")
+            appendLine("  on tc.table_schema = kcu.table_schema")
+            appendLine(" and tc.table_name = kcu.table_name")
+            appendLine(" and tc.constraint_name = kcu.constraint_name")
+            append("where ")
+            appendLine(conditions.joinToString(" and "))
+            appendLine("order by tc.table_name, tc.constraint_name, kcu.ordinal_position")
+        }
+        return executeQuery(sql, connectionString, user, pwd)
+    }
+
     private fun isBooleanTinyInt(name: String, columnType: String, comment: String): Boolean =
         ".deleted.".contains(".$name.") ||
                 context.getString("deletedField").equals(name, ignoreCase = true) ||

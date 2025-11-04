@@ -48,7 +48,7 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
 
         val idColumn = allColumns.firstOrNull { SqlSchemaUtils.isColumnPrimaryKey(it) }
         val idTypeRaw = idColumn?.let { SqlSchemaUtils.getColumnType(it) } ?: "Long"
-        val idType = if (idTypeRaw.endsWith("?")) idTypeRaw else "$idTypeRaw?"
+        val idType = idTypeRaw.removeSuffix("?")
         val excludeIdParamName = "exclude${entityType}Id"
 
         // imports
@@ -89,10 +89,15 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = ctx.entityTypeMap[tableName] ?: return ""
         val constraints = ctx.uniqueConstraintsMap[tableName].orEmpty()
+        val deletedField = ctx.getString("deletedField")
 
         constraints.forEach { cons ->
             val cols = (cons["columns"] as? List<Map<String, Any?>>).orEmpty()
-            val suffix = cols.sortedBy { (it["ordinal"] as Number).toInt() }
+            val filtered = cols.filter { c ->
+                !c["columnName"].toString().equals(deletedField, ignoreCase = true)
+            }
+            if (filtered.isEmpty()) return@forEach
+            val suffix = filtered.sortedBy { (it["ordinal"] as Number).toInt() }
                 .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
             val q = "Unique${entityType}${suffix}Qry"
             if (!ctx.typeMapping.containsKey(q)) {
@@ -127,13 +132,17 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
         val entityType = ctx.entityTypeMap[tableName] ?: return null
         val constraints = ctx.uniqueConstraintsMap[tableName].orEmpty()
         val target = generatorName(table)
+        val deletedField = ctx.getString("deletedField")
         return constraints.firstOrNull { cons ->
             val cols = (cons["columns"] as? List<Map<String, Any?>>).orEmpty()
-            val suffix = cols.sortedBy { (it["ordinal"] as Number).toInt() }
+            val filtered = cols.filter { c ->
+                !c["columnName"].toString().equals(deletedField, ignoreCase = true)
+            }
+            if (filtered.isEmpty()) return@firstOrNull false
+            val suffix = filtered.sortedBy { (it["ordinal"] as Number).toInt() }
                 .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
             val q = "Unique${entityType}${suffix}Qry"
             q == target
         }
     }
 }
-

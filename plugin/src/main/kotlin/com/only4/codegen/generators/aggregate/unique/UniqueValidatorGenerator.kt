@@ -16,12 +16,9 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
     context(ctx: AggregateContext)
     override fun shouldGenerate(table: Map<String, Any?>): Boolean {
         if (SqlSchemaUtils.isIgnore(table)) return false
-        val name = generatorName(table)
-        if (name.isBlank() || ctx.typeMapping.containsKey(name)) return false
-
-        // 依赖 Query 已生成
-        val queryName = UniqueQueryGenerator().generatorName(table)
-        return queryName.isNotBlank() && ctx.typeMapping.containsKey(queryName)
+        // 仅依据当前生成名是否可用（生成名内部已确保前置条件满足）
+        val validatorName = generatorName(table)
+        return validatorName.isNotBlank()
     }
 
     context(ctx: AggregateContext)
@@ -42,19 +39,25 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
             .map { colName ->
                 val colMeta = allColumns.first { SqlSchemaUtils.getColumnName(it).equals(colName, ignoreCase = true) }
                 val type = SqlSchemaUtils.getColumnType(colMeta)
+                val camel = toLowerCamelCase(colName) ?: colName
                 mapOf(
-                    "name" to (toLowerCamelCase(colName) ?: colName),
+                    "name" to camel,
                     "type" to type,
                     "isString" to (type.removeSuffix("?") == "String"),
-                    "paramProperty" to "\"${toLowerCamelCase(colName) ?: colName}Field\""
+                    // 注解参数名，如 codeField / nameField
+                    "param" to "${camel}Field",
+                    // 初始化后用于 props[...] 的变量名，如 codeProperty
+                    "varName" to "${camel}Property"
                 )
             }
 
         val idColumn = allColumns.firstOrNull { SqlSchemaUtils.isColumnPrimaryKey(it) }
         val idTypeRaw = idColumn?.let { SqlSchemaUtils.getColumnType(it) } ?: "Long"
-        val idType = if (idTypeRaw.endsWith("?")) idTypeRaw.removeSuffix("?") else idTypeRaw
-        val entityIdPropDefault = (toLowerCamelCase(SqlSchemaUtils.getColumnName(idColumn ?: emptyMap())) ?: "${toLowerCamelCase(entityType) ?: entityType}Id")
-        val entityIdParam = "${toLowerCamelCase(entityType) ?: entityType}IdField"
+        val idType = idTypeRaw.removeSuffix("?")
+        val entityCamel = toLowerCamelCase(entityType) ?: entityType
+        val entityIdParam = "${entityCamel}IdField"
+        val entityIdPropDefault = "${entityCamel}Id"
+        val entityIdVar = "${entityCamel}IdProperty"
 
         // imports
         val importManager = ValidatorImportManager().apply { addBaseImports() }
@@ -63,7 +66,7 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
             // kotlin reflect
             "kotlin.reflect.full.memberProperties",
             // unique query type
-            ctx.typeMapping[UniqueQueryGenerator().generatorName(table)]!!
+            ctx.typeMapping[getQueryName(table)]!!
         )
 
         with(ctx) {
@@ -78,16 +81,17 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
 
             resultContext.putContext(tag, "FieldParams", requestProps.map {
                 mapOf(
-                    "param" to "${it["name"]}Field",
-                    "default" to it["name"]
+                    "param" to it["param"]!!,
+                    "default" to it["name"]!!
                 )
             })
             resultContext.putContext(tag, "RequestProps", requestProps)
             resultContext.putContext(tag, "EntityIdParam", entityIdParam)
             resultContext.putContext(tag, "EntityIdDefault", entityIdPropDefault)
+            resultContext.putContext(tag, "EntityIdVar", entityIdVar)
             resultContext.putContext(tag, "IdType", idType)
             resultContext.putContext(tag, "ExcludeIdParamName", "exclude${entityType}Id")
-            resultContext.putContext(tag, "Query", UniqueQueryGenerator().generatorName(table))
+            resultContext.putContext(tag, "Query", getQueryName(table))
         }
 
         return resultContext
@@ -106,12 +110,18 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = ctx.entityTypeMap[tableName] ?: return ""
         val constraints = ctx.uniqueConstraintsMap[tableName].orEmpty()
+        val deletedField = ctx.getString("deletedField")
         constraints.forEach { cons ->
             val cols = (cons["columns"] as? List<Map<String, Any?>>).orEmpty()
-            val suffix = cols.sortedBy { (it["ordinal"] as Number).toInt() }
+            val filtered = cols.filter { c ->
+                !c["columnName"].toString().equals(deletedField, ignoreCase = true)
+            }
+            if (filtered.isEmpty()) return@forEach
+            val suffix = filtered.sortedBy { (it["ordinal"] as Number).toInt() }
                 .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
             val name = "Unique${entityType}${suffix}"
-            if (!ctx.typeMapping.containsKey(name)) return name
+            val queryName = "${name}Qry"
+            if (ctx.typeMapping.containsKey(queryName) && !ctx.typeMapping.containsKey(name)) return name
         }
         return ""
     }
@@ -140,14 +150,24 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = ctx.entityTypeMap[tableName] ?: return null
         val constraints = ctx.uniqueConstraintsMap[tableName].orEmpty()
+        val deletedField = ctx.getString("deletedField")
         val targetName = generatorName(table)
         return constraints.firstOrNull { cons ->
             val cols = (cons["columns"] as? List<Map<String, Any?>>).orEmpty()
-            val suffix = cols.sortedBy { (it["ordinal"] as Number).toInt() }
+            val filtered = cols.filter { c ->
+                !c["columnName"].toString().equals(deletedField, ignoreCase = true)
+            }
+            if (filtered.isEmpty()) return@firstOrNull false
+            val suffix = filtered.sortedBy { (it["ordinal"] as Number).toInt() }
                 .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
             val name = "Unique${entityType}${suffix}"
             name == targetName
         }
     }
-}
 
+    context(ctx: AggregateContext)
+    private fun getQueryName(table: Map<String, Any?>): String {
+        val validatorName = generatorName(table)
+        return if (validatorName.isBlank()) "" else "${validatorName}Qry"
+    }
+}
