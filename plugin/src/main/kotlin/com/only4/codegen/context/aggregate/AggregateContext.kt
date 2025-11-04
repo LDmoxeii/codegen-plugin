@@ -17,12 +17,19 @@ interface AggregateContext : BaseContext {
     val annotationsMap: Map<String, Map<String, String>>
     val relationsMap: Map<String, Map<String, String>>
 
-    // === 默认导入配置 ===
+    // === 默认的实体类导入 ===
     val entityClassExtraImports: List<String>
 
     // === 枚举信息 ===
     val enumConfigMap: Map<String, Map<Int, Array<String>>>
     val enumPackageMap: Map<String, String>
+
+    // === 唯一约束信息 ===
+    // key: tableName -> value: list of constraints
+    // constraint map keys:
+    //   - constraintName: String
+    //   - columns: List<Map<String, Any?>> where each item has { columnName: String, ordinal: Int }
+    val uniqueConstraintsMap: Map<String, List<Map<String, Any?>>>
 
     fun resolveAggregateWithModule(tableName: String): String
 }

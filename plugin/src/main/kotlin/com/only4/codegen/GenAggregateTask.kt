@@ -4,16 +4,18 @@ import com.only4.codegen.context.aggregate.AggregateContext
 import com.only4.codegen.context.aggregate.MutableAggregateContext
 import com.only4.codegen.context.aggregate.builders.*
 import com.only4.codegen.generators.aggregate.*
+import com.only4.codegen.generators.aggregate.unique.UniqueQueryGenerator
+import com.only4.codegen.generators.aggregate.unique.UniqueQueryHandlerGenerator
+import com.only4.codegen.generators.aggregate.unique.UniqueValidatorGenerator
 import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.resolvePackageDirectory
 import com.only4.codegen.template.TemplateNode
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import java.util.regex.Pattern
 
 /**
- * 生成实体类任务
+ * 基于数据库实体的聚合生成任务
  */
 open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
@@ -83,6 +85,9 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
     @Internal
     override val enumPackageMap: MutableMap<String, String> = mutableMapOf()
 
+    @Internal
+    override val uniqueConstraintsMap: MutableMap<String, List<Map<String, Any?>>> = mutableMapOf()
+
     override fun resolveAggregateWithModule(tableName: String): String {
         val module = tableModuleMap[tableName]
         return if (!(module.isNullOrBlank())) {
@@ -141,40 +146,42 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
     }
 
     private fun buildGenerationContext(): AggregateContext {
-
         val contextBuilders = listOf(
-            TableContextBuilder(),          // order=10  - 表和列信息
-            EntityTypeContextBuilder(),     // order=20  - 实体类型
-            AnnotationContextBuilder(),     // order=20  - 注解信息
-            ModuleContextBuilder(),         // order=20  - 模块信息
-            RelationContextBuilder(),       // order=20  - 表关系
-            EnumContextBuilder(),           // order=20  - 枚举信息
-            AggregateContextBuilder(),      // order=30  - 聚合信息
-            TablePackageContextBuilder(),   // order=40  - 表包信息
+            TableContextBuilder(),           // order=10  - 表/列基础信息
+            EntityTypeContextBuilder(),      // order=20  - 实体类型
+            AnnotationContextBuilder(),      // order=20  - 注释/注解信息
+            ModuleContextBuilder(),          // order=20  - 模块信息
+            RelationContextBuilder(),        // order=20  - 关联关系
+            UniqueConstraintContextBuilder(),// order=25  - 唯一约束
+            EnumContextBuilder(),            // order=50  - 枚举信息
+            AggregateContextBuilder(),       // order=30  - 聚合信息
+            TablePackageContextBuilder(),    // order=40  - 包信息
         )
 
-        contextBuilders
-            .sortedBy { it.order }
-            .forEach { builder ->
-                logger.lifecycle("Building context: ${builder.javaClass.simpleName}")
-                builder.build(this)
-            }
-
+        contextBuilders.sortedBy { it.order }.forEach { builder ->
+            logger.lifecycle("Building context: ${builder.javaClass.simpleName}")
+            builder.build(this)
+        }
         return this
     }
 
     private fun generateFiles(context: AggregateContext) {
         val generators = listOf(
             SchemaBaseGenerator(),           // order=10 - Schema 基类
-            EnumGenerator(),                 // order=10 - 枚举类
-            EnumTranslationGenerator(),      // order=20 - 枚举翻译器
-            EntityGenerator(),               // order=20 - 实体类
-            SpecificationGenerator(),        // order=30 - 规约类
-            FactoryGenerator(),              // order=30 - 工厂类
-            DomainEventGenerator(),          // order=30 - 领域事件类
+            EnumGenerator(),                 // order=10 - 枚举
+            EnumTranslationGenerator(),      // order=20 - 枚举翻译
+            EntityGenerator(),               // order=20 - 实体
+            // === 基于唯一约束的生成 ===
+            UniqueQueryGenerator(),          // order=22 - 唯一约束查询
+            UniqueQueryHandlerGenerator(),   // order=24 - 唯一约束查询处理器
+            UniqueValidatorGenerator(),      // order=28 - 唯一约束校验器
+            // === 其他 ===
+            SpecificationGenerator(),        // order=30 - 规范
+            FactoryGenerator(),              // order=30 - 工厂
+            DomainEventGenerator(),          // order=30 - 领域事件
             DomainEventHandlerGenerator(),   // order=30 - 领域事件处理器
-            RepositoryGenerator(),           // order=30 - Repository 接口及适配器
-            AggregateGenerator(),            // order=40 - 聚合封装类
+            RepositoryGenerator(),           // order=30 - Repository 接口及实现
+            AggregateGenerator(),            // order=40 - 聚合封装
             SchemaGenerator(),               // order=50 - Schema 类
         )
 
@@ -202,9 +209,9 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
                 val tableContext = generator.buildContext(table)
 
-                // 合并模板节点（先收集再组合成多套，再根据 pattern 选择）：
-                // - 多个 dir/file 顶层节点可共存；每个唯一键(name+pattern)代表一套模板节点
-                // - context 优先于 defaults（在文件和目录两侧都遵循此优先级）
+                // 合并模板节点（上下文配置合并默认，再根据 pattern 选择）：
+                // - 同一 dir/file 类型节点去重；每个唯一 (name+pattern) 保留一个模板节点
+                // - context 优先级高于 defaults；目录和文件层级也遵循优先级合并
                 val genName = generator.generatorName(table)
 
                 val ctxTop = context.templateNodeMap.getOrDefault(generator.tag, emptyList())
@@ -231,3 +238,4 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
         }
     }
 }
+

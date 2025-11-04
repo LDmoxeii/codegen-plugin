@@ -15,4 +15,6 @@ interface MutableAggregateContext : AggregateContext {
     override val enumConfigMap: MutableMap<String, Map<Int, Array<String>>>
 
     override val templateNodeMap: MutableMap<String, MutableList<TemplateNode>>
+
+    override val uniqueConstraintsMap: MutableMap<String, List<Map<String, Any?>>>
 }
