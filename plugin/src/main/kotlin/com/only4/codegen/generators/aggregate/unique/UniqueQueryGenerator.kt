@@ -92,13 +92,8 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
         val deletedField = ctx.getString("deletedField")
 
         constraints.forEach { cons ->
-            val cols = (cons["columns"] as? List<Map<String, Any?>>).orEmpty()
-            val filtered = cols.filter { c ->
-                !c["columnName"].toString().equals(deletedField, ignoreCase = true)
-            }
-            if (filtered.isEmpty()) return@forEach
-            val suffix = filtered.sortedBy { (it["ordinal"] as Number).toInt() }
-                .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
+            val suffix = computeSuffix(cons, deletedField)
+            if (suffix.isBlank()) return@forEach
             val q = "Unique${entityType}${suffix}Qry"
             if (!ctx.typeMapping.containsKey(q)) {
                 return q
@@ -134,15 +129,30 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
         val target = generatorName(table)
         val deletedField = ctx.getString("deletedField")
         return constraints.firstOrNull { cons ->
-            val cols = (cons["columns"] as? List<Map<String, Any?>>).orEmpty()
-            val filtered = cols.filter { c ->
-                !c["columnName"].toString().equals(deletedField, ignoreCase = true)
-            }
-            if (filtered.isEmpty()) return@firstOrNull false
-            val suffix = filtered.sortedBy { (it["ordinal"] as Number).toInt() }
-                .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
+            val suffix = computeSuffix(cons, deletedField)
+            if (suffix.isBlank()) return@firstOrNull false
             val q = "Unique${entityType}${suffix}Qry"
             q == target
         }
+    }
+
+    private fun computeSuffix(cons: Map<String, Any?>, deletedField: String): String {
+        // 1) Prefer custom suffix from constraint name: uk_v_xxx -> Xxx
+        val cName = cons["constraintName"].toString()
+        val regex = Regex("^uk_v_(.+)$", RegexOption.IGNORE_CASE)
+        val m = regex.find(cName)
+        if (m != null) {
+            val token = m.groupValues[1]
+            return toUpperCamelCase(token) ?: token.replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
+        }
+
+        // 2) Fallback to concatenated column names (excluding deleted field)
+        val cols = (cons["columns"] as? List<Map<String, Any?>>).orEmpty()
+        val filtered = cols.filter { c ->
+            !c["columnName"].toString().equals(deletedField, ignoreCase = true)
+        }
+        if (filtered.isEmpty()) return ""
+        return filtered.sortedBy { (it["ordinal"] as Number).toInt() }
+            .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
     }
 }
