@@ -5,6 +5,7 @@ import com.only4.codegen.context.design.models.CommonDesign
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
+import com.only4.codegen.manager.ValidatorImportManager
 
 class ValidatorGenerator : DesignTemplateGenerator {
 
@@ -30,6 +31,10 @@ class ValidatorGenerator : DesignTemplateGenerator {
 
             // 值类型（默认 Long）
             resultContext.putContext(tag, "ValueType", "Long")
+            
+            // imports via ImportManager
+            val importManager = ValidatorImportManager().apply { addBaseImports() }
+            resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
         return resultContext
