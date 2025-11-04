@@ -16,8 +16,8 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
 @MustBeDocumented
 annotation class {{ Validator }}(
     val message: String = "校验未通过",
-    val groups: Array<KClass<*>> = emptyArray(),
-    val payload: Array<KClass<out Payload>> = emptyArray(),
+    val groups: Array<KClass<*>> = [],
+    val payload: Array<KClass<out Payload>> = [],
 ){
     class Validator : ConstraintValidator<{{ Validator }}, {{ ValueType }}> {
         override fun isValid(value: {{ ValueType }}?, context: ConstraintValidatorContext): Boolean {
