@@ -1,7 +1,7 @@
 package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.manager.SchemaBaseImportManager
+import com.only4.codegen.engine.generation.common.V2Imports
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.template.TemplateNode
 
@@ -21,9 +21,8 @@ class SchemaBaseGenerator : AggregateTemplateGenerator {
     override fun buildContext(table: Map<String, Any?>): Map<String, Any?> {
         val resultContext = ctx.baseMap.toMutableMap()
 
-        // 创建 ImportManager
-        val importManager = SchemaBaseImportManager()
-        importManager.addBaseImports()
+        // imports via V2Imports
+        val importLines = V2Imports.schemaBase()
 
         with(ctx) {
             resultContext.putContext(tag, "modulePath", ctx.domainPath)
@@ -33,7 +32,7 @@ class SchemaBaseGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "SchemaBase", generatorName(table))
 
             // 添加 imports
-            resultContext.putContext(tag, "imports", importManager.toImportLines())
+            resultContext.putContext(tag, "imports", importLines)
         }
 
         return resultContext

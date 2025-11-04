@@ -1,7 +1,7 @@
 package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.manager.SchemaImportManager
+import com.only4.codegen.engine.generation.common.V2Imports
 import com.only4.codegen.misc.*
 import com.only4.codegen.pebble.PebbleTemplateRenderer.renderString
 import com.only4.codegen.template.TemplateNode
@@ -38,24 +38,22 @@ class SchemaGenerator : AggregateTemplateGenerator {
         val generateAggregate = ctx.getBoolean("generateAggregate")
         val repositorySupportQuerydsl = ctx.getBoolean("repositorySupportQuerydsl")
 
-        // 创建 ImportManager
-        val importManager = SchemaImportManager(getPackageFromClassName(ctx.typeMapping["Schema"]!!))
-        importManager.addBaseImports()
-        importManager.add(
-            ctx.typeMapping[entityType]!!,
+        // imports via V2Imports
+        val schemaBasePkg = getPackageFromClassName(ctx.typeMapping["Schema"]!!)
+        val entityFull = ctx.typeMapping[entityType]!!
+        val qEntityFull = ctx.typeMapping["Q$entityType"]
+        val aggregateFull = ctx.typeMapping[aggregateType]
+        val importLines = V2Imports.schema(
+            schemaBasePackage = schemaBasePkg,
+            entityFullName = entityFull,
+            isAggregateRoot = isAggregateRoot,
+            supportQuerydsl = repositorySupportQuerydsl,
+            qEntityFullName = qEntityFull,
+            aggregateFullName = aggregateFull,
         )
-        importManager.addIfNeeded(
-            isAggregateRoot,
-            "com.only4.cap4k.ddd.domain.repo.JpaPredicate"
-        )
-        importManager.addIfNeeded(
-            isAggregateRoot && repositorySupportQuerydsl,
-            "com.querydsl.core.types.OrderSpecifier",
-            "com.only4.cap4k.ddd.core.domain.aggregate.AggregatePredicate",
-            "com.only4.cap4k.ddd.domain.repo.querydsl.QuerydslPredicate"
-        )
-        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl) { ctx.typeMapping["Q$entityType"]!! }
-        importManager.addIfNeeded(isAggregateRoot && repositorySupportQuerydsl) { ctx.typeMapping[aggregateType]!! }
+
+        // 额外 imports（字段上显式类型）
+        val dynamicImports = mutableSetOf<String>()
 
         // 准备列字段数据
         val fields = columns
@@ -68,7 +66,7 @@ class SchemaGenerator : AggregateTemplateGenerator {
                 val comment = SqlSchemaUtils.getComment(column)
 
                 if (SqlSchemaUtils.hasType(column)) {
-                    importManager.add(ctx.typeMapping[simpleType]!!)
+                    ctx.typeMapping[simpleType]?.let { dynamicImports.add(it) }
                 }
 
                 mapOf(
@@ -109,7 +107,8 @@ class SchemaGenerator : AggregateTemplateGenerator {
 
             resultContext.putContext(tag, "Schema", "S$entityType")
 
-            resultContext.putContext(tag, "imports", importManager.toImportLines())
+            // 合并基础 import 与动态字段 import
+            resultContext.putContext(tag, "imports", (importLines + dynamicImports).distinct())
 
             resultContext.putContext(tag, "EntityVar", toLowerCamelCase(entityType) ?: entityType)
             resultContext.putContext(tag, "Entity", entityType)

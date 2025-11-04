@@ -8,6 +8,9 @@ import com.only4.codegen.manager.ClientHandlerImportManager
 import com.only4.codegen.manager.DomainEventHandlerImportManager
 import com.only4.codegen.manager.QueryImportManager
 import com.only4.codegen.manager.EnumImportManager
+import com.only4.codegen.manager.SchemaBaseImportManager
+import com.only4.codegen.manager.SchemaImportManager
+import com.only4.codegen.manager.TranslationImportManager
 
 object V2Imports {
 
@@ -78,4 +81,39 @@ object V2Imports {
                 add("com.only4.cap4k.ddd.domain.repo.querydsl.AbstractQuerydslRepository")
             }
         }.toImportLines()
+
+    // Aggregate: translation (enum translator)
+    fun translation(vararg extras: String): List<String> =
+        TranslationImportManager().apply {
+            addBaseImports()
+            extras.forEach { add(it) }
+        }.toImportLines()
+
+    // Aggregate: schema base helpers
+    fun schemaBase(): List<String> =
+        SchemaBaseImportManager().apply { addBaseImports() }.toImportLines()
+
+    // Aggregate: schema for entity with optional Querydsl support
+    fun schema(
+        schemaBasePackage: String,
+        entityFullName: String,
+        isAggregateRoot: Boolean,
+        supportQuerydsl: Boolean,
+        qEntityFullName: String? = null,
+        aggregateFullName: String? = null,
+    ): List<String> {
+        val mgr = SchemaImportManager(schemaBasePackage).apply {
+            addBaseImports()
+            add(entityFullName)
+            if (isAggregateRoot) add("com.only4.cap4k.ddd.domain.repo.JpaPredicate")
+            if (isAggregateRoot && supportQuerydsl) {
+                add("com.querydsl.core.types.OrderSpecifier")
+                add("com.only4.cap4k.ddd.core.domain.aggregate.AggregatePredicate")
+                add("com.only4.cap4k.ddd.domain.repo.querydsl.QuerydslPredicate")
+            }
+            if (isAggregateRoot && supportQuerydsl && qEntityFullName != null) add(qEntityFullName)
+            if (isAggregateRoot && supportQuerydsl && aggregateFullName != null) add(aggregateFullName)
+        }
+        return mgr.toImportLines()
+    }
 }

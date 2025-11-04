@@ -1,7 +1,7 @@
 package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.manager.TranslationImportManager
+import com.only4.codegen.engine.generation.common.V2Imports
 import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.misc.toSnakeCase
@@ -55,11 +55,8 @@ class EnumTranslationGenerator : AggregateTemplateGenerator {
                 } else false
             }
 
-            val importManager = TranslationImportManager()
-            importManager.addBaseImports()
-
-            // 引入枚举类型
-            typeMapping[currentEnumType]?.let { importManager.add(it) }
+            // imports via V2Imports
+            val enumFull = typeMapping[currentEnumType]
 
             val resultContext = baseMap.toMutableMap()
 
@@ -82,8 +79,9 @@ class EnumTranslationGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "EnumNameField", getString("enumNameField"))
 
             // imports
-            importManager.add("${generatorFullName(table)}.Companion.${typeConst}")
-            resultContext.putContext(tag, "imports", importManager.toImportLines())
+            val extras = listOfNotNull(enumFull, "${generatorFullName(table)}.Companion.${typeConst}").toTypedArray()
+            val importLines = V2Imports.translation(*extras)
+            resultContext.putContext(tag, "imports", importLines)
 
             return resultContext
         }

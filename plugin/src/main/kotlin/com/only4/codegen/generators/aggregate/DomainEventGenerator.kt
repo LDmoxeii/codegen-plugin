@@ -1,7 +1,7 @@
 package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.manager.DomainEventImportManager
+import com.only4.codegen.engine.generation.common.V2Imports
 import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.refPackage
@@ -48,10 +48,8 @@ class DomainEventGenerator : AggregateTemplateGenerator {
         val entityType = ctx.entityTypeMap[tableName]!!
         val fullEntityType = ctx.typeMapping[entityType]!!
 
-        // 创建 ImportManager
-        val importManager = DomainEventImportManager()
-        importManager.addBaseImports()
-        importManager.add(fullEntityType)
+        // imports via V2Imports
+        val importLines = V2Imports.domainEvent(fullEntityType)
 
         val resultContext = ctx.baseMap.toMutableMap()
 
@@ -70,7 +68,7 @@ class DomainEventGenerator : AggregateTemplateGenerator {
             resultContext.putContext(tag, "Comment", SqlSchemaUtils.getComment(table))
 
             // 添加 imports
-            resultContext.putContext(tag, "imports", importManager.toImportLines())
+            resultContext.putContext(tag, "imports", importLines)
         }
 
 
