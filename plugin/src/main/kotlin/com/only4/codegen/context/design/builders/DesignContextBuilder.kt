@@ -1,8 +1,8 @@
 package com.only4.codegen.context.design.builders
 
-import com.alibaba.fastjson.JSON
-import com.alibaba.fastjson.JSONArray
-import com.alibaba.fastjson.JSONObject
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import com.only4.codegen.context.ContextBuilder
 import com.only4.codegen.context.design.MutableDesignContext
 import com.only4.codegen.context.design.models.DesignElement
@@ -29,12 +29,12 @@ class DesignContextBuilder : ContextBuilder<MutableDesignContext> {
     private fun loadDesignFile(file: File, context: MutableDesignContext) {
         val encoding = context.getString("designEncoding", "UTF-8")
         val content = file.readText(Charset.forName(encoding))
-        val jsonArray = JSON.parseArray(content)
+        val jsonArray = JsonParser.parseString(content).asJsonArray
 
         parseJsonDesignArray(jsonArray, context)
     }
 
-    private fun parseJsonDesignArray(jsonArray: JSONArray, context: MutableDesignContext) {
+    private fun parseJsonDesignArray(jsonArray: JsonArray, context: MutableDesignContext) {
         // 定义支持的设计类型别名映射（基于条目内的 tag 字段）
         val typeAliasMap = mapOf(
             // command
@@ -75,8 +75,8 @@ class DesignContextBuilder : ContextBuilder<MutableDesignContext> {
         )
 
         jsonArray.forEach { item ->
-            val obj = item as? JSONObject ?: return@forEach
-            val rawTag = obj.getString("tag")?.lowercase() ?: return@forEach
+            val obj = (item as? JsonObject) ?: item.asJsonObject
+            val rawTag = obj.get("tag")?.asString?.lowercase() ?: return@forEach
             val normalizedType = typeAliasMap[rawTag] ?: rawTag
 
             val element = parseDesignElement(normalizedType, obj)
@@ -86,28 +86,28 @@ class DesignContextBuilder : ContextBuilder<MutableDesignContext> {
         }
     }
 
-    private fun parseDesignElement(type: String, jsonObj: JSONObject): DesignElement {
-        val `package` = jsonObj.getString("package") ?: ""
-        val name = jsonObj.getString("name") ?: ""
-        val desc = jsonObj.getString("desc") ?: ""
-        val aggregates = jsonObj.getJSONArray("aggregates")?.map { it.toString() }
+    private fun parseDesignElement(type: String, jsonObj: JsonObject): DesignElement {
+        val `package` = jsonObj.get("package")?.asString ?: ""
+        val name = jsonObj.get("name")?.asString ?: ""
+        val desc = jsonObj.get("desc")?.asString ?: ""
+
+        val aggregates = if (jsonObj.has("aggregates") && jsonObj.get("aggregates").isJsonArray) {
+            jsonObj.getAsJsonArray("aggregates").map { it.asString }
+        } else null
 
         val metadata = mutableMapOf<String, Any?>()
-        jsonObj.keys.forEach { key ->
+        jsonObj.entrySet().forEach { (key, value) ->
             when (key) {
-                "package", "name", "aggregate", "aggregates", "desc", "tag" -> {} // 跳过基础字段
-
+                "package", "name", "aggregate", "aggregates", "desc", "tag" -> {}
                 "metadata" -> {
-                    // 如果有 metadata 对象,合并到 map
-                    val metadataObj = jsonObj.getJSONObject(key)
-                    metadataObj?.keys?.forEach { metaKey ->
-                        metadata[metaKey] = metadataObj[metaKey]
+                    if (value.isJsonObject) {
+                        value.asJsonObject.entrySet().forEach { (metaKey, metaVal) ->
+                            metadata[metaKey] = jsonPrimitiveToKotlin(metaVal)
+                        }
                     }
                 }
-
                 else -> {
-                    // 其他字段直接作为 metadata
-                    metadata[key] = jsonObj[key]
+                    metadata[key] = jsonPrimitiveToKotlin(value)
                 }
             }
         }
@@ -120,5 +120,21 @@ class DesignContextBuilder : ContextBuilder<MutableDesignContext> {
             desc = desc,
             metadata = metadata
         )
+    }
+
+    private fun jsonPrimitiveToKotlin(value: com.google.gson.JsonElement): Any? = when {
+        value.isJsonNull -> null
+        value.isJsonPrimitive -> {
+            val p = value.asJsonPrimitive
+            when {
+                p.isBoolean -> p.asBoolean
+                p.isNumber -> p.asNumber
+                p.isString -> p.asString
+                else -> p.toString()
+            }
+        }
+        value.isJsonArray -> value.asJsonArray.map { jsonPrimitiveToKotlin(it) }
+        value.isJsonObject -> value.asJsonObject.entrySet().associate { it.key to jsonPrimitiveToKotlin(it.value) }
+        else -> value.toString()
     }
 }

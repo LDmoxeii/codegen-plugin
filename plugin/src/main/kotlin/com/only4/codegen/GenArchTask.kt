@@ -1,6 +1,6 @@
 package com.only4.codegen
 
-import com.alibaba.fastjson.JSON
+import com.google.gson.Gson
 import com.only4.codegen.misc.loadFileContent
 import com.only4.codegen.misc.resolveDirectory
 import com.only4.codegen.pebble.PebbleConfig
@@ -51,7 +51,7 @@ open class GenArchTask : AbstractCodegenTask() {
 
         PathNode.setDirectory(resolveDirectory(templatePath, projectDir.get()))
 
-        return JSON.parseObject(templateContent, Template::class.java).apply {
+        return Gson().fromJson(templateContent, Template::class.java).apply {
             resolve(baseMap)
         }
     }

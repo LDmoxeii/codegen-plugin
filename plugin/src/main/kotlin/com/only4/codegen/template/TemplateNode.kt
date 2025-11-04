@@ -1,6 +1,6 @@
 package com.only4.codegen.template
 
-import com.alibaba.fastjson.JSON
+import com.google.gson.Gson
 
 /**
  * 脚手架模板模板节点
@@ -15,18 +15,55 @@ class TemplateNode : PathNode() {
      */
     var pattern: String = ""
 
+    companion object {
+        fun mergeAndSelect(
+            ctxTop: List<TemplateNode>,
+            defTop: List<TemplateNode>,
+            genName: String,
+        ): List<TemplateNode> {
+            fun collectFiles(nodes: List<TemplateNode>): List<TemplateNode> =
+                nodes.flatMap { it.collectFiles() }
+
+            val ctxFiles = linkedMapOf<String, TemplateNode>()
+            collectFiles(ctxTop).forEach { ctxFiles[it.uniqueKey()] = it }
+
+            val defFiles = linkedMapOf<String, TemplateNode>()
+            collectFiles(defTop).forEach { defFiles[it.uniqueKey()] = it }
+
+            fun dirsByPattern(nodes: List<TemplateNode>): Map<String, TemplateNode> =
+                buildMap {
+                    nodes.filter { it.isDirNode() }.forEach { d ->
+                        if (!this.containsKey(d.pattern)) this[d.pattern] = d
+                    }
+                }
+
+            val ctxDirs = dirsByPattern(ctxTop)
+            val defDirs = dirsByPattern(defTop)
+
+            val allKeys: Set<String> = (ctxFiles.keys + defFiles.keys).toSet()
+            val groups: List<TemplateNode> = allKeys.map { key ->
+                val fileTpl = (ctxFiles[key] ?: defFiles[key])!!.deepCopy()
+                val pattern = fileTpl.pattern
+                val dirTpl = (ctxDirs[pattern] ?: defDirs[pattern])
+                if (dirTpl != null) {
+                    val d = dirTpl.deepCopy()
+                    d.children = mutableListOf(fileTpl.toPathNode())
+                    d
+                } else {
+                    fileTpl
+                }
+            }
+
+            return groups.filter { it.matches(genName) }
+        }
+    }
+
     fun nodeType(): String = (this.type ?: "file").lowercase()
-    fun isRootNode(): Boolean = nodeType() == "root"
     fun isDirNode(): Boolean = nodeType() == "dir"
     fun isFileNode(): Boolean = nodeType() == "file"
     fun uniqueKey(): String = "${this.name ?: ""}#${this.pattern}"
     fun matches(genName: String): Boolean = this.pattern.isBlank() ||
         java.util.regex.Pattern.compile(this.pattern).asPredicate().test(genName)
-
-    /**
-     * 收集顶层 file 节点以及作为当前节点(通常为 dir)子项中的所有 file 节点。
-     * 对于子项中的 file(PathNode)，用当前节点的 pattern 包装成临时 TemplateNode，便于上层以 name+pattern 进行去重与合并。
-     */
     fun collectFiles(): List<TemplateNode> {
         val result = mutableListOf<TemplateNode>()
 
@@ -63,9 +100,6 @@ class TemplateNode : PathNode() {
         return result
     }
 
-    /**
-     * 将 TemplateNode 转换为普通 PathNode（用于作为子节点渲染，避免子节点出现 TemplateNode 类型）。
-     */
     fun toPathNode(): PathNode {
         val p = PathNode()
         p.type = this.type
@@ -97,7 +131,8 @@ class TemplateNode : PathNode() {
     }
 
     fun deepCopy(): TemplateNode {
-        return JSON.parseObject(JSON.toJSONString(this), TemplateNode::class.java)
+        val gson = Gson()
+        return gson.fromJson(gson.toJson(this), TemplateNode::class.java)
     }
 
     override fun resolve(context: Map<String, Any?>): PathNode {

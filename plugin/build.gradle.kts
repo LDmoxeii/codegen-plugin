@@ -33,12 +33,11 @@ dependencies {
     // KSP processor module (for metadata models)
     implementation(project(":ksp-processor"))
 
-    // Database dependencies
-    implementation("mysql:mysql-connector-java:8.0.33")
-    implementation("org.postgresql:postgresql:42.7.2")
+    // Database dependencies (provided by consumers at runtime)
+    runtimeOnly("mysql:mysql-connector-java:8.0.33")
+    runtimeOnly("org.postgresql:postgresql:42.7.2")
 
     // JSON processing
-    implementation("com.alibaba:fastjson:2.0.43")
     implementation("com.google.code.gson:gson:2.10.1")
 
     implementation("io.pebbletemplates:pebble:3.2.4")
