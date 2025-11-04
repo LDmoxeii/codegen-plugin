@@ -56,4 +56,26 @@ object V2Imports {
     }
 
     fun enumImports(): List<String> = EnumImportManager().apply { addBaseImports() }.toImportLines()
+
+    fun factory(fullEntityType: String): List<String> =
+        com.only4.codegen.manager.FactoryImportManager().apply {
+            addBaseImports(); add(fullEntityType)
+        }.toImportLines()
+
+    fun specification(): List<String> =
+        com.only4.codegen.manager.SpecificationImportManager().apply { addBaseImports() }.toImportLines()
+
+    fun aggregate(fullFactoryType: String): List<String> =
+        com.only4.codegen.manager.AggregateImportManager().apply {
+            addBaseImports(); add(fullFactoryType)
+        }.toImportLines()
+
+    fun repository(fullRootEntity: String, fullIdType: String?, supportQuerydsl: Boolean): List<String> =
+        com.only4.codegen.manager.RepositoryImportManager().apply {
+            addBaseImports(); add(fullRootEntity); if (fullIdType != null) add(fullIdType)
+            if (supportQuerydsl) {
+                add("org.springframework.data.querydsl.QuerydslPredicateExecutor")
+                add("com.only4.cap4k.ddd.domain.repo.querydsl.AbstractQuerydslRepository")
+            }
+        }.toImportLines()
 }

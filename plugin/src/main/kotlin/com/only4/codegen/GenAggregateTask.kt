@@ -176,6 +176,8 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
         val basePackage = getString("basePackage")
         val outputEncoding = getString("outputEncoding", "UTF-8")
         val outDomain = com.only4.codegen.engine.output.FileOutputManager(domainPath, outputEncoding)
+        val outAdapter = com.only4.codegen.engine.output.FileOutputManager(adapterPath, outputEncoding)
+        val outApp = com.only4.codegen.engine.output.FileOutputManager(applicationPath, outputEncoding)
 
         val generatedEnums = mutableSetOf<String>()
 
@@ -219,6 +221,198 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
                     imports = com.only4.codegen.engine.generation.common.V2Imports.enumImports(),
                 )
                 context.typeMapping[enumType] = full
+            }
+        }
+
+        // Ensure entities exist via legacy generator to populate typeMapping for downstream
+        generateForTables(EntityGenerator(), context)
+
+        // Factory
+        context.tableMap.values.forEach { table ->
+            if (SqlSchemaUtils.isIgnore(table) || SqlSchemaUtils.hasRelation(table)) return@forEach
+            if (!SqlSchemaUtils.isAggregateRoot(table)) return@forEach
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val entityType = context.entityTypeMap[tableName] ?: return@forEach
+            val factoryType = "${entityType}Factory"
+            if (context.typeMapping.containsKey(factoryType)) return@forEach
+            val columns = context.columnsMap[tableName] ?: return@forEach
+            val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
+            if (ids.isEmpty()) return@forEach
+            val fullEntityType = context.typeMapping[entityType] ?: return@forEach
+            val defTop = FactoryGenerator().getDefaultTemplateNodes()
+            val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                context = context,
+                templateBaseDir = templateBaseDir,
+                basePackage = basePackage,
+                out = outDomain,
+                tag = "factory",
+                genName = factoryType,
+                designPackage = com.only4.codegen.misc.concatPackage(aggregate, "factory"),
+                comment = SqlSchemaUtils.getComment(table),
+                defaultNodes = defTop,
+                templatePackageFallback = "domain.aggregates",
+                outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
+                vars = mapOf(
+                    "Factory" to factoryType,
+                    "Payload" to "${entityType}Payload",
+                    "Entity" to entityType,
+                    "Aggregate" to com.only4.codegen.misc.toUpperCamelCase(aggregate) ?: aggregate,
+                ),
+                imports = com.only4.codegen.engine.generation.common.V2Imports.factory(fullEntityType),
+            )
+            context.typeMapping[factoryType] = full
+        }
+
+        // Specification
+        context.tableMap.values.forEach { table ->
+            if (SqlSchemaUtils.isIgnore(table) || SqlSchemaUtils.hasRelation(table)) return@forEach
+            if (!SqlSchemaUtils.isAggregateRoot(table)) return@forEach
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val entityType = context.entityTypeMap[tableName] ?: return@forEach
+            val specType = "${entityType}Specification"
+            if (context.typeMapping.containsKey(specType)) return@forEach
+            val columns = context.columnsMap[tableName] ?: return@forEach
+            val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
+            if (ids.isEmpty()) return@forEach
+            val defTop = SpecificationGenerator().getDefaultTemplateNodes()
+            val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                context = context,
+                templateBaseDir = templateBaseDir,
+                basePackage = basePackage,
+                out = outDomain,
+                tag = "specification",
+                genName = specType,
+                designPackage = aggregate,
+                comment = SqlSchemaUtils.getComment(table),
+                defaultNodes = defTop,
+                templatePackageFallback = "domain.aggregates",
+                outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
+                vars = mapOf(
+                    "DEFAULT_SPEC_PACKAGE" to "specs",
+                    "Specification" to specType,
+                    "Entity" to entityType,
+                    "Aggregate" to com.only4.codegen.misc.toUpperCamelCase(aggregate) ?: aggregate,
+                ),
+                imports = com.only4.codegen.engine.generation.common.V2Imports.specification(),
+            )
+            context.typeMapping[specType] = full
+        }
+
+        // Aggregate wrapper
+        context.tableMap.values.forEach { table ->
+            if (SqlSchemaUtils.isIgnore(table) || SqlSchemaUtils.hasRelation(table)) return@forEach
+            if (!context.getBoolean("generateAggregate", false)) return@forEach
+            if (!SqlSchemaUtils.isAggregateRoot(table)) return@forEach
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val columns = context.columnsMap[tableName] ?: return@forEach
+            val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
+            val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
+            val entityType = context.entityTypeMap[tableName] ?: return@forEach
+            val factoryType = "${entityType}Factory"
+            val fullFactoryType = context.typeMapping[factoryType] ?: return@forEach
+            val aggregateTypeTemplate = getString("aggregateTypeTemplate")
+            val aggregateName = com.only4.codegen.pebble.PebbleTemplateRenderer.renderString(
+                aggregateTypeTemplate, mapOf("Entity" to entityType)
+            )
+            if (context.typeMapping.containsKey(aggregateName)) return@forEach
+            val defTop = AggregateGenerator().getDefaultTemplateNodes()
+            val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                context = context,
+                templateBaseDir = templateBaseDir,
+                basePackage = basePackage,
+                out = outDomain,
+                tag = "aggregate",
+                genName = aggregateName,
+                designPackage = aggregate,
+                comment = SqlSchemaUtils.getComment(table),
+                defaultNodes = defTop,
+                templatePackageFallback = "domain.aggregates",
+                outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
+                vars = mapOf(
+                    "Entity" to entityType,
+                    "IdentityType" to identityType,
+                    "AggregateName" to aggregateName,
+                    "Factory" to factoryType,
+                ),
+                imports = com.only4.codegen.engine.generation.common.V2Imports.aggregate(fullFactoryType),
+            )
+            context.typeMapping[aggregateName] = full
+        }
+
+        // Repository (adapter)
+        context.tableMap.values.forEach { table ->
+            if (SqlSchemaUtils.isIgnore(table) || SqlSchemaUtils.hasRelation(table)) return@forEach
+            if (!SqlSchemaUtils.isAggregateRoot(table)) return@forEach
+            val tableName = SqlSchemaUtils.getTableName(table)
+            val entityType = context.entityTypeMap[tableName] ?: return@forEach
+            val repoNameTemplate = getString("repositoryNameTemplate")
+            val repoName = com.only4.codegen.pebble.PebbleTemplateRenderer.renderString(repoNameTemplate, mapOf("Aggregate" to entityType))
+            if (context.typeMapping.containsKey(repoName)) return@forEach
+            val columns = context.columnsMap[tableName] ?: return@forEach
+            val ids = columns.filter { SqlSchemaUtils.isColumnPrimaryKey(it) }
+            val identityType = if (ids.size != 1) "Long" else SqlSchemaUtils.getColumnType(ids[0])
+            val fullRootEntityType = context.typeMapping[entityType] ?: return@forEach
+            val fullIdType = context.typeMapping[identityType]
+            val supportQuerydsl = getBoolean("repositorySupportQuerydsl")
+            val defTop = RepositoryGenerator().getDefaultTemplateNodes()
+            val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                context = context,
+                templateBaseDir = templateBaseDir,
+                basePackage = basePackage,
+                out = outAdapter,
+                tag = "repository",
+                genName = repoName,
+                designPackage = "",
+                comment = "Repository for $entityType aggregate",
+                defaultNodes = defTop,
+                templatePackageFallback = "adapter",
+                outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
+                vars = mapOf(
+                    "supportQuerydsl" to supportQuerydsl,
+                    "Aggregate" to entityType,
+                    "IdentityType" to identityType,
+                    "Repository" to repoName,
+                ),
+                imports = com.only4.codegen.engine.generation.common.V2Imports.repository(fullRootEntityType, fullIdType, supportQuerydsl),
+            )
+            context.typeMapping[repoName] = full
+        }
+
+        // Domain Event Handler (application)
+        context.tableMap.values.forEach { table ->
+            if (SqlSchemaUtils.isIgnore(table) || SqlSchemaUtils.hasRelation(table)) return@forEach
+            if (!SqlSchemaUtils.isAggregateRoot(table)) return@forEach
+            val events = SqlSchemaUtils.getDomainEvents(table)
+            if (events.isNullOrEmpty()) return@forEach
+            events.forEach { domainEventInfo ->
+                val infos = domainEventInfo.split(":")
+                val baseName = (com.only4.codegen.misc.toUpperCamelCase(infos[0]) ?: infos[0]).let { b ->
+                    if (b.endsWith("Event") || b.endsWith("Evt")) b else "${b}DomainEvent"
+                }
+                val handlerName = "${baseName}Subscriber"
+                if (context.typeMapping.containsKey(handlerName)) return@forEach
+                val tableName = SqlSchemaUtils.getTableName(table)
+                val aggregate = context.resolveAggregateWithModule(tableName)
+                val defTop = DomainEventHandlerGenerator().getDefaultTemplateNodes()
+                val full = com.only4.codegen.engine.generation.common.V2Render.render(
+                    context = context,
+                    templateBaseDir = templateBaseDir,
+                    basePackage = basePackage,
+                    out = outApp,
+                    tag = "domain_event_handler",
+                    genName = handlerName,
+                    designPackage = aggregate,
+                    comment = SqlSchemaUtils.getComment(table),
+                    defaultNodes = defTop,
+                    templatePackageFallback = "application",
+                    outputType = com.only4.codegen.engine.output.OutputType.SERVICE,
+                    vars = mapOf(
+                        "DomainEventHandler" to handlerName,
+                        "DomainEvent" to baseName,
+                    ),
+                    imports = com.only4.codegen.engine.generation.common.V2Imports.domainEventHandler(context.typeMapping[baseName]),
+                )
+                context.typeMapping[handlerName] = full
             }
         }
     }
