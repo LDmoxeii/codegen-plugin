@@ -12,6 +12,7 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
     private val designTypeToGeneratorTags = mapOf(
         "domain_event" to listOf("domain_event", "domain_event_handler"),
         "query" to listOf("query", "query_handler"),
+        "api_payload" to listOf("api_payload"),
         "client" to listOf("client", "client_handler"),
         "validator" to listOf("validator"),
     )
@@ -57,6 +58,10 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
 
             "query" -> buildCommonDesign(
                 "query", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            )
+
+            "api_payload" -> buildCommonDesign(
+                "api_payload", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
             "saga" -> buildCommonDesign(

@@ -12,6 +12,7 @@ import kotlin.reflect.KClass
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
  * @author cap4k-ddd-codegen
  * @date {{ date }}
+ */
 @Target(AnnotationTarget.FIELD, AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @Constraint(validatedBy = [{{ Validator }}.Validator::class])
@@ -23,7 +24,6 @@ annotation class {{ Validator }}(
 ){
     class Validator : ConstraintValidator<{{ Validator }}, {{ ValueType }}> {
         override fun isValid(value: {{ ValueType }}?, context: ConstraintValidatorContext): Boolean {
-            // TODO: 实现具体的校验逻辑
             return true
         }
     }

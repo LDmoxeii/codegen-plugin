@@ -14,7 +14,7 @@ import com.only4.codegen.template.TemplateNode
 class ApiPayloadGenerator : DesignTemplateGenerator {
 
     override val tag: String = "api_payload"
-    override val order: Int = 25
+    override val order: Int = 10
 
     context(ctx: DesignContext)
     override fun shouldGenerate(design: Any): Boolean {
@@ -38,7 +38,7 @@ class ApiPayloadGenerator : DesignTemplateGenerator {
         with(ctx) {
             // 输出到 adapter 模块
             result.putContext(tag, "modulePath", ctx.adapterPath)
-            result.putContext(tag, "templatePackage", templatePackage[tag] ?: refPackage(".adapter.portal.api.payload"))
+            result.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: "adapter.portal.api.payload"))
             result.putContext(tag, "package", refPackage(design.`package`))
 
             result.putContext(tag, "Payload", generatorName(design))

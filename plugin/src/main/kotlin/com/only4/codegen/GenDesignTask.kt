@@ -30,60 +30,67 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     @Internal
     override val designMap = mutableMapOf<String, MutableList<BaseDesign>>()
 
-
     @Internal
     override val designTagAliasMap: Map<String, String> = mapOf(
 
-        // Repository 别名
+        // Repository
         "repositories" to "repository",
         "repository" to "repository",
         "repos" to "repository",
         "repo" to "repository",
 
-        // Factory 别名
+        // Factory
         "factories" to "factory",
         "factory" to "factory",
         "fac" to "factory",
 
-        // Specification 别名
+        // Specification
         "specifications" to "specification",
         "specification" to "specification",
         "specs" to "specification",
         "spec" to "specification",
         "spe" to "specification",
 
-        // Domain Event 别名
+        // Domain Event
         "domain_events" to "domain_event",
         "domain_event" to "domain_event",
         "d_e" to "domain_event",
         "de" to "domain_event",
 
-        // Command 别名
+        // Command
         "commands" to "command",
         "command" to "command",
         "cmd" to "command",
 
-        // Query 别名
+        // Query
         "queries" to "query",
         "query" to "query",
         "qry" to "query",
 
-        // Client 别名（防腐层）
+        // API Payload
+        "api_payload" to "api_payload",
+        "payload" to "api_payload",
+        "request_payload" to "api_payload",
+        "req_payload" to "api_payload",
+        "request" to "api_payload",
+        "req" to "api_payload",
+
+        // Client (分布式/远程调用)
         "clients" to "client",
         "client" to "client",
         "cli" to "client",
 
-        // Saga 别名
+        // Saga
         "saga" to "saga",
         "sagas" to "saga",
 
-        // Validator 别名
+        // Validator
         "validators" to "validator",
         "validator" to "validator",
         "validater" to "validator",
         "validate" to "validator",
 
-        // Integration Event 别名
+        // Integration Event
         "integration_events" to "integration_event",
         "integration_event" to "integration_event",
         "events" to "integration_event",
@@ -92,13 +99,12 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         "i_e" to "integration_event",
         "ie" to "integration_event",
 
-        // Domain Service 别名
+        // Domain Service
         "domain_service" to "domain_service",
         "domain_services" to "domain_service",
         "service" to "domain_service",
-        "svc" to "domain_service"
+        "svc" to "domain_service",
     )
-
 
     @TaskAction
     override fun generate() {
@@ -134,10 +140,10 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
     private fun buildDesignContext(metadataPath: String): DesignContext {
         val builders = listOf(
-            DesignContextBuilder(),                            // order=10  - 加载 JSON 设计文件
-            KspMetadataContextBuilder(metadataPath),           // order=15  - 加载 KSP 聚合元数据
-            TypeMappingBuilder(),                       // order=18  - 构建类型映射 typeMapping
-            UnifiedDesignBuilder()                      // order=20  - 统一解析所有设计类型
+            DesignContextBuilder(),                  // order=10  - 读取 JSON 设计文件
+            KspMetadataContextBuilder(metadataPath), // order=15  - 读取 KSP 聚合元信息
+            TypeMappingBuilder(),                    // order=18  - 构建类型映射 typeMapping
+            UnifiedDesignBuilder()                   // order=20  - 统一设计元素分发
         )
 
         builders.sortedBy { it.order }.forEach { builder ->
@@ -151,12 +157,13 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         val generators = listOf(
             CommandGenerator(),             // order=10 - 生成命令
             QueryGenerator(),               // order=10 - 生成查询
-            ClientGenerator(),              // order=10 - 生成分布式客户端（防腐层）
+            ClientGenerator(),              // order=10 - 生成分布式客户端（远程调用）
             DomainEventGenerator(),         // order=10 - 生成领域事件
             DomainEventHandlerGenerator(),  // order=20 - 生成领域事件处理器
             QueryHandlerGenerator(),        // order=20 - 生成查询处理器
-            ClientHandlerGenerator(),       // order=20 - 生成分布式客户端处理器
-            ValidatorGenerator()            // order=10 - 生成校验器
+            ClientHandlerGenerator(),       // order=20 - 生成客户端处理器
+            ValidatorGenerator(),           // order=10 - 生成校验器
+            ApiPayloadGenerator(),          // order=10 - 生成 API 请求负载
         )
 
         generators.sortedBy { it.order }.forEach { generator ->
@@ -181,9 +188,9 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
                 val templateContext = generator.buildContext(design).toMutableMap()
 
-                // 合并模板节点（先收集再组合成多套，再根据 pattern 选择）：
-                // - 多个 dir/file 顶层节点可共存；每个唯一键(name+pattern)代表一套模板节点
-                // - context 优先于 defaults（在文件和目录两侧都遵循此优先级）
+                // 合并模板节点（上下文与默认合并多份，再按 pattern 选择）
+                // - 同一 dir/file 类型节点可共存；每个唯一 (name+pattern) 保留一个模板节点
+                // - context 优先级高于 defaults，子目录与文件名层级都按优先级覆盖
                 val genName = generator.generatorName(design)
 
                 val ctxTop = context.templateNodeMap.getOrDefault(generator.tag, emptyList())
