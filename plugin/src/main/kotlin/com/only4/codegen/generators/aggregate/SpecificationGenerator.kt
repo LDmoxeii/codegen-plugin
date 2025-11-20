@@ -54,10 +54,9 @@ class SpecificationGenerator : AggregateTemplateGenerator {
 
         with(ctx) {
             resultContext.putContext(tag, "modulePath", domainPath)
-            resultContext.putContext(tag, "templatePackage", refPackage(ctx.templatePackage[tag] ?: ""))
-            resultContext.putContext(tag, "package", refPackage(concatPackage(refPackage(aggregate), refPackage("specs"))))
+            resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
+            resultContext.putContext(tag, "package", refPackage(concatPackage(refPackage(aggregate), refPackage(DEFAULT_SPEC_PACKAGE))))
 
-            resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
             resultContext.putContext(tag, "Specification", generatorName(table))
 
             resultContext.putContext(tag, "Entity", entityType)
