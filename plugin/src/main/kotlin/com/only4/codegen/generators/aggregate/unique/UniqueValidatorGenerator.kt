@@ -53,7 +53,7 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
             .filter { !it.equals(deletedField, ignoreCase = true) }
             .map { colName ->
                 val colMeta = allColumns.first { SqlSchemaUtils.getColumnName(it).equals(colName, ignoreCase = true) }
-                val type = SqlSchemaUtils.getColumnType(colMeta)
+                val type = SqlSchemaUtils.getColumnType(colMeta).removeSuffix("?")
                 addTypeImportIfNeeded(colMeta, type)
                 val camel = toLowerCamelCase(colName) ?: colName
                 mapOf(
