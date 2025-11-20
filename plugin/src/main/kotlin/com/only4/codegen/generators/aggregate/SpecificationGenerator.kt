@@ -3,6 +3,7 @@ package com.only4.codegen.generators.aggregate
 import com.only4.codegen.context.aggregate.AggregateContext
 import com.only4.codegen.manager.SpecificationImportManager
 import com.only4.codegen.misc.SqlSchemaUtils
+import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
@@ -49,11 +50,12 @@ class SpecificationGenerator : AggregateTemplateGenerator {
         // 创建 ImportManager
         val importManager = SpecificationImportManager()
         importManager.addBaseImports()
+        importManager.add(fullEntityType)
 
         with(ctx) {
             resultContext.putContext(tag, "modulePath", domainPath)
             resultContext.putContext(tag, "templatePackage", refPackage(ctx.templatePackage[tag] ?: ""))
-            resultContext.putContext(tag, "package", refPackage(aggregate))
+            resultContext.putContext(tag, "package", refPackage(concatPackage(refPackage(aggregate), refPackage("specs"))))
 
             resultContext.putContext(tag, "DEFAULT_SPEC_PACKAGE", DEFAULT_SPEC_PACKAGE)
             resultContext.putContext(tag, "Specification", generatorName(table))
