@@ -4,12 +4,9 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
 {%- endfor %}
 
 /**
- * {{ Comment }}
- *
  * 本文件由[cap4k-ddd-codegen-gradle-plugin]生成
  * 警告：可以在本文件中添加自定义规约方法
  * @author cap4k-ddd-codegen
- * @date {{ date }}
  */
 @Service
 @Aggregate(

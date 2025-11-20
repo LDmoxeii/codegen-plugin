@@ -4,11 +4,8 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
 {%- endfor %}
 
 /**
- * {{ Comment }}
- *
  * 该文件由 [cap4k-ddd-codegen-gradle-plugin] 生成
  * @author cap4k-ddd-codegen
- * @date {{ date }}
  */
 @Target(AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)
