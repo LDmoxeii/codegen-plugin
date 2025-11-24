@@ -4,11 +4,8 @@ import com.only4.codegen.context.ContextBuilder
 import com.only4.codegen.context.aggregate.MutableAggregateContext
 import com.only4.codegen.misc.SqlSchemaUtils
 
-/**
- * 唯一约束信息构建器（委托 SqlSchemaUtils 方言实现查询）
- */
 class UniqueConstraintContextBuilder : ContextBuilder<MutableAggregateContext> {
-    override val order: Int = 25
+    override val order: Int = 20
 
     override fun build(context: MutableAggregateContext) {
         val dbUrl = context.getString("dbUrl")

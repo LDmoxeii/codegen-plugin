@@ -136,8 +136,8 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             AnnotationContextBuilder(),      // order=20  - 注释/注解信息
             ModuleContextBuilder(),          // order=20  - 模块信息
             RelationContextBuilder(),        // order=20  - 关联关系
-            UniqueConstraintContextBuilder(),// order=25  - 唯一约束
-            EnumContextBuilder(),            // order=50  - 枚举信息
+            UniqueConstraintContextBuilder(),// order=20  - 唯一约束
+            EnumContextBuilder(),            // order=20  - 枚举信息
             AggregateContextBuilder(),       // order=30  - 聚合信息
             TablePackageContextBuilder(),    // order=40  - 包信息
         )
@@ -155,11 +155,9 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
             EnumGenerator(),                 // order=10 - 枚举
             EnumTranslationGenerator(),      // order=20 - 枚举翻译
             EntityGenerator(),               // order=20 - 实体
-            // === 基于唯一约束的生成 ===
-            UniqueQueryGenerator(),          // order=22 - 唯一约束查询
-            UniqueQueryHandlerGenerator(),   // order=24 - 唯一约束查询处理器
-            UniqueValidatorGenerator(),      // order=28 - 唯一约束校验器
-            // === 其他 ===
+            UniqueQueryGenerator(),          // order=20 - 唯一约束查询
+            UniqueQueryHandlerGenerator(),   // order=20 - 唯一约束查询处理器
+            UniqueValidatorGenerator(),      // order=20 - 唯一约束校验器
             SpecificationGenerator(),        // order=30 - 规范
             FactoryGenerator(),              // order=30 - 工厂
             DomainEventGenerator(),          // order=30 - 领域事件

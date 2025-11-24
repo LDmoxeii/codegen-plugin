@@ -249,7 +249,6 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
             aggregates = aggregates,
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
-            entity = element.metadata["entity"] as? String ?: "",
             persist = element.metadata["persist"] as? Boolean ?: false,
         )
     }

@@ -8,7 +8,7 @@ import com.only4.codegen.misc.SqlSchemaUtils
  * 枚举信息构建器
  */
 class EnumContextBuilder : ContextBuilder<MutableAggregateContext> {
-    override val order = 50
+    override val order = 20
 
     override fun build(context: MutableAggregateContext) {
         context.tableMap.values.forEach { table ->

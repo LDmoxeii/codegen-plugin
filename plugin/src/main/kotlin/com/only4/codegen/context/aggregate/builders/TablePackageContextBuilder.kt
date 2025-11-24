@@ -13,8 +13,11 @@ class TablePackageContextBuilder: ContextBuilder<MutableAggregateContext> {
             with(context) {
                 val tableName = SqlSchemaUtils.getTableName(table)
                 val aggregate = resolveAggregateWithModule(tableName)
-                tablePackageMap[tableName] =
-                    "${getString("basePackage")}${refPackage(templatePackage["entity"]!!)}${refPackage(aggregate)}"
+
+                val basePackage = getString("basePackage")
+                val templatePackage = refPackage(templatePackage["entity"]!!)
+                val `package` = refPackage(aggregate)
+                tablePackageMap[tableName] = "$basePackage$templatePackage$`package`"
             }
         }
     }

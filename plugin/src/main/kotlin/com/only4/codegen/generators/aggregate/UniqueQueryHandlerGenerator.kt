@@ -10,7 +10,7 @@ import com.only4.codegen.template.TemplateNode
 
 class UniqueQueryHandlerGenerator : AggregateTemplateGenerator {
     override val tag: String = "query_handler"
-    override val order: Int = 24
+    override val order: Int = 20
 
     context(ctx: AggregateContext)
     override fun shouldGenerate(table: Map<String, Any?>): Boolean {

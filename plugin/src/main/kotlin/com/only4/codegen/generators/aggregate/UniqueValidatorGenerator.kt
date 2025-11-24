@@ -10,7 +10,7 @@ import com.only4.codegen.template.TemplateNode
 
 class UniqueValidatorGenerator : AggregateTemplateGenerator {
     override val tag: String = "validator"
-    override val order: Int = 28
+    override val order: Int = 20
 
     context(ctx: AggregateContext)
     override fun shouldGenerate(table: Map<String, Any?>): Boolean {
