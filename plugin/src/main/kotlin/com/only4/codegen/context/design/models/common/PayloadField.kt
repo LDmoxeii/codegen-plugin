@@ -1,8 +1,5 @@
-package com.only4.codegen.context.design.models
+package com.only4.codegen.context.design.models.common
 
-/**
- * API Payload 字段定义
- */
 data class PayloadField(
     val name: String,
     val type: String? = null,

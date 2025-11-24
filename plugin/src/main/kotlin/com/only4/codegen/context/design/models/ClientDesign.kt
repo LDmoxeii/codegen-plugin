@@ -1,6 +1,7 @@
 package com.only4.codegen.context.design.models
 
 import com.only4.codegen.misc.toUpperCamelCase
+import com.only4.codegen.context.design.models.common.PayloadField
 
 data class ClientDesign(
     override val type: String,
@@ -11,6 +12,8 @@ data class ClientDesign(
     override val aggregates: List<String>,
     override val primaryAggregateMetadata: AggregateInfo?,
     override val aggregateMetadataList: List<AggregateInfo>,
+    val requestFields: List<PayloadField> = emptyList(),
+    val responseFields: List<PayloadField> = emptyList(),
 ) : BaseDesign {
     override fun className(): String {
         val candidate = if (name.endsWith("Cli")) name else "${name}Cli"

@@ -1,7 +1,7 @@
 package com.only4.codegen.context.design.models
 
 import com.only4.codegen.misc.toUpperCamelCase
-import com.only4.codegen.context.design.models.PayloadField
+import com.only4.codegen.context.design.models.common.PayloadField
 
 data class ApiPayloadDesign(
     override val type: String,

@@ -26,21 +26,22 @@ class ClientHandlerGenerator : DesignTemplateGenerator {
         val clientName = design.className()
         val clientType = ctx.typeMapping[clientName]!!
 
-        // 创建 ImportManager
         val importManager = ClientHandlerImportManager()
         importManager.addBaseImports()
         importManager.add(clientType)
+
+        val fieldContext = resolveRequestResponseFields(design, design.requestFields, design.responseFields)
 
         with(ctx) {
             resultContext.putContext(tag, "modulePath", ctx.adapterPath)
             resultContext.putContext(tag, "templatePackage", refPackage(ctx.templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(design.`package`))
 
-            // 模板使用 {{ Client }} 作为基名，类名为 {{ Client }}Handler
             resultContext.putContext(tag, "Client", clientName)
             resultContext.putContext(tag, "Comment", design.desc)
 
-            // imports
+            resultContext.putContext(tag, "responseFields", fieldContext.responseFieldsForTemplate)
+
             resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 

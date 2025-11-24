@@ -3,6 +3,7 @@ package com.only4.codegen.context.design.builders
 import com.only4.codegen.context.ContextBuilder
 import com.only4.codegen.context.design.MutableDesignContext
 import com.only4.codegen.context.design.models.*
+import com.only4.codegen.context.design.models.common.PayloadField
 import com.only4.codegen.core.TagAliasResolver
 import com.only4.codegen.misc.toUpperCamelCase
 
@@ -118,6 +119,8 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
             aggregates = aggregates,
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
+            requestFields = parsePayloadFields(element.metadata["requestFields"]),
+            responseFields = parsePayloadFields(element.metadata["responseFields"]),
         )
 
     private fun buildQueryDesign(
@@ -136,6 +139,8 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
             aggregates = aggregates,
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
+            requestFields = parsePayloadFields(element.metadata["requestFields"]),
+            responseFields = parsePayloadFields(element.metadata["responseFields"]),
         )
 
     private fun buildApiPayloadDesign(
@@ -192,6 +197,8 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
             aggregates = aggregates,
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
+            requestFields = parsePayloadFields(element.metadata["requestFields"]),
+            responseFields = parsePayloadFields(element.metadata["responseFields"]),
         )
 
     private fun buildDomainServiceDesign(
@@ -251,6 +258,8 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
             aggregates = aggregates,
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
+            requestFields = parsePayloadFields(element.metadata["requestFields"]),
+            responseFields = parsePayloadFields(element.metadata["responseFields"]),
             persist = element.metadata["persist"] as? Boolean ?: false,
         )
     }

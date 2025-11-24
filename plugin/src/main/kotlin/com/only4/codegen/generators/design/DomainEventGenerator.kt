@@ -28,10 +28,13 @@ class DomainEventGenerator : DesignTemplateGenerator {
 
         val fullAggregateType = ctx.typeMapping[design.aggregate]!!
 
-        // 创建 ImportManager
         val importManager = DomainEventImportManager()
         importManager.addBaseImports()
         importManager.add(fullAggregateType)
+
+        val fieldContext = resolveRequestResponseFields(design, design.requestFields, design.responseFields)
+        importManager.add(*fieldContext.imports.toTypedArray())
+
         val resultContext = ctx.baseMap.toMutableMap()
 
         with(ctx) {
@@ -43,12 +46,12 @@ class DomainEventGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "DomainEvent", generatorName(design))
 
             resultContext.putContext(tag, "Aggregate", design.aggregate)
-
             resultContext.putContext(tag, "persist", design.persist.toString())
 
             resultContext.putContext(tag, "Comment", design.desc)
 
-            // 添加 imports
+            resultContext.putContext(tag, "fields", fieldContext.requestFieldsForTemplate)
+
             resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
@@ -93,3 +96,4 @@ class DomainEventGenerator : DesignTemplateGenerator {
         }
     }
 }
+

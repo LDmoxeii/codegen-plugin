@@ -1,47 +1,73 @@
 [
   {
-    "tag": "api_payload",
+    "tag": "payload",
     "package": "video.transcode",
     "name": "SubmitVideo",
     "desc": "提交视频转码请求",
-    "aggregates": ["video_post"],
+    "aggregates": ["VideoPost"],
     "requestFields": [
-      { "name": "videoId", "type": "kotlin.Long" },
+      { "name": "videoId", "type": "Long" },
       { "name": "customerId" },
-      { "name": "note", "type": "kotlin.String", "nullable": true, "defaultValue": "null" }
+      { "name": "note", "type": "String", "nullable": true, "defaultValue": "null" }
     ],
     "responseFields": [
-      { "name": "taskId", "type": "kotlin.String" }
+      { "name": "taskId", "type": "String" }
     ]
   },
-
   {
     "tag": "cmd",
-    "package": "",
-    "name": "",
-    "desc": ""
+    "package": "video.transcode",
+    "name": "SubmitVideo",
+    "desc": "提交视频转码命令",
+    "aggregates": ["VideoPost"],
+    "requestFields": [
+      { "name": "videoId", "type": "Long" },
+      { "name": "customerId" },
+      { "name": "note", "type": "String", "nullable": true }
+    ],
+    "responseFields": [
+      { "name": "taskId", "type": "String" }
+    ]
   },
-
   {
     "tag": "de",
-    "package": "",
-    "name": "",
-    "desc": "",
+    "package": "user.profile",
+    "name": "UserCreated",
+    "desc": "用户创建事件",
     "aggregates": ["User"],
-    "persist": false
+    "persist": false,
+    "requestFields": [
+      { "name": "userId", "type": "Long" },
+      { "name": "nickname", "type": "String", "nullable": true }
+    ],
+    "responseFields": [
+      { "name": "email", "type": "String", "nullable": true }
+    ]
   },
-
   {
     "tag": "qry",
-    "package": "",
-    "name": "",
-    "desc": ""
+    "package": "video.transcode",
+    "name": "SubmitVideoList",
+    "desc": "查询提交的视频任务列表",
+    "aggregates": ["VideoPost"],
+    "requestFields": [
+      { "name": "customerId", "type": "Long" }
+    ],
+    "responseFields": [
+      { "name": "tasks", "type": "List<String>" }
+    ]
   },
-
   {
     "tag": "cli",
-    "package": "",
-    "name": "",
-    "desc": ""
+    "package": "video.transcode",
+    "name": "NotifyTask",
+    "desc": "任务通知调用",
+    "requestFields": [
+      { "name": "taskId", "type": "String" },
+      { "name": "status", "type": "String" }
+    ],
+    "responseFields": [
+      { "name": "accepted", "type": "Boolean", "defaultValue": "true" }
+    ]
   }
 ]

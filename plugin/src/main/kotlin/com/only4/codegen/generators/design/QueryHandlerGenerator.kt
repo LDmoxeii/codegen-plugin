@@ -25,13 +25,13 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         val resultContext = ctx.baseMap.toMutableMap()
         val queryType = ctx.typeMapping[design.className()]!!
 
-        // 根据设计名称推断查询类型
         val handlerQueryType = QueryHandlerImportManager.inferQueryType(design.name)
 
-        // 创建 ImportManager
         val importManager = QueryHandlerImportManager(handlerQueryType)
         importManager.addBaseImports()
         importManager.add(queryType)
+
+        val fieldContext = resolveRequestResponseFields(design, design.requestFields, design.responseFields)
 
         with(ctx) {
             resultContext.putContext(tag, "modulePath", ctx.adapterPath)
@@ -42,8 +42,8 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "Query", design.className())
 
             resultContext.putContext(tag, "Comment", design.desc)
+            resultContext.putContext(tag, "responseFields", fieldContext.responseFieldsForTemplate)
 
-            // 添加 imports
             resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
@@ -107,3 +107,4 @@ class QueryHandlerGenerator : DesignTemplateGenerator {
         }
     }
 }
+

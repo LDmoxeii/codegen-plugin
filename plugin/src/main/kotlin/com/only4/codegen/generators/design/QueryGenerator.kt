@@ -24,10 +24,10 @@ class QueryGenerator : DesignTemplateGenerator {
 
         val resultContext = ctx.baseMap.toMutableMap()
 
-        // 根据设计名称推断查询类型
+        // ������������ƶϲ�ѯ����
         val queryType = QueryImportManager.inferQueryType(design.name)
 
-        // 创建 ImportManager
+        // ���� ImportManager
         val importManager = QueryImportManager(queryType)
         importManager.addBaseImports()
 
@@ -39,7 +39,12 @@ class QueryGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "Query", generatorName(design))
             resultContext.putContext(tag, "Comment", design.desc)
 
-            // 添加 imports
+            val fieldContext = resolveRequestResponseFields(design, design.requestFields, design.responseFields)
+            resultContext.putContext(tag, "requestFields", fieldContext.requestFieldsForTemplate)
+            resultContext.putContext(tag, "responseFields", fieldContext.responseFieldsForTemplate)
+            importManager.add(*fieldContext.imports.toTypedArray())
+
+            // ���� imports
             resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
@@ -102,3 +107,4 @@ class QueryGenerator : DesignTemplateGenerator {
         }
     }
 }
+

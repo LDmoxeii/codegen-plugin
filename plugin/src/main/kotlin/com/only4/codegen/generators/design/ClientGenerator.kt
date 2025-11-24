@@ -21,7 +21,6 @@ class ClientGenerator : DesignTemplateGenerator {
 
         val resultContext = ctx.baseMap.toMutableMap()
 
-        // 创建 ImportManager
         val importManager = ClientImportManager()
         importManager.addBaseImports()
 
@@ -33,7 +32,11 @@ class ClientGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "Client", generatorName(design))
             resultContext.putContext(tag, "Comment", design.desc)
 
-            // 添加 imports
+            val fieldContext = resolveRequestResponseFields(design, design.requestFields, design.responseFields)
+            resultContext.putContext(tag, "requestFields", fieldContext.requestFieldsForTemplate)
+            resultContext.putContext(tag, "responseFields", fieldContext.responseFieldsForTemplate)
+            importManager.add(*fieldContext.imports.toTypedArray())
+
             resultContext.putContext(tag, "imports", importManager.toImportLines())
         }
 
