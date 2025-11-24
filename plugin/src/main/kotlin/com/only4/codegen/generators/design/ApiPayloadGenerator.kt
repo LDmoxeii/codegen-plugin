@@ -148,7 +148,12 @@ class ApiPayloadGenerator : DesignTemplateGenerator {
             val shortName = cleaned.substringAfterLast(".")
             val needsImport = cleaned.contains(".") && !cleaned.startsWith("kotlin.")
                     && cleaned != shortName && !cleaned.startsWith("java.lang.")
-            if (needsImport) imports.add(cleaned)
+            val mappedType = ctx.typeMapping[shortName]
+            if (cleaned == shortName && mappedType != null) {
+                imports.add(mappedType)
+            } else if (needsImport) {
+                imports.add(cleaned)
+            }
             return if (nullable) "$shortName?" else shortName
         }
 

@@ -2,8 +2,6 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
 {%- for import in imports %}
 {{ import }}
 {%- endfor %}
-import org.mapstruct.Mapper
-import org.mapstruct.factory.Mappers
 
 /**
  * {{ Comment }}
@@ -16,9 +14,9 @@ object {{ Payload }} {
 
 {%- if requestFields|length > 0 %}
     data class Request(
-    {%- for field in requestFields %}
-        val {{ field.name }}: {{ field.type }}{{ " = " ~ field.defaultValue if field.defaultValue is defined }}{{ "," if not loop.last else "" }}
-    {%- endfor %}
+{%- for field in requestFields %}
+        val {{ field.name }}: {{ field.type }}{% if field.defaultValue is defined %} = {{ field.defaultValue }}{% endif %}{% if not loop.last %},{% endif %}
+{%- endfor %}
     )
 {%- else %}
     class Request
@@ -26,9 +24,9 @@ object {{ Payload }} {
 
 {%- if responseFields|length > 0 %}
     data class Response(
-    {%- for field in responseFields %}
-        val {{ field.name }}: {{ field.type }}{{ " = " ~ field.defaultValue if field.defaultValue is defined }}{{ "," if not loop.last else "" }}
-    {%- endfor %}
+{%- for field in responseFields %}
+        val {{ field.name }}: {{ field.type }}{% if field.defaultValue is defined %} = {{ field.defaultValue }}{% endif %}{% if not loop.last %},{% endif %}
+{%- endfor %}
     )
 {%- else %}
     class Response
