@@ -7,5 +7,6 @@ class EnumImportManager : BaseImportManager() {
     override fun addBaseImports() {
         requiredImports.add("com.only4.cap4k.ddd.core.domain.aggregate.annotation.Aggregate")
         requiredImports.add("jakarta.persistence.AttributeConverter")
+        requiredImports.add("com.only.engine.exception.KnownException")
     }
 }
