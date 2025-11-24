@@ -9,6 +9,7 @@ import com.only4.codegen.context.design.builders.UnifiedDesignBuilder
 import com.only4.codegen.context.design.models.AggregateInfo
 import com.only4.codegen.context.design.models.BaseDesign
 import com.only4.codegen.context.design.models.DesignElement
+import com.only4.codegen.core.TagAliasResolver
 import com.only4.codegen.generators.design.*
 import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.resolvePackageDirectory
@@ -28,81 +29,13 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
     @Internal
     override val designMap = mutableMapOf<String, MutableList<BaseDesign>>()
 
-    @Internal
-    override val designTagAliasMap: Map<String, String> = mapOf(
-
-        // Repository
-        "repositories" to "repository",
-        "repository" to "repository",
-        "repos" to "repository",
-        "repo" to "repository",
-
-        // Factory
-        "factories" to "factory",
-        "factory" to "factory",
-        "fac" to "factory",
-
-        // Specification
-        "specifications" to "specification",
-        "specification" to "specification",
-        "specs" to "specification",
-        "spec" to "specification",
-        "spe" to "specification",
-
-        // Domain Event
-        "domain_events" to "domain_event",
-        "domain_event" to "domain_event",
-        "d_e" to "domain_event",
-        "de" to "domain_event",
-
-        // Command
-        "commands" to "command",
-        "command" to "command",
-        "cmd" to "command",
-
-        // Query
-        "queries" to "query",
-        "query" to "query",
-        "qry" to "query",
-
-        // API Payload
-        "api_payload" to "api_payload",
-        "payload" to "api_payload",
-        "request_payload" to "api_payload",
-        "req_payload" to "api_payload",
-        "request" to "api_payload",
-        "req" to "api_payload",
-
-        // Client (分布式/远程调用)
-        "clients" to "client",
-        "client" to "client",
-        "cli" to "client",
-
-        // Saga
-        "saga" to "saga",
-        "sagas" to "saga",
-
-        // Validator
-        "validators" to "validator",
-        "validator" to "validator",
-        "validater" to "validator",
-        "validate" to "validator",
-
-        // Integration Event
-        "integration_events" to "integration_event",
-        "integration_event" to "integration_event",
-        "events" to "integration_event",
-        "event" to "integration_event",
-        "evt" to "integration_event",
-        "i_e" to "integration_event",
-        "ie" to "integration_event",
-
-        // Domain Service
-        "domain_service" to "domain_service",
-        "domain_services" to "domain_service",
-        "service" to "domain_service",
-        "svc" to "domain_service",
-    )
+    override fun renderTemplate(templateNodes: List<TemplateNode>, parentPath: String) {
+        super.renderTemplate(templateNodes, parentPath)
+        templateNodes.forEach { templateNode ->
+            val tag = templateNode.tag?.let { TagAliasResolver.normalizeDesignTag(it) } ?: return@forEach
+            templateNodeMap.computeIfAbsent(tag) { mutableListOf() }.add(templateNode)
+        }
+    }
 
     @TaskAction
     override fun generate() {
@@ -155,13 +88,13 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
         val generators = listOf(
             CommandGenerator(),             // order=10 - 生成命令
             QueryGenerator(),               // order=10 - 生成查询
-            ClientGenerator(),              // order=10 - 生成分布式客户端（远程调用）
+            ClientGenerator(),              // order=10 - 生成分布式客户端
             DomainEventGenerator(),         // order=10 - 生成领域事件
+            ValidatorGenerator(),           // order=10 - 生成校验器
+            ApiPayloadGenerator(),          // order=10 - 生成 API 请求负载
             DomainEventHandlerGenerator(),  // order=20 - 生成领域事件处理器
             QueryHandlerGenerator(),        // order=20 - 生成查询处理器
             ClientHandlerGenerator(),       // order=20 - 生成客户端处理器
-            ValidatorGenerator(),           // order=10 - 生成校验器
-            ApiPayloadGenerator(),          // order=10 - 生成 API 请求负载
         )
 
         generators.sortedBy { it.order }.forEach { generator ->
@@ -212,14 +145,6 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
                 generator.onGenerated(design)
             }
-        }
-    }
-
-    override fun renderTemplate(templateNodes: List<TemplateNode>, parentPath: String) {
-        super.renderTemplate(templateNodes, parentPath)
-        templateNodes.forEach { templateNode ->
-            val tag = templateNode.tag?.lowercase()?.let { designTagAliasMap[it] ?: it } ?: return@forEach
-            templateNodeMap.computeIfAbsent(tag) { mutableListOf() }.add(templateNode)
         }
     }
 }

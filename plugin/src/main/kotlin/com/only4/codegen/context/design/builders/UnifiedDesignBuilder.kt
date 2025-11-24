@@ -3,6 +3,7 @@ package com.only4.codegen.context.design.builders
 import com.only4.codegen.context.ContextBuilder
 import com.only4.codegen.context.design.MutableDesignContext
 import com.only4.codegen.context.design.models.*
+import com.only4.codegen.core.TagAliasResolver
 import com.only4.codegen.misc.toUpperCamelCase
 
 class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
@@ -21,7 +22,7 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         val designMap = mutableMapOf<String, MutableList<BaseDesign>>()
 
         context.designElementMap.forEach { (type, elements) ->
-            val normalizedType = context.designTagAliasMap[type.lowercase()] ?: type.lowercase()
+            val normalizedType = TagAliasResolver.normalizeDesignTag(type)
 
             elements.forEach {
                 val design = buildDesign(normalizedType, it, context)
@@ -216,12 +217,10 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         primaryAggregateMetadata: AggregateInfo?,
         aggregateMetadataList: List<AggregateInfo>,
     ): IntegrationEventDesign {
-        val eventName = normalizeName(element.name, "Event")
-
         return IntegrationEventDesign(
             type = "integration_event",
             `package` = element.`package`,
-            name = eventName,
+            name = element.name,
             desc = element.desc,
             aggregate = primaryAggregate,
             aggregates = aggregates,
@@ -272,16 +271,4 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
         )
-
-    private fun normalizeName(name: String, vararg suffixes: String): String {
-        var normalized = toUpperCamelCase(name).orEmpty()
-
-        val hasSuffix = suffixes.any { normalized.endsWith(it) }
-
-        if (!hasSuffix && suffixes.isNotEmpty()) {
-            normalized += suffixes.first()
-        }
-
-        return normalized
-    }
 }

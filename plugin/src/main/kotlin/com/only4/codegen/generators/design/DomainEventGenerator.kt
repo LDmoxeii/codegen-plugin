@@ -26,12 +26,12 @@ class DomainEventGenerator : DesignTemplateGenerator {
     override fun buildContext(design: Any): Map<String, Any?> {
         require(design is DomainEventDesign) { "Design must be DomainEventDesign" }
 
-        val fullEntityType = ctx.typeMapping[design.entity]!!
+        val fullAggregateType = ctx.typeMapping[design.aggregate]!!
 
         // 创建 ImportManager
         val importManager = DomainEventImportManager()
         importManager.addBaseImports()
-        importManager.add(fullEntityType)
+        importManager.add(fullAggregateType)
         val resultContext = ctx.baseMap.toMutableMap()
 
         with(ctx) {
@@ -42,7 +42,6 @@ class DomainEventGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "Name", generatorName(design))
             resultContext.putContext(tag, "DomainEvent", generatorName(design))
 
-            resultContext.putContext(tag, "Entity", design.entity)
             resultContext.putContext(tag, "Aggregate", design.aggregate)
 
             resultContext.putContext(tag, "persist", design.persist.toString())

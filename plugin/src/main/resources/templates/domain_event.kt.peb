@@ -18,4 +18,4 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
     type = Aggregate.TYPE_DOMAIN_EVENT,
     description = ""
 )
-class {{ DomainEvent }}(val entity: {{ Entity }})
+class {{ DomainEvent }}(val entity: {{ Aggregate }})

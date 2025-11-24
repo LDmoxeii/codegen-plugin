@@ -3,6 +3,7 @@ package com.only4.codegen
 import com.only4.codegen.context.aggregate.AggregateContext
 import com.only4.codegen.context.aggregate.MutableAggregateContext
 import com.only4.codegen.context.aggregate.builders.*
+import com.only4.codegen.core.TagAliasResolver
 import com.only4.codegen.generators.aggregate.*
 import com.only4.codegen.generators.aggregate.UniqueQueryGenerator
 import com.only4.codegen.generators.aggregate.UniqueQueryHandlerGenerator
@@ -103,26 +104,9 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
     ) {
         super.renderTemplate(templateNodes, parentPath)
         templateNodes.forEach { templateNode ->
-            val alias = alias4Design(templateNode.tag!!)
-            templateNodeMap.computeIfAbsent(alias) { mutableListOf() }.add(templateNode)
+            val tag = templateNode.tag?.let { TagAliasResolver.normalizeAggregateTag(it) } ?: return@forEach
+            templateNodeMap.computeIfAbsent(tag) { mutableListOf() }.add(templateNode)
         }
-    }
-
-
-    private fun alias4Design(name: String): String = when (name.lowercase()) {
-        "entity", "aggregate", "entities", "aggregates" -> "aggregate"
-        "schema", "schemas" -> "schema"
-        "enum", "enums" -> "enum"
-        "enumitem", "enum_item" -> "enum_item"
-        "factories", "factory", "fac" -> "factory"
-        "specifications", "specification", "specs", "spec", "spe" -> "specification"
-        "domain_events", "domain_event", "d_e", "de" -> "domain_event"
-        "domain_event_handlers", "domain_event_handler", "d_e_h", "deh",
-        "domain_event_subscribers", "domain_event_subscriber", "d_e_s", "des",
-            -> "domain_event_handler"
-
-        "domain_service", "service", "svc" -> "domain_service"
-        else -> name
     }
 
     @TaskAction

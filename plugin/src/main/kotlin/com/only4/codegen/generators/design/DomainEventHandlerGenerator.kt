@@ -45,9 +45,8 @@ class DomainEventHandlerGenerator : DesignTemplateGenerator {
             resultContext.putContext(tag, "DomainEventHandler", generatorName(design))
             resultContext.putContext(tag, "Name", generatorName(design))
 
-            resultContext.putContext(tag, "Entity", design.entity)
             resultContext.putContext(tag, "Aggregate", design.aggregate)
-            resultContext.putContext(tag, "EntityVar", design.entity.replaceFirstChar { it.lowercase() })
+            resultContext.putContext(tag, "AggregateVar", design.aggregate.replaceFirstChar { it.lowercase() })
             resultContext.putContext(tag, "AggregateRoot", design.aggregate)
 
             resultContext.putContext(tag, "Comment", design.desc)

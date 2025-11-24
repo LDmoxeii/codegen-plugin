@@ -11,7 +11,6 @@ data class DomainEventDesign(
     override val aggregates: List<String>,
     override val primaryAggregateMetadata: AggregateInfo?,
     override val aggregateMetadataList: List<AggregateInfo>,
-    val entity: String,
     val persist: Boolean = false,
 ) : BaseDesign {
     override fun className(): String {
