@@ -1,9 +1,18 @@
 [
   {
-    "tag": "payload",
-    "package": "",
-    "name": "",
-    "desc": ""
+    "tag": "api_payload",
+    "package": "video.transcode",
+    "name": "SubmitVideo",
+    "desc": "提交视频转码请求",
+    "aggregates": ["video_post"],
+    "requestFields": [
+      { "name": "videoId", "type": "kotlin.Long" },
+      { "name": "customerId" },
+      { "name": "note", "type": "kotlin.String", "nullable": true, "defaultValue": "null" }
+    ],
+    "responseFields": [
+      { "name": "taskId", "type": "kotlin.String" }
+    ]
   },
 
   {

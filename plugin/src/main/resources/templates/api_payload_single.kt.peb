@@ -14,8 +14,23 @@ import org.mapstruct.factory.Mappers
  */
 object {{ Payload }} {
 
+{%- if requestFields|length > 0 %}
+    data class Request(
+    {%- for field in requestFields %}
+        val {{ field.name }}: {{ field.type }}{{ " = " ~ field.defaultValue if field.defaultValue is defined }}{{ "," if not loop.last else "" }}
+    {%- endfor %}
+    )
+{%- else %}
     class Request
+{%- endif %}
 
+{%- if responseFields|length > 0 %}
+    data class Response(
+    {%- for field in responseFields %}
+        val {{ field.name }}: {{ field.type }}{{ " = " ~ field.defaultValue if field.defaultValue is defined }}{{ "," if not loop.last else "" }}
+    {%- endfor %}
+    )
+{%- else %}
     class Response
+{%- endif %}
 }
-

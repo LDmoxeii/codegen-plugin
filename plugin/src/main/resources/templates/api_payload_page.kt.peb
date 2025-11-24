@@ -12,8 +12,23 @@ package {{ basePackage }}{{ templatePackage }}{{ package }}
  */
 object {{ Payload }} {
 
+{%- if requestFields|length > 0 %}
+    data class Request(
+    {%- for field in requestFields %}
+        val {{ field.name }}: {{ field.type }}{{ " = " ~ field.defaultValue if field.defaultValue is defined }}{{ "," if not loop.last else "" }}
+    {%- endfor %}
+    ) : PageParam()
+{%- else %}
     class Request : PageParam()
+{%- endif %}
 
+{%- if responseFields|length > 0 %}
+    data class Item(
+    {%- for field in responseFields %}
+        val {{ field.name }}: {{ field.type }}{{ " = " ~ field.defaultValue if field.defaultValue is defined }}{{ "," if not loop.last else "" }}
+    {%- endfor %}
+    )
+{%- else %}
     class Item
+{%- endif %}
 }
-

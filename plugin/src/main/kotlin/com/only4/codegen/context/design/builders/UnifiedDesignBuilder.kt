@@ -154,6 +154,8 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
             aggregates = aggregates,
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
+            requestFields = parsePayloadFields(element.metadata["requestFields"]),
+            responseFields = parsePayloadFields(element.metadata["responseFields"]),
         )
 
     private fun buildSagaDesign(
@@ -270,4 +272,18 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
             primaryAggregateMetadata = primaryAggregateMetadata,
             aggregateMetadataList = aggregateMetadataList,
         )
+
+    private fun parsePayloadFields(raw: Any?): List<PayloadField> {
+        val list = raw as? List<*> ?: return emptyList()
+        return list.mapNotNull { item ->
+            val map = item as? Map<*, *> ?: return@mapNotNull null
+            val name = map["name"]?.toString()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+            PayloadField(
+                name = name,
+                type = map["type"]?.toString()?.takeIf { it.isNotBlank() },
+                defaultValue = map["defaultValue"]?.toString()?.takeIf { it.isNotBlank() },
+                nullable = map["nullable"]?.toString()?.toBoolean() ?: false,
+            )
+        }
+    }
 }
