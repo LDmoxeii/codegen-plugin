@@ -1,7 +1,6 @@
-package com.only4.codegen.generators.aggregate.unique
+package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.generators.aggregate.AggregateTemplateGenerator
 import com.only4.codegen.manager.QueryHandlerImportManager
 import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.refPackage
@@ -96,12 +95,6 @@ class UniqueQueryHandlerGenerator : AggregateTemplateGenerator {
     }
 
     context(ctx: AggregateContext)
-    private fun getQueryName(table: Map<String, Any?>): String {
-        val handlerName = generatorName(table)
-        return handlerName.removeSuffix("Handler")
-    }
-
-    context(ctx: AggregateContext)
     override fun generatorName(table: Map<String, Any?>): String {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = ctx.entityTypeMap[tableName] ?: return ""
@@ -134,6 +127,12 @@ class UniqueQueryHandlerGenerator : AggregateTemplateGenerator {
     context(ctx: AggregateContext)
     override fun onGenerated(table: Map<String, Any?>) {
         ctx.typeMapping[generatorName(table)] = generatorFullName(table)
+    }
+
+    context(ctx: AggregateContext)
+    private fun getQueryName(table: Map<String, Any?>): String {
+        val handlerName = generatorName(table)
+        return handlerName.removeSuffix("Handler")
     }
 
     context(ctx: AggregateContext)

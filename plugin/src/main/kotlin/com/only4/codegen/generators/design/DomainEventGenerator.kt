@@ -5,7 +5,6 @@ import com.only4.codegen.context.design.models.DomainEventDesign
 import com.only4.codegen.manager.DomainEventImportManager
 import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.refPackage
-import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
 import org.gradle.api.logging.Logging
 
@@ -70,13 +69,7 @@ class DomainEventGenerator : DesignTemplateGenerator {
     context(ctx: DesignContext)
     override fun generatorName(design: Any): String {
         require(design is DomainEventDesign)
-        var name = design.name
-
-        if (!name.endsWith("Evt") && !name.endsWith("Event")) {
-            name += "DomainEvent"
-        }
-
-        return toUpperCamelCase(name)!!
+        return design.className()
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {

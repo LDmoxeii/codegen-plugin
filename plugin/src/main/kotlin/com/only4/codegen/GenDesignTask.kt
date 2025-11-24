@@ -15,9 +15,7 @@ import com.only4.codegen.misc.resolvePackageDirectory
 import com.only4.codegen.template.TemplateNode
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
-import org.gradle.internal.extensions.core.directoryChildrenNamesHash
 import java.io.File
-import java.util.regex.Pattern
 
 open class GenDesignTask : GenArchTask(), MutableDesignContext {
 

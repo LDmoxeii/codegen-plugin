@@ -12,4 +12,9 @@ interface BaseDesign {
     val aggregates: List<String>   // 所有关联聚合
     val primaryAggregateMetadata: AggregateInfo?      // 主聚合元信息
     val aggregateMetadataList: List<AggregateInfo>    // 所有聚合元信息
+
+    /**
+     * 设计元素对应的类名（按照各自约定补全后缀并转成 UpperCamelCase）
+     */
+    fun className(): String
 }

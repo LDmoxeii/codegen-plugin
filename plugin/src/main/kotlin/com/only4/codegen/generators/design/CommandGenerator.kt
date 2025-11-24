@@ -1,10 +1,9 @@
 package com.only4.codegen.generators.design
 
 import com.only4.codegen.context.design.DesignContext
-import com.only4.codegen.context.design.models.CommonDesign
+import com.only4.codegen.context.design.models.CommandDesign
 import com.only4.codegen.manager.CommandImportManager
 import com.only4.codegen.misc.refPackage
-import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
 
 class CommandGenerator : DesignTemplateGenerator {
@@ -18,7 +17,7 @@ class CommandGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun buildContext(design: Any): Map<String, Any?> {
-        require(design is CommonDesign) { "Design must be CommonDesign" }
+        require(design is CommandDesign) { "Design must be CommandDesign" }
 
         val resultContext = ctx.baseMap.toMutableMap()
 
@@ -43,7 +42,7 @@ class CommandGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun generatorFullName(design: Any): String {
-        require(design is CommonDesign)
+        require(design is CommandDesign)
         val basePackage = ctx.getString("basePackage")
         val templatePackage = refPackage(ctx.templatePackage[tag] ?: "")
         val `package` = refPackage(design.`package`)
@@ -53,13 +52,8 @@ class CommandGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun generatorName(design: Any): String {
-        require(design is CommonDesign)
-        val name = design.name
-        return if (name.endsWith("Cmd")) {
-            toUpperCamelCase(name)!!
-        } else {
-            toUpperCamelCase("${name}Cmd")!!
-        }
+        require(design is CommandDesign)
+        return design.className()
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {

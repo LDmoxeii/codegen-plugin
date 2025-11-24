@@ -5,7 +5,6 @@ import com.only4.codegen.context.design.models.DomainEventDesign
 import com.only4.codegen.manager.DomainEventHandlerImportManager
 import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.refPackage
-import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
 import org.gradle.api.logging.Logging
 
@@ -27,7 +26,7 @@ class DomainEventHandlerGenerator : DesignTemplateGenerator {
     override fun buildContext(design: Any): Map<String, Any?> {
         require(design is DomainEventDesign) { "Design must be DomainEventDesign" }
 
-        val domainEventName = getDomainEventName(design)
+        val domainEventName = design.className()
         val fullDomainEventType = ctx.typeMapping[domainEventName]!!
 
         // 创建 ImportManager
@@ -73,20 +72,8 @@ class DomainEventHandlerGenerator : DesignTemplateGenerator {
     context(ctx: DesignContext)
     override fun generatorName(design: Any): String {
         require(design is DomainEventDesign)
-        val domainEventName = getDomainEventName(design)
-
-        return toUpperCamelCase("${domainEventName}Subscriber")!!
-    }
-
-    context(ctx: DesignContext)
-    private fun getDomainEventName(design: DomainEventDesign): String {
-        var name = design.name
-
-        if (!name.endsWith("Evt") && !name.endsWith("Event")) {
-            name += "DomainEvent"
-        }
-
-        return toUpperCamelCase(name)!!
+        val domainEventName = design.className()
+        return "${domainEventName}Subscriber"
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {

@@ -1,10 +1,9 @@
 package com.only4.codegen.generators.design
 
 import com.only4.codegen.context.design.DesignContext
-import com.only4.codegen.context.design.models.CommonDesign
+import com.only4.codegen.context.design.models.ClientDesign
 import com.only4.codegen.manager.ClientHandlerImportManager
 import com.only4.codegen.misc.refPackage
-import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
 
 class ClientHandlerGenerator : DesignTemplateGenerator {
@@ -14,17 +13,17 @@ class ClientHandlerGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun shouldGenerate(design: Any): Boolean {
-        if (design !is CommonDesign) return false
+        if (design !is ClientDesign) return false
         if (ctx.typeMapping.containsKey(generatorName(design))) return false
         return true
     }
 
     context(ctx: DesignContext)
     override fun buildContext(design: Any): Map<String, Any?> {
-        require(design is CommonDesign) { "Design must be CommonDesign" }
+        require(design is ClientDesign) { "Design must be ClientDesign" }
 
         val resultContext = ctx.baseMap.toMutableMap()
-        val clientName = getClientName(design)
+        val clientName = design.className()
         val clientType = ctx.typeMapping[clientName]!!
 
         // 创建 ImportManager
@@ -50,7 +49,7 @@ class ClientHandlerGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun generatorFullName(design: Any): String {
-        require(design is CommonDesign)
+        require(design is ClientDesign)
         val basePackage = ctx.getString("basePackage")
         val templatePackage = refPackage(ctx.templatePackage[tag] ?: "")
         val `package` = refPackage(design.`package`)
@@ -59,20 +58,10 @@ class ClientHandlerGenerator : DesignTemplateGenerator {
     }
 
     context(ctx: DesignContext)
-    private fun getClientName(design: Any): String {
-        require(design is CommonDesign)
-        val name = design.name
-        return if (name.endsWith("Cli")) {
-            toUpperCamelCase(name)!!
-        } else {
-            toUpperCamelCase("${name}Cli")!!
-        }
-    }
-
-    context(ctx: DesignContext)
     override fun generatorName(design: Any): String {
-        val client = getClientName(design)
-        return toUpperCamelCase("${client}Handler")!!
+        require(design is ClientDesign)
+        val client = design.className()
+        return "${client}Handler"
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {
@@ -90,7 +79,7 @@ class ClientHandlerGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun onGenerated(design: Any) {
-        if (design is CommonDesign) {
+        if (design is ClientDesign) {
             val fullName = generatorFullName(design)
             ctx.typeMapping[generatorName(design)] = fullName
         }

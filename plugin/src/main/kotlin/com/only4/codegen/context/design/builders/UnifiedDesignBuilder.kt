@@ -52,40 +52,40 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         val primaryAggregateMetadata = aggregateMetadataList.firstOrNull()
 
         return when (type) {
-            "command" -> buildCommonDesign(
-                "command", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "command" -> buildCommandDesign(
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
-            "query" -> buildCommonDesign(
-                "query", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "query" -> buildQueryDesign(
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
-            "api_payload" -> buildCommonDesign(
-                "api_payload", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "api_payload" -> buildApiPayloadDesign(
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
-            "saga" -> buildCommonDesign(
-                "saga", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "saga" -> buildSagaDesign(
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
-            "client" -> buildCommonDesign(
-                "client", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "client" -> buildClientDesign(
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
-            "domain_service" -> buildCommonDesign(
-                "domain_service", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "domain_service" -> buildDomainServiceDesign(
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
             "integration_event" -> buildIntegrationEventDesign(
-                "integration_event", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
             "domain_event" -> buildDomainEventDesign(
-                "domain_event", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
-            "validator" -> buildCommonDesign(
-                "validator", element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
+            "validator" -> buildValidatorDesign(
+                element, primaryAggregate, aggregates, primaryAggregateMetadata, aggregateMetadataList
             )
 
             else -> throw IllegalArgumentException("Unknown design type: $type")
@@ -101,28 +101,115 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         return emptyList()
     }
 
-    private fun buildCommonDesign(
-        type: String,
+    private fun buildCommandDesign(
         element: DesignElement,
         primaryAggregate: String?,
         aggregates: List<String>,
         primaryAggregateMetadata: AggregateInfo?,
         aggregateMetadataList: List<AggregateInfo>,
-    ): CommonDesign {
-        return CommonDesign(
-            type = type,
+    ): CommandDesign =
+        CommandDesign(
+            type = "command",
             `package` = element.`package`,
             name = element.name,
             desc = element.desc,
             aggregate = primaryAggregate,
             aggregates = aggregates,
             primaryAggregateMetadata = primaryAggregateMetadata,
-            aggregateMetadataList = aggregateMetadataList
+            aggregateMetadataList = aggregateMetadataList,
         )
-    }
+
+    private fun buildQueryDesign(
+        element: DesignElement,
+        primaryAggregate: String?,
+        aggregates: List<String>,
+        primaryAggregateMetadata: AggregateInfo?,
+        aggregateMetadataList: List<AggregateInfo>,
+    ): QueryDesign =
+        QueryDesign(
+            type = "query",
+            `package` = element.`package`,
+            name = element.name,
+            desc = element.desc,
+            aggregate = primaryAggregate,
+            aggregates = aggregates,
+            primaryAggregateMetadata = primaryAggregateMetadata,
+            aggregateMetadataList = aggregateMetadataList,
+        )
+
+    private fun buildApiPayloadDesign(
+        element: DesignElement,
+        primaryAggregate: String?,
+        aggregates: List<String>,
+        primaryAggregateMetadata: AggregateInfo?,
+        aggregateMetadataList: List<AggregateInfo>,
+    ): ApiPayloadDesign =
+        ApiPayloadDesign(
+            type = "api_payload",
+            `package` = element.`package`,
+            name = element.name,
+            desc = element.desc,
+            aggregate = primaryAggregate,
+            aggregates = aggregates,
+            primaryAggregateMetadata = primaryAggregateMetadata,
+            aggregateMetadataList = aggregateMetadataList,
+        )
+
+    private fun buildSagaDesign(
+        element: DesignElement,
+        primaryAggregate: String?,
+        aggregates: List<String>,
+        primaryAggregateMetadata: AggregateInfo?,
+        aggregateMetadataList: List<AggregateInfo>,
+    ): SagaDesign =
+        SagaDesign(
+            type = "saga",
+            `package` = element.`package`,
+            name = element.name,
+            desc = element.desc,
+            aggregate = primaryAggregate,
+            aggregates = aggregates,
+            primaryAggregateMetadata = primaryAggregateMetadata,
+            aggregateMetadataList = aggregateMetadataList,
+        )
+
+    private fun buildClientDesign(
+        element: DesignElement,
+        primaryAggregate: String?,
+        aggregates: List<String>,
+        primaryAggregateMetadata: AggregateInfo?,
+        aggregateMetadataList: List<AggregateInfo>,
+    ): ClientDesign =
+        ClientDesign(
+            type = "client",
+            `package` = element.`package`,
+            name = element.name,
+            desc = element.desc,
+            aggregate = primaryAggregate,
+            aggregates = aggregates,
+            primaryAggregateMetadata = primaryAggregateMetadata,
+            aggregateMetadataList = aggregateMetadataList,
+        )
+
+    private fun buildDomainServiceDesign(
+        element: DesignElement,
+        primaryAggregate: String?,
+        aggregates: List<String>,
+        primaryAggregateMetadata: AggregateInfo?,
+        aggregateMetadataList: List<AggregateInfo>,
+    ): DomainServiceDesign =
+        DomainServiceDesign(
+            type = "domain_service",
+            `package` = element.`package`,
+            name = element.name,
+            desc = element.desc,
+            aggregate = primaryAggregate,
+            aggregates = aggregates,
+            primaryAggregateMetadata = primaryAggregateMetadata,
+            aggregateMetadataList = aggregateMetadataList,
+        )
 
     private fun buildIntegrationEventDesign(
-        type: String,
         element: DesignElement,
         primaryAggregate: String?,
         aggregates: List<String>,
@@ -132,7 +219,7 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         val eventName = normalizeName(element.name, "Event")
 
         return IntegrationEventDesign(
-            type = type,
+            type = "integration_event",
             `package` = element.`package`,
             name = eventName,
             desc = element.desc,
@@ -146,7 +233,6 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
     }
 
     private fun buildDomainEventDesign(
-        type: String,
         element: DesignElement,
         primaryAggregate: String?,
         aggregates: List<String>,
@@ -156,7 +242,7 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
         require(primaryAggregate != null) { "Domain event must have an aggregate: ${element.name}" }
 
         return DomainEventDesign(
-            type = type,
+            type = "domain_event",
             `package` = element.`package`,
             name = element.name,
             desc = element.desc,
@@ -168,6 +254,24 @@ class UnifiedDesignBuilder : ContextBuilder<MutableDesignContext> {
             persist = element.metadata["persist"] as? Boolean ?: false,
         )
     }
+
+    private fun buildValidatorDesign(
+        element: DesignElement,
+        primaryAggregate: String?,
+        aggregates: List<String>,
+        primaryAggregateMetadata: AggregateInfo?,
+        aggregateMetadataList: List<AggregateInfo>,
+    ): ValidatorDesign =
+        ValidatorDesign(
+            type = "validator",
+            `package` = element.`package`,
+            name = element.name,
+            desc = element.desc,
+            aggregate = primaryAggregate,
+            aggregates = aggregates,
+            primaryAggregateMetadata = primaryAggregateMetadata,
+            aggregateMetadataList = aggregateMetadataList,
+        )
 
     private fun normalizeName(name: String, vararg suffixes: String): String {
         var normalized = toUpperCamelCase(name).orEmpty()

@@ -1,7 +1,6 @@
-package com.only4.codegen.generators.aggregate.unique
+package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.generators.aggregate.AggregateTemplateGenerator
 import com.only4.codegen.manager.ValidatorImportManager
 import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.refPackage
@@ -158,6 +157,12 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
     }
 
     context(ctx: AggregateContext)
+    private fun getQueryName(table: Map<String, Any?>): String {
+        val validatorName = generatorName(table)
+        return if (validatorName.isBlank()) "" else "${validatorName}Qry"
+    }
+
+    context(ctx: AggregateContext)
     private fun resolveSelectedConstraint(table: Map<String, Any?>): Map<String, Any?>? {
         val tableName = SqlSchemaUtils.getTableName(table)
         val entityType = ctx.entityTypeMap[tableName] ?: return null
@@ -186,11 +191,5 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
         if (filtered.isEmpty()) return ""
         return filtered.sortedBy { (it["ordinal"] as Number).toInt() }
             .joinToString("") { toUpperCamelCase(it["columnName"].toString()) ?: it["columnName"].toString() }
-    }
-
-    context(ctx: AggregateContext)
-    private fun getQueryName(table: Map<String, Any?>): String {
-        val validatorName = generatorName(table)
-        return if (validatorName.isBlank()) "" else "${validatorName}Qry"
     }
 }

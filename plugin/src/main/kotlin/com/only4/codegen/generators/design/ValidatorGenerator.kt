@@ -1,9 +1,8 @@
 package com.only4.codegen.generators.design
 
 import com.only4.codegen.context.design.DesignContext
-import com.only4.codegen.context.design.models.CommonDesign
+import com.only4.codegen.context.design.models.ValidatorDesign
 import com.only4.codegen.misc.refPackage
-import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
 import com.only4.codegen.manager.ValidatorImportManager
 
@@ -17,7 +16,7 @@ class ValidatorGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun buildContext(design: Any): Map<String, Any?> {
-        require(design is CommonDesign) { "Design must be CommonDesign" }
+        require(design is ValidatorDesign) { "Design must be ValidatorDesign" }
 
         val resultContext = ctx.baseMap.toMutableMap()
 
@@ -42,7 +41,7 @@ class ValidatorGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun generatorFullName(design: Any): String {
-        require(design is CommonDesign)
+        require(design is ValidatorDesign)
         val basePackage = ctx.getString("basePackage")
         val templatePackage = refPackage("application")
         val `package` = refPackage("validater")
@@ -51,9 +50,8 @@ class ValidatorGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun generatorName(design: Any): String {
-        require(design is CommonDesign)
-        val name = design.name
-        return toUpperCamelCase(name)!!
+        require(design is ValidatorDesign)
+        return design.className()
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {

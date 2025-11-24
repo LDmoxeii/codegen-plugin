@@ -4,9 +4,9 @@ import com.only4.codegen.context.aggregate.AggregateContext
 import com.only4.codegen.context.aggregate.MutableAggregateContext
 import com.only4.codegen.context.aggregate.builders.*
 import com.only4.codegen.generators.aggregate.*
-import com.only4.codegen.generators.aggregate.unique.UniqueQueryGenerator
-import com.only4.codegen.generators.aggregate.unique.UniqueQueryHandlerGenerator
-import com.only4.codegen.generators.aggregate.unique.UniqueValidatorGenerator
+import com.only4.codegen.generators.aggregate.UniqueQueryGenerator
+import com.only4.codegen.generators.aggregate.UniqueQueryHandlerGenerator
+import com.only4.codegen.generators.aggregate.UniqueValidatorGenerator
 import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.resolvePackageDirectory

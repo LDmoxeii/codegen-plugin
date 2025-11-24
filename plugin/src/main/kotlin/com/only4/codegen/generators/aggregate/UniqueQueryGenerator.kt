@@ -1,7 +1,6 @@
-package com.only4.codegen.generators.aggregate.unique
+package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.generators.aggregate.AggregateTemplateGenerator
 import com.only4.codegen.manager.QueryImportManager
 import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.refPackage

@@ -1,10 +1,9 @@
 package com.only4.codegen.generators.design
 
 import com.only4.codegen.context.design.DesignContext
-import com.only4.codegen.context.design.models.CommonDesign
+import com.only4.codegen.context.design.models.ApiPayloadDesign
 import com.only4.codegen.manager.ApiPayloadImportManager
 import com.only4.codegen.misc.refPackage
-import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
 
 /**
@@ -18,7 +17,7 @@ class ApiPayloadGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun shouldGenerate(design: Any): Boolean {
-        if (design !is CommonDesign) return false
+        if (design !is ApiPayloadDesign) return false
         // 避免重复生成（按名称唯一）
         if (ctx.typeMapping.containsKey(generatorName(design))) return false
         return true
@@ -26,7 +25,7 @@ class ApiPayloadGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun buildContext(design: Any): Map<String, Any?> {
-        require(design is CommonDesign) { "Design must be CommonDesign" }
+        require(design is ApiPayloadDesign) { "Design must be ApiPayloadDesign" }
 
         val result = ctx.baseMap.toMutableMap()
 
@@ -53,7 +52,7 @@ class ApiPayloadGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun generatorFullName(design: Any): String {
-        require(design is CommonDesign)
+        require(design is ApiPayloadDesign)
         val basePackage = ctx.getString("basePackage")
         val templatePackage = refPackage(".adapter.portal.api.payload")
         val `package` = refPackage(design.`package`)
@@ -62,9 +61,8 @@ class ApiPayloadGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun generatorName(design: Any): String {
-        require(design is CommonDesign)
-        // 不强制后缀，按设计名转 UpperCamelCase
-        return toUpperCamelCase(design.name)!!
+        require(design is ApiPayloadDesign)
+        return design.className()
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {
@@ -104,10 +102,9 @@ class ApiPayloadGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun onGenerated(design: Any) {
-        if (design is CommonDesign) {
+        if (design is ApiPayloadDesign) {
             val full = generatorFullName(design)
             ctx.typeMapping[generatorName(design)] = full
         }
     }
 }
-

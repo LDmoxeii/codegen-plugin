@@ -1,10 +1,9 @@
 package com.only4.codegen.generators.design
 
 import com.only4.codegen.context.design.DesignContext
-import com.only4.codegen.context.design.models.CommonDesign
+import com.only4.codegen.context.design.models.ClientDesign
 import com.only4.codegen.manager.ClientImportManager
 import com.only4.codegen.misc.refPackage
-import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
 
 class ClientGenerator : DesignTemplateGenerator {
@@ -18,7 +17,7 @@ class ClientGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun buildContext(design: Any): Map<String, Any?> {
-        require(design is CommonDesign) { "Design must be CommonDesign" }
+        require(design is ClientDesign) { "Design must be ClientDesign" }
 
         val resultContext = ctx.baseMap.toMutableMap()
 
@@ -43,7 +42,7 @@ class ClientGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun generatorFullName(design: Any): String {
-        require(design is CommonDesign)
+        require(design is ClientDesign)
         val basePackage = ctx.getString("basePackage")
         val templatePackage = refPackage(ctx.templatePackage[tag] ?: "")
         val `package` = refPackage(design.`package`)
@@ -53,13 +52,8 @@ class ClientGenerator : DesignTemplateGenerator {
 
     context(ctx: DesignContext)
     override fun generatorName(design: Any): String {
-        require(design is CommonDesign)
-        val name = design.name
-        return if (name.endsWith("Cli")) {
-            toUpperCamelCase(name)!!
-        } else {
-            toUpperCamelCase("${name}Cli")!!
-        }
+        require(design is ClientDesign)
+        return design.className()
     }
 
     override fun getDefaultTemplateNodes(): List<TemplateNode> {
