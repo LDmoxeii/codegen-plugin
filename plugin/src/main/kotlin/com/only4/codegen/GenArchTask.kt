@@ -42,7 +42,7 @@ open class GenArchTask : AbstractCodegenTask() {
         val archTemplate = validateAndGetArchTemplate(ext) ?: return
 
         template = loadTemplate(archTemplate, ext)
-        render(template!!, projectDir.get())
+        pathRenderer.render(template!!, projectDir.get())
 
     }
 

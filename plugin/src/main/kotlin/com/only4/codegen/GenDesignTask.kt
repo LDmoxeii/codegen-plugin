@@ -108,7 +108,7 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
     @TaskAction
     override fun generate() {
-        renderFileSwitch = false
+        pathRenderer.renderFileSwitch = false
         super.generate()
 
         genDesign()
@@ -200,7 +200,7 @@ open class GenDesignTask : GenArchTask(), MutableDesignContext {
 
                 selected.forEach { templateNode ->
                     val pathNode = templateNode.resolve(templateContext)
-                    forceRender(
+                    pathRenderer.forceRender(
                         pathNode, resolvePackageDirectory(
                             templateContext["modulePath"].toString(),
                             concatPackage(

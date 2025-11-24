@@ -127,7 +127,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
     @TaskAction
     override fun generate() {
-        renderFileSwitch = false
+        pathRenderer.renderFileSwitch = false
         super.generate()
         SqlSchemaUtils.context = this
 
@@ -221,7 +221,7 @@ open class GenAggregateTask : GenArchTask(), MutableAggregateContext {
 
                 selected.forEach { templateNode ->
                     val pathNode = templateNode.resolve(tableContext)
-                    forceRender(
+                    pathRenderer.forceRender(
                         pathNode,
                         resolvePackageDirectory(
                             tableContext["modulePath"].toString(),

@@ -1,13 +1,7 @@
 package com.only4.codegen
 
 import com.only4.codegen.context.BaseContext
-import com.only4.codegen.core.AliasRegistry
-import com.only4.codegen.core.DefaultFileWriter
-import com.only4.codegen.core.FileWriter
-import com.only4.codegen.core.GradleLoggerAdapter
-import com.only4.codegen.core.LoggerAdapter
-import com.only4.codegen.misc.resolvePackage
-import com.only4.codegen.template.PathNode
+import com.only4.codegen.core.*
 import com.only4.codegen.template.Template
 import com.only4.codegen.template.TemplateNode
 import org.gradle.api.DefaultTask
@@ -15,7 +9,6 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import java.io.File
-import java.nio.charset.Charset
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -57,9 +50,6 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
     protected var template: Template? = null
 
     @Internal
-    protected var renderFileSwitch = true
-
-    @Internal
     protected open val aliasRegistry = AliasRegistry()
 
     @get:Internal
@@ -67,6 +57,20 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
 
     @get:Internal
     protected open val fileWriter: FileWriter by lazy { DefaultFileWriter(logAdapter) }
+
+    @get:Internal
+    protected open val pathRenderer: PathRenderer by lazy {
+        PathRenderer(
+            fileWriter = fileWriter,
+            basePackageProvider = { getString("basePackage") },
+            outputEncodingProvider = { extension.get().outputEncoding.get() },
+            templateProvider = { template ?: error("template must be initialized before rendering") },
+            templatePackage = templatePackage,
+            templateParentPath = templateParentPath,
+            patternSplitter = Regex(PATTERN_SPLITTER),
+            protectFlag = FLAG_DO_NOT_OVERWRITE,
+        )
+    }
 
     private val CodegenExtension.adapterPath: String
         get() = modulePath(moduleNameSuffix4Adapter.get())
@@ -184,75 +188,8 @@ abstract class AbstractCodegenTask : DefaultTask(), BaseContext {
             this[alias] = value
         }
 
-    protected fun forceRender(pathNode: PathNode, parentPath: String): String =
-        renderFileSwitch.let { originalValue ->
-            renderFileSwitch = true
-            try {
-                render(pathNode, parentPath)
-            } finally {
-                renderFileSwitch = originalValue
-            }
-        }
-
-    protected fun render(pathNode: PathNode, parentPath: String): String =
-        when (pathNode.type?.lowercase()) {
-            "root" -> {
-                pathNode.children?.forEach { render(it, parentPath) }
-                parentPath
-            }
-
-            "dir" -> {
-                val dirPath = renderDir(pathNode, parentPath)
-                pathNode.children?.forEach { render(it, dirPath) }
-                dirPath
-            }
-
-            "file" -> renderFile(pathNode, parentPath)
-            else -> parentPath
-        }
-
     protected open fun renderTemplate(
         templateNodes: List<TemplateNode>,
         parentPath: String,
-    ) {
-        templateNodes.forEach { templateNode ->
-            templatePackage[templateNode.tag!!] = resolvePackage("${parentPath}${File.separator}X.kt")
-                .substring(getString("basePackage").length + 1)
-            templateParentPath[templateNode.tag!!] = parentPath
-        }
-    }
-
-    private fun renderDir(pathNode: PathNode, parentPath: String): String {
-        require(pathNode.type.equals("dir", ignoreCase = true)) { "pathNode must be a directory type" }
-
-        val name = pathNode.name?.takeIf { it.isNotBlank() } ?: return parentPath
-        val path = "$parentPath${File.separator}$name"
-        fileWriter.ensureDirectory(path, pathNode.conflict)
-
-        pathNode.tag?.takeIf { it.isNotBlank() }?.let { tag ->
-            tag.split(Regex(PATTERN_SPLITTER))
-                .filter { it.isNotBlank() }
-                .forEach { renderTemplate(template!!.select(it), path) }
-        }
-
-        return path
-    }
-
-    protected fun renderFile(pathNode: PathNode, parentPath: String): String {
-        require(pathNode.type.equals("file", ignoreCase = true)) { "pathNode must be a file type" }
-
-        val name = pathNode.name?.takeIf { it.isNotBlank() }
-            ?: error("pathNode name must not be blank")
-
-        val path = "$parentPath${File.separator}$name"
-        if (!renderFileSwitch) return path
-
-        val content = pathNode.data.orEmpty()
-        val encoding = pathNode.encoding ?: extension.get().outputEncoding.get()
-        val charset = Charset.forName(encoding)
-
-        fileWriter.writeFile(path, content, charset, pathNode.conflict, FLAG_DO_NOT_OVERWRITE)
-        return path
-    }
-
+    ) = pathRenderer.renderTemplate(templateNodes, parentPath)
 }
