@@ -2,7 +2,7 @@ package com.only4.codegen.generators.design
 
 import com.only4.codegen.context.design.DesignContext
 import com.only4.codegen.context.design.models.QueryDesign
-import com.only4.codegen.manager.QueryImportManager
+import com.only4.codegen.imports.QueryImportManager
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.template.TemplateNode
 

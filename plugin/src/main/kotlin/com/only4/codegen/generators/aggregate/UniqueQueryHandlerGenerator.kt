@@ -1,7 +1,7 @@
 package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.manager.QueryHandlerImportManager
+import com.only4.codegen.imports.QueryHandlerImportManager
 import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.misc.toLowerCamelCase

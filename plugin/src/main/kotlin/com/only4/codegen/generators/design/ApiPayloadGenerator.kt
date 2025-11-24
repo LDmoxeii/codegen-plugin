@@ -2,7 +2,7 @@ package com.only4.codegen.generators.design
 
 import com.only4.codegen.context.design.DesignContext
 import com.only4.codegen.context.design.models.ApiPayloadDesign
-import com.only4.codegen.manager.ApiPayloadImportManager
+import com.only4.codegen.imports.ApiPayloadImportManager
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.template.TemplateNode
 

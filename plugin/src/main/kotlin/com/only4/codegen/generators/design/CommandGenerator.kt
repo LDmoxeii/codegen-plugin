@@ -2,7 +2,7 @@ package com.only4.codegen.generators.design
 
 import com.only4.codegen.context.design.DesignContext
 import com.only4.codegen.context.design.models.CommandDesign
-import com.only4.codegen.manager.CommandImportManager
+import com.only4.codegen.imports.CommandImportManager
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.template.TemplateNode
 

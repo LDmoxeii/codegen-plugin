@@ -2,7 +2,7 @@ package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.gradle.AbstractCodegenTask
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.manager.EntityImportManager
+import com.only4.codegen.imports.EntityImportManager
 import com.only4.codegen.misc.*
 import com.only4.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_ID_ALIAS
 import com.only4.codegen.misc.SqlSchemaUtils.RIGHT_QUOTES_4_ID_ALIAS

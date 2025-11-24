@@ -1,7 +1,7 @@
 package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.manager.RepositoryImportManager
+import com.only4.codegen.imports.RepositoryImportManager
 import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.pebble.PebbleTemplateRenderer.renderString

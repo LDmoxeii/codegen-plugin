@@ -4,7 +4,7 @@ import com.only4.codegen.context.design.DesignContext
 import com.only4.codegen.context.design.models.ValidatorDesign
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.template.TemplateNode
-import com.only4.codegen.manager.ValidatorImportManager
+import com.only4.codegen.imports.ValidatorImportManager
 
 class ValidatorGenerator : DesignTemplateGenerator {
 

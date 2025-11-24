@@ -1,7 +1,7 @@
 package com.only4.codegen.generators.aggregate
 
 import com.only4.codegen.context.aggregate.AggregateContext
-import com.only4.codegen.manager.SchemaBaseImportManager
+import com.only4.codegen.imports.SchemaBaseImportManager
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.template.TemplateNode
 
