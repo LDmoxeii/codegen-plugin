@@ -5,6 +5,7 @@ import com.only4.codegen.imports.SchemaImportManager
 import com.only4.codegen.misc.*
 import com.only4.codegen.pebble.PebbleTemplateRenderer.renderString
 import com.only4.codegen.template.TemplateNode
+import java.io.File
 
 /**
  * Schema 文件生成器
@@ -103,7 +104,8 @@ class SchemaGenerator : AggregateTemplateGenerator {
         val resultContext = ctx.baseMap.toMutableMap()
 
         with(ctx) {
-            resultContext.putContext(tag, "modulePath", domainPath)
+            val generatedRoot = File(ctx.domainPath, "build/generated/codegen")
+            resultContext.putContext(tag, "modulePath", generatedRoot.canonicalPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 

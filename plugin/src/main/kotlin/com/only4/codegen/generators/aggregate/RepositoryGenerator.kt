@@ -6,6 +6,7 @@ import com.only4.codegen.misc.SqlSchemaUtils
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.pebble.PebbleTemplateRenderer.renderString
 import com.only4.codegen.template.TemplateNode
+import java.io.File
 
 /**
  * Repository 生成器
@@ -57,7 +58,8 @@ class RepositoryGenerator : AggregateTemplateGenerator {
         val resultContext = ctx.baseMap.toMutableMap()
 
         with(ctx) {
-            resultContext.putContext(tag, "modulePath", adapterPath)
+            val generatedRoot = File(ctx.adapterPath, "build/generated/codegen")
+            resultContext.putContext(tag, "modulePath", generatedRoot.canonicalPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", "")
 

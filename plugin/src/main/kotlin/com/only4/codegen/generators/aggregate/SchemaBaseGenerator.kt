@@ -4,6 +4,7 @@ import com.only4.codegen.context.aggregate.AggregateContext
 import com.only4.codegen.imports.SchemaBaseImportManager
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.template.TemplateNode
+import java.io.File
 
 /**
  * Schema 基类生成器
@@ -26,7 +27,8 @@ class SchemaBaseGenerator : AggregateTemplateGenerator {
         importManager.addBaseImports()
 
         with(ctx) {
-            resultContext.putContext(tag, "modulePath", ctx.domainPath)
+            val generatedRoot = File(ctx.domainPath, "build/generated/codegen")
+            resultContext.putContext(tag, "modulePath", generatedRoot.canonicalPath)
             resultContext.putContext(tag, "templatePackage", refPackage(ctx.templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", "")
 

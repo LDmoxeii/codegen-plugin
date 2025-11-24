@@ -7,6 +7,7 @@ import com.only4.codegen.misc.refPackage
 import com.only4.codegen.misc.toLowerCamelCase
 import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
+import java.io.File
 
 class UniqueValidatorGenerator : AggregateTemplateGenerator {
     override val tag: String = "validator"
@@ -85,7 +86,8 @@ class UniqueValidatorGenerator : AggregateTemplateGenerator {
         )
 
         with(ctx) {
-            resultContext.putContext(tag, "modulePath", applicationPath)
+            val generatedRoot = File(ctx.applicationPath, "build/generated/codegen")
+            resultContext.putContext(tag, "modulePath", generatedRoot.canonicalPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(""))
 

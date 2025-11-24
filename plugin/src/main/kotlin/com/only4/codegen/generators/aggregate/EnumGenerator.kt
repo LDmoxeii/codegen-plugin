@@ -7,6 +7,7 @@ import com.only4.codegen.misc.concatPackage
 import com.only4.codegen.misc.refPackage
 import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
+import java.io.File
 
 /**
  * 枚举文件生成器
@@ -72,7 +73,8 @@ class EnumGenerator : AggregateTemplateGenerator {
 
             val resultContext = baseMap.toMutableMap()
 
-            resultContext.putContext(tag, "modulePath", domainPath)
+            val generatedRoot = File(ctx.domainPath, "build/generated/codegen")
+            resultContext.putContext(tag, "modulePath", generatedRoot.canonicalPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(concatPackage(refPackage(aggregate), refPackage("enums"))))
 

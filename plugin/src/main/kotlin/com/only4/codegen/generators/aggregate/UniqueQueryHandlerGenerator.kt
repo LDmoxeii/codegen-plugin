@@ -7,6 +7,7 @@ import com.only4.codegen.misc.refPackage
 import com.only4.codegen.misc.toLowerCamelCase
 import com.only4.codegen.misc.toUpperCamelCase
 import com.only4.codegen.template.TemplateNode
+import java.io.File
 
 class UniqueQueryHandlerGenerator : AggregateTemplateGenerator {
     override val tag: String = "query_handler"
@@ -64,7 +65,8 @@ class UniqueQueryHandlerGenerator : AggregateTemplateGenerator {
         importManager.add("$shareModelPkg.$idPropName")
 
         with(ctx) {
-            resultContext.putContext(tag, "modulePath", adapterPath)
+            val generatedRoot = File(ctx.adapterPath, "build/generated/codegen")
+            resultContext.putContext(tag, "modulePath", generatedRoot.canonicalPath)
             resultContext.putContext(tag, "templatePackage", refPackage(templatePackage[tag] ?: ""))
             resultContext.putContext(tag, "package", refPackage(aggregate))
 
