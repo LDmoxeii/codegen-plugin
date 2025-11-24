@@ -1,4 +1,4 @@
-package com.only4.codegen.manager
+package com.only4.codegen.imports
 
 class EntityImportManager : BaseImportManager()  {
     override fun addBaseImports() {

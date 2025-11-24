@@ -1,4 +1,4 @@
-package com.only4.codegen.manager
+package com.only4.codegen.imports
 
 /**
  * API Payload 导入管理器

@@ -1,6 +1,6 @@
 package com.only4.codegen.generators.aggregate
 
-import com.only4.codegen.AbstractCodegenTask
+import com.only4.codegen.gradle.AbstractCodegenTask
 import com.only4.codegen.context.aggregate.AggregateContext
 import com.only4.codegen.manager.EntityImportManager
 import com.only4.codegen.misc.*

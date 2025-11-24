@@ -1,9 +1,9 @@
-package com.only4.codegen.manager
+package com.only4.codegen.imports
 
 /**
- * DomainEventHandler 生成器的 Import 管理器
+ * IntegrationEventHandler 生成器的 Import 管理器
  */
-class DomainEventHandlerImportManager : BaseImportManager() {
+class IntegrationEventHandlerImportManager : BaseImportManager() {
     override fun addBaseImports() {
         requiredImports.add("org.springframework.context.event.EventListener")
         requiredImports.add("org.springframework.stereotype.Service")

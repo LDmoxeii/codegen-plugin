@@ -1,6 +1,6 @@
 package com.only4.codegen.misc
 
-import com.only4.codegen.AbstractCodegenTask
+import com.only4.codegen.gradle.AbstractCodegenTask
 import com.only4.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_ID_ALIAS
 import com.only4.codegen.misc.SqlSchemaUtils.LEFT_QUOTES_4_LITERAL_STRING
 import com.only4.codegen.misc.SqlSchemaUtils.RIGHT_QUOTES_4_ID_ALIAS

@@ -1,4 +1,4 @@
-package com.only4.codegen
+package com.only4.codegen.gradle
 
 import com.only4.codegen.context.BaseContext
 import com.only4.codegen.core.AliasRegistry
@@ -6,6 +6,7 @@ import com.only4.codegen.core.DefaultFileWriter
 import com.only4.codegen.core.FileWriter
 import com.only4.codegen.core.GradleLoggerAdapter
 import com.only4.codegen.core.LoggerAdapter
+import com.only4.codegen.gradle.extension.CodegenExtension
 import com.only4.codegen.misc.resolvePackage
 import com.only4.codegen.template.PathNode
 import com.only4.codegen.template.Template

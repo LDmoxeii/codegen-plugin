@@ -1,5 +1,6 @@
-package com.only4.codegen
+package com.only4.codegen.gradle
 
+import com.only4.codegen.gradle.extension.CodegenExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 

@@ -1,4 +1,4 @@
-package com.only4.codegen.manager
+package com.only4.codegen.imports
 
 /**
  * Validator 模板的 Import 管理器

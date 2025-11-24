@@ -1,4 +1,4 @@
-package com.only4.codegen
+package com.only4.codegen.gradle.extension
 
 import org.gradle.api.Action
 import org.gradle.api.file.ConfigurableFileCollection

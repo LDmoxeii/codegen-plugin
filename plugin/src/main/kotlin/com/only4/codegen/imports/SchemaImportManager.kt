@@ -1,4 +1,4 @@
-package com.only4.codegen.manager
+package com.only4.codegen.imports
 
 class SchemaImportManager(private val schemaBasePackage: String) : BaseImportManager() {
 

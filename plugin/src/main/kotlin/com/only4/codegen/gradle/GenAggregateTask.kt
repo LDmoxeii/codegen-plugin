@@ -1,4 +1,4 @@
-package com.only4.codegen
+package com.only4.codegen.gradle
 
 import com.only4.codegen.context.aggregate.AggregateContext
 import com.only4.codegen.context.aggregate.MutableAggregateContext

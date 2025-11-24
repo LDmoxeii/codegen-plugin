@@ -1,4 +1,4 @@
-package com.only4.codegen
+package com.only4.codegen.gradle
 
 import com.only4.codegen.context.design.DesignContext
 import com.only4.codegen.context.design.MutableDesignContext

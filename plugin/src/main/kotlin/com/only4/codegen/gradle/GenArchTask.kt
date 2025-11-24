@@ -1,6 +1,7 @@
-package com.only4.codegen
+package com.only4.codegen.gradle
 
 import com.google.gson.Gson
+import com.only4.codegen.gradle.extension.CodegenExtension
 import com.only4.codegen.misc.loadFileContent
 import com.only4.codegen.misc.resolveDirectory
 import com.only4.codegen.pebble.PebbleConfig
