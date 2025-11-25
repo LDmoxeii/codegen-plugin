@@ -112,7 +112,6 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
 
         constraints.forEach { cons ->
             val suffix = computeSuffix(cons, deletedField)
-            if (suffix.isBlank()) return@forEach
             val q = "Unique${entityType}${suffix}Qry"
             if (!ctx.typeMapping.containsKey(q)) {
                 return q
@@ -149,7 +148,6 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
         val deletedField = ctx.getString("deletedField")
         return constraints.firstOrNull { cons ->
             val suffix = computeSuffix(cons, deletedField)
-            if (suffix.isBlank()) return@firstOrNull false
             val q = "Unique${entityType}${suffix}Qry"
             q == target
         }
@@ -158,6 +156,7 @@ class UniqueQueryGenerator : AggregateTemplateGenerator {
     private fun computeSuffix(cons: Map<String, Any?>, deletedField: String): String {
         // 1) Prefer custom suffix from constraint name: uk_v_xxx -> Xxx
         val cName = cons["constraintName"].toString()
+        if ("uk_i" == cName) return ""
         val regex = Regex("^uk_v_(.+)$", RegexOption.IGNORE_CASE)
         val m = regex.find(cName)
         if (m != null) {
